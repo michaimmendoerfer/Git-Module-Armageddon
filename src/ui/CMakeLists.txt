@@ -11,6 +11,7 @@ SET(SOURCES screens/ui_ScrMenu.c
     images/ui_img_icon_gauge_png.c
     images/ui_img_icon_switch_png.c
     images/ui_img_1825836894.c
+    images/ui_img_1404430020.c
     images/ui_img_551600910.c)
 
 add_library(ui ${SOURCES})

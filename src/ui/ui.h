@@ -39,6 +39,7 @@ extern lv_obj_t * ui_Label5;
 // SCREEN: ui_ScrGauge
 void ui_ScrGauge_screen_init(void);
 extern lv_obj_t * ui_ScrGauge;
+extern lv_obj_t * ui_Image2;
 // SCREEN: ui_ScrSwitch
 void ui_ScrSwitch_screen_init(void);
 extern lv_obj_t * ui_ScrSwitch;
@@ -53,6 +54,7 @@ LV_IMG_DECLARE(ui_img_icon_settings_png);    // assets\icon_settings.png
 LV_IMG_DECLARE(ui_img_icon_gauge_png);    // assets\icon_gauge.png
 LV_IMG_DECLARE(ui_img_icon_switch_png);    // assets\icon_switch.png
 LV_IMG_DECLARE(ui_img_1825836894);    // assets\bg_grill-small.png
+LV_IMG_DECLARE(ui_img_1404430020);    // assets\voltmeter-alt.png
 LV_IMG_DECLARE(ui_img_551600910);    // assets\Btn-small-on-100.png
 
 

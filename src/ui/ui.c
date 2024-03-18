@@ -38,6 +38,7 @@ lv_obj_t * ui_Label5;
 // SCREEN: ui_ScrGauge
 void ui_ScrGauge_screen_init(void);
 lv_obj_t * ui_ScrGauge;
+lv_obj_t * ui_Image2;
 
 
 // SCREEN: ui_ScrSwitch

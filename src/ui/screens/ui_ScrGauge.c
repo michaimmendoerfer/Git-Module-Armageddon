@@ -11,5 +11,14 @@ void ui_ScrGauge_screen_init(void)
     lv_obj_clear_flag(ui_ScrGauge, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
     lv_obj_set_style_bg_img_src(ui_ScrGauge, &ui_img_1825836894, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    ui_Image2 = lv_img_create(ui_ScrGauge);
+    lv_img_set_src(ui_Image2, &ui_img_1404430020);
+    lv_obj_set_width(ui_Image2, LV_SIZE_CONTENT);   /// 240
+    lv_obj_set_height(ui_Image2, LV_SIZE_CONTENT);    /// 240
+    lv_obj_set_x(ui_Image2, -67);
+    lv_obj_set_y(ui_Image2, 1);
+    lv_obj_set_align(ui_Image2, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_Image2, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
+    lv_obj_clear_flag(ui_Image2, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
 
 }
