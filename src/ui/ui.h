@@ -13,6 +13,8 @@ extern "C" {
 #include "lvgl.h"
 
 #include "ui_helpers.h"
+#include "components/ui_comp.h"
+#include "components/ui_comp_hook.h"
 #include "ui_events.h"
 // SCREEN: ui_ScrMenu
 void ui_ScrMenu_screen_init(void);
@@ -36,17 +38,18 @@ extern lv_obj_t * ui_Label2;
 extern lv_obj_t * ui_Label3;
 extern lv_obj_t * ui_Label4;
 extern lv_obj_t * ui_Label5;
-// SCREEN: ui_ScrGauge
-void ui_ScrGauge_screen_init(void);
-extern lv_obj_t * ui_ScrGauge;
+// SCREEN: ui_ScrGaugeSingle
+void ui_ScrGaugeSingle_screen_init(void);
+extern lv_obj_t * ui_ScrGaugeSingle;
 extern lv_obj_t * ui_Image2;
 // SCREEN: ui_ScrSwitch
 void ui_ScrSwitch_screen_init(void);
+void ui_event_ScrSwitch(lv_event_t * e);
 extern lv_obj_t * ui_ScrSwitch;
-extern lv_obj_t * ui_Image7;
-extern lv_obj_t * ui_Image8;
-extern lv_obj_t * ui_Image9;
-extern lv_obj_t * ui_Image10;
+extern lv_obj_t * ui_SwitchButton1;
+extern lv_obj_t * ui_SwitchButton2;
+extern lv_obj_t * ui_SwitchButton3;
+extern lv_obj_t * ui_SwitchButton4;
 extern lv_obj_t * ui____initial_actions0;
 
 LV_IMG_DECLARE(ui_img_bg_grill_png);    // assets\bg_grill.png
@@ -55,6 +58,8 @@ LV_IMG_DECLARE(ui_img_icon_gauge_png);    // assets\icon_gauge.png
 LV_IMG_DECLARE(ui_img_icon_switch_png);    // assets\icon_switch.png
 LV_IMG_DECLARE(ui_img_1825836894);    // assets\bg_grill-small.png
 LV_IMG_DECLARE(ui_img_1404430020);    // assets\voltmeter-alt.png
+LV_IMG_DECLARE(ui_img_toggle_vertical_off_75_png);    // assets\Toggle_vertical_off_75.png
+LV_IMG_DECLARE(ui_img_toggle_vertical_on_75_png);    // assets\Toggle_vertical_on_75.png
 LV_IMG_DECLARE(ui_img_551600910);    // assets\Btn-small-on-100.png
 
 

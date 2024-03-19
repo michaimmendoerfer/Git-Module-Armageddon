@@ -3,14 +3,14 @@
 // LVGL version: 8.2.0
 // Project name: SquareLine_Project_Jeepify_Large_PDC
 
-#ifndef _UI_EVENTS_H
-#define _UI_EVENTS_H
+#ifndef _SQUARELINE_PROJECT_JEEPIFY_LARGE_PDC_UI_COMP_HOOK_H
+#define _SQUARELINE_PROJECT_JEEPIFY_LARGE_PDC_UI_COMP_HOOK_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void Ui_Switch_Loaded(lv_event_t * e);
+void ui_comp_SwitchButton_create_hook(lv_obj_t * comp);
 
 #ifdef __cplusplus
 } /*extern "C"*/

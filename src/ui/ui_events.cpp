@@ -3,17 +3,9 @@
 // LVGL version: 8.2.0
 // Project name: SquareLine_Project_Jeepify_Large_PDC
 
-#ifndef _UI_EVENTS_H
-#define _UI_EVENTS_H
+#include "ui.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void Ui_Switch_Loaded(lv_event_t * e);
-
-#ifdef __cplusplus
-} /*extern "C"*/
-#endif
-
-#endif
+void Ui_Switch_Loaded(lv_event_t * e)
+{
+	// Your code here
+}

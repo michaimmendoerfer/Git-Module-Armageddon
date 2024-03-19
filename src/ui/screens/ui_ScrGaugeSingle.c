@@ -5,13 +5,13 @@
 
 #include "../ui.h"
 
-void ui_ScrGauge_screen_init(void)
+void ui_ScrGaugeSingle_screen_init(void)
 {
-    ui_ScrGauge = lv_obj_create(NULL);
-    lv_obj_clear_flag(ui_ScrGauge, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
-    lv_obj_set_style_bg_img_src(ui_ScrGauge, &ui_img_1825836894, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_ScrGaugeSingle = lv_obj_create(NULL);
+    lv_obj_clear_flag(ui_ScrGaugeSingle, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_set_style_bg_img_src(ui_ScrGaugeSingle, &ui_img_1825836894, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_Image2 = lv_img_create(ui_ScrGauge);
+    ui_Image2 = lv_img_create(ui_ScrGaugeSingle);
     lv_img_set_src(ui_Image2, &ui_img_1404430020);
     lv_obj_set_width(ui_Image2, LV_SIZE_CONTENT);   /// 240
     lv_obj_set_height(ui_Image2, LV_SIZE_CONTENT);    /// 240
