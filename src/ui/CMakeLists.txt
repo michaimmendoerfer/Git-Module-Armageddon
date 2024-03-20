@@ -12,10 +12,12 @@ SET(SOURCES components/ui_comp_switchbutton.c
     images/ui_img_icon_settings_png.c
     images/ui_img_icon_gauge_png.c
     images/ui_img_icon_switch_png.c
+    images/ui_img_icon_pair_off_png.c
+    images/ui_img_icon_pair_png.c
     images/ui_img_1825836894.c
+    images/ui_img_551600910.c
     images/ui_img_1404430020.c
     images/ui_img_toggle_vertical_off_75_png.c
-    images/ui_img_toggle_vertical_on_75_png.c
-    images/ui_img_551600910.c)
+    images/ui_img_toggle_vertical_on_75_png.c)
 
 add_library(ui ${SOURCES})

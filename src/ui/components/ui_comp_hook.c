@@ -8,3 +8,7 @@
 void ui_comp_SwitchButton_create_hook(lv_obj_t * comp)
 {
 }
+
+void ui_comp_SwitchButton_compedit_create_hook(lv_obj_t * comp)
+{
+}

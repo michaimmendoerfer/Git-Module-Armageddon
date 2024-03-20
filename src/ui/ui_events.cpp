@@ -4,8 +4,190 @@
 // Project name: SquareLine_Project_Jeepify_Large_PDC
 
 #include "ui.h"
+#include "Jeepify.h"
+#include "PeerClass.h"
+#include <nvs_flash.h>
+
+#define SWITCHES_PER_SCREEN 4
+
+extern PeerClass Module;
+extern void ToggleSwitch(int SNr);
+extern void SetDemoMode(bool Mode);
+extern void SetDebugMode(bool Mode);
+extern void SetSleepMode(bool Mode);
+
+extern uint32_t TSPair;
+
+int ScrSwitchPage = 0;
+
+void SingleUpdateTimer(lv_timer_t * timer);
+lv_timer_t *SingleTimer;
+
 
 void Ui_Switch_Loaded(lv_event_t * e)
 {
+	lv_obj_t *Container;
+	int PeriphPos;
+	
+	for (int Sw=0; Sw<SWITCHES_PER_SCREEN; Sw++)
+	{
+		Container = lv_obj_get_child(lv_scr_act(), Sw);
+		PeriphPos = ScrSwitchPage*SWITCHES_PER_SCREEN+Sw;
+
+		if (!Module.isPeriphEmpty(PeriphPos))
+		{
+			if (Module.GetPeriphValue(PeriphPos)) 
+				lv_imgbtn_set_state(lv_obj_get_child(Container, 0), LV_IMGBTN_STATE_CHECKED_RELEASED);
+			lv_label_set_text(lv_obj_get_child(Container, 1), Module.GetName());
+			lv_label_set_text(lv_obj_get_child(Container, 2), Module.GetPeriphName(PeriphPos));
+		}
+		else 
+		{
+			lv_obj_add_flag(Container, LV_OBJ_FLAG_HIDDEN);
+		}
+	}
+
+	static uint32_t user_data = 10;
+	if (!SingleTimer) 
+		{
+			SingleTimer = lv_timer_create(SingleUpdateTimer, 500,  &user_data);
+			Serial.println("SingleTimer created");
+		}
+}
+
+void Ui_SwitchButton_Clicked(lv_event_t * e)
+{
+	lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    
+	if(event_code == LV_EVENT_CLICKED) {
+        auto Container 	 = lv_obj_get_parent(target);
+		auto SwitchLabel = lv_obj_get_child(Container, 3);
+		auto SwitchName  = lv_obj_get_child(Container, 2);
+	    int SwitchNr = atoi(lv_label_get_text(SwitchLabel));
+		
+		//Serial.printf("Button %d pressed from Switch %s\n\r", SwitchNr, lv_label_get_text(SwitchName));
+		int ToToggle = ScrSwitchPage*SWITCHES_PER_SCREEN+SwitchNr-1;
+		Serial.printf("ToToggle = %d", ToToggle);
+		ToggleSwitch(ToToggle);	
+	}
+}
+
+void Ui_Menu_Loaded(lv_event_t * e)
+{
+	if (Module.GetPairMode()) lv_obj_add_state(ui_BtnMenu4, LV_STATE_CHECKED);
+}
+
+void Ui_MenuBtn4_Click(lv_event_t * e)
+{
+	Module.SetPairMode(!Module.GetPairMode());
+	if (Module.GetPairMode()) 
+	{
+		lv_obj_add_state(ui_BtnMenu4, LV_STATE_CHECKED);
+		TSPair = millis();
+	}
+	else
+	{
+		lv_obj_clear_state(ui_BtnMenu4, LV_STATE_CHECKED);
+		TSPair = 0;
+	}
+}
+
+void SingleUpdateTimer(lv_timer_t * timer)
+{
+	Serial.println("SinglUpdateTimer");
+	lv_obj_t *Container;
+	int PeriphPos;
+	
+	for (int Sw=0; Sw<SWITCHES_PER_SCREEN; Sw++)
+	{
+		Container = lv_obj_get_child(lv_scr_act(), Sw);
+		PeriphPos = ScrSwitchPage*SWITCHES_PER_SCREEN+Sw;
+
+		if (!Module.isPeriphEmpty(PeriphPos))
+		{
+			Serial.printf("SingleUpdateTimer: Value of %d is %f", PeriphPos, Module.GetPeriphValue(PeriphPos));
+			if (Module.GetPeriphValue(PeriphPos) == 1) 
+			{
+				lv_imgbtn_set_state(lv_obj_get_child(Container, 0), LV_IMGBTN_STATE_CHECKED_RELEASED);
+			}
+			else
+			{
+				lv_imgbtn_set_state(lv_obj_get_child(Container, 0), LV_IMGBTN_STATE_RELEASED);
+			}
+		}
+	}	
+}
+
+void Ui_SettingBtn1_Click(lv_event_t * e)
+{
+	Module.SetDemoMode(!Module.GetDemoMode());
+	SetDemoMode(Module.GetDemoMode());
+}
+
+void Ui_SettingBtn2_Click(lv_event_t * e)
+{
+	Module.SetSleepMode(!Module.GetSleepMode());
+	SetSleepMode(Module.GetSleepMode());
+}
+
+void Ui_SettingBtn3_Click(lv_event_t * e)
+{
+	Module.SetDebugMode(!Module.GetDebugMode());
+	SetDebugMode(Module.GetDebugMode());
+}
+
+void Ui_SettingBtn4_Click(lv_event_t * e)
+{
+	Module.SetPairMode(!Module.GetPairMode());
+}
+
+void Ui_Settings_Loaded(lv_event_t * e)
+{
+	if (Module.GetDemoMode())  lv_obj_add_state(ui_SwSettingsDemo,  LV_STATE_CHECKED);
+	if (Module.GetSleepMode()) lv_obj_add_state(ui_SwSettingsSleep, LV_STATE_CHECKED);
+	if (Module.GetDebugMode()) lv_obj_add_state(ui_SwSettingsDebug, LV_STATE_CHECKED);
+	if (Module.GetPairMode())  lv_obj_add_state(ui_SwSettingsPair,  LV_STATE_CHECKED);
+}
+
+void Ui_GaugeSingle_Loaded(lv_event_t * e)
+{
 	// Your code here
+}
+
+void Ui_GaugeSingle_Next(lv_event_t * e)
+{
+	// Your code here
+}
+
+void Ui_GaugeSingle_Prev(lv_event_t * e)
+{
+	// Your code here
+}
+
+void Ui_Switch_Next(lv_event_t * e)
+{
+	if ((ScrSwitchPage == 0) and (Module.GetType() == SWITCH_8_WAY))
+		ScrSwitchPage++;
+	Ui_Switch_Loaded(e);
+}
+
+void UI_Switch_Prev(lv_event_t * e)
+{
+	if (ScrSwitchPage > 0) ScrSwitchPage--;
+	Ui_Switch_Loaded(e);
+}
+
+void Ui_Switch_Leave(lv_event_t * e)
+{
+	lv_timer_del(SingleTimer);
+	SingleTimer = NULL;
+
+	Serial.println("SingleTimer deleted");
+}
+
+void Ui_Settings_Reset(lv_event_t * e)
+{
+	nvs_flash_erase(); nvs_flash_init();
+    ESP.restart();
 }

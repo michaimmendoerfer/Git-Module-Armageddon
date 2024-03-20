@@ -20,6 +20,7 @@ extern "C" {
 #define UI_COMP_SWITCHBUTTON_LBLSWITCHID 4
 #define _UI_COMP_SWITCHBUTTON_NUM 5
 lv_obj_t * ui_SwitchButton_create(lv_obj_t * comp_parent);
+void ui_event_comp_SwitchButton_ImgButton(lv_event_t * e);
 
 #ifdef __cplusplus
 } /*extern "C"*/

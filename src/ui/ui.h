@@ -18,6 +18,7 @@ extern "C" {
 #include "ui_events.h"
 // SCREEN: ui_ScrMenu
 void ui_ScrMenu_screen_init(void);
+void ui_event_ScrMenu(lv_event_t * e);
 extern lv_obj_t * ui_ScrMenu;
 void ui_event_BtnMenu1(lv_event_t * e);
 extern lv_obj_t * ui_BtnMenu1;
@@ -25,23 +26,39 @@ void ui_event_BtnMenu2(lv_event_t * e);
 extern lv_obj_t * ui_BtnMenu2;
 void ui_event_BtnMenu3(lv_event_t * e);
 extern lv_obj_t * ui_BtnMenu3;
+void ui_event_BtnMenu4(lv_event_t * e);
+extern lv_obj_t * ui_BtnMenu4;
+extern lv_obj_t * ui_LblMenuJeepify;
+extern lv_obj_t * ui_LblMenuType;
 // SCREEN: ui_ScrSettings
 void ui_ScrSettings_screen_init(void);
 void ui_event_ScrSettings(lv_event_t * e);
 extern lv_obj_t * ui_ScrSettings;
+void ui_event_SwSettingsDemo(lv_event_t * e);
+extern lv_obj_t * ui_SwSettingsDemo;
+void ui_event_SwSettingsSleep(lv_event_t * e);
+extern lv_obj_t * ui_SwSettingsSleep;
+void ui_event_SwSettingsDebug(lv_event_t * e);
+extern lv_obj_t * ui_SwSettingsDebug;
+void ui_event_SwSettingsPair(lv_event_t * e);
+extern lv_obj_t * ui_SwSettingsPair;
 extern lv_obj_t * ui_Label1;
-extern lv_obj_t * ui_Switch1;
-extern lv_obj_t * ui_Switch2;
-extern lv_obj_t * ui_Switch3;
-extern lv_obj_t * ui_Switch4;
 extern lv_obj_t * ui_Label2;
 extern lv_obj_t * ui_Label3;
 extern lv_obj_t * ui_Label4;
 extern lv_obj_t * ui_Label5;
+extern lv_obj_t * ui_LblSettingName;
+extern lv_obj_t * ui_LblSettingType;
+void ui_event_ImgSettingsReset(lv_event_t * e);
+extern lv_obj_t * ui_ImgSettingsReset;
+extern lv_obj_t * ui_Label9;
 // SCREEN: ui_ScrGaugeSingle
 void ui_ScrGaugeSingle_screen_init(void);
+void ui_event_ScrGaugeSingle(lv_event_t * e);
 extern lv_obj_t * ui_ScrGaugeSingle;
 extern lv_obj_t * ui_Image2;
+extern lv_obj_t * ui_LblGaugeSingleValueDescription;
+extern lv_obj_t * ui_LblGaugeSingleValue;
 // SCREEN: ui_ScrSwitch
 void ui_ScrSwitch_screen_init(void);
 void ui_event_ScrSwitch(lv_event_t * e);
@@ -50,17 +67,29 @@ extern lv_obj_t * ui_SwitchButton1;
 extern lv_obj_t * ui_SwitchButton2;
 extern lv_obj_t * ui_SwitchButton3;
 extern lv_obj_t * ui_SwitchButton4;
+extern lv_obj_t * ui_ContainerSwitchValues;
+extern lv_obj_t * ui_LblGaugeSingleValueDescription1;
+extern lv_obj_t * ui_LblGaugeSingleValueDescription2;
+extern lv_obj_t * ui_LblGaugeSingleValueDescription3;
+extern lv_obj_t * ui_LblGaugeSingleValueDescription4;
+extern lv_obj_t * ui_LblGaugeSingleValue1;
+extern lv_obj_t * ui_LblGaugeSingleValue2;
+extern lv_obj_t * ui_LblGaugeSingleValue3;
+extern lv_obj_t * ui_LblGaugeSingleValue4;
+extern lv_obj_t * ui_LblSwitchPage;
 extern lv_obj_t * ui____initial_actions0;
 
 LV_IMG_DECLARE(ui_img_bg_grill_png);    // assets\bg_grill.png
 LV_IMG_DECLARE(ui_img_icon_settings_png);    // assets\icon_settings.png
 LV_IMG_DECLARE(ui_img_icon_gauge_png);    // assets\icon_gauge.png
 LV_IMG_DECLARE(ui_img_icon_switch_png);    // assets\icon_switch.png
+LV_IMG_DECLARE(ui_img_icon_pair_off_png);    // assets\icon_pair_off.png
+LV_IMG_DECLARE(ui_img_icon_pair_png);    // assets\icon_pair.png
 LV_IMG_DECLARE(ui_img_1825836894);    // assets\bg_grill-small.png
+LV_IMG_DECLARE(ui_img_551600910);    // assets\Btn-small-on-100.png
 LV_IMG_DECLARE(ui_img_1404430020);    // assets\voltmeter-alt.png
 LV_IMG_DECLARE(ui_img_toggle_vertical_off_75_png);    // assets\Toggle_vertical_off_75.png
 LV_IMG_DECLARE(ui_img_toggle_vertical_on_75_png);    // assets\Toggle_vertical_on_75.png
-LV_IMG_DECLARE(ui_img_551600910);    // assets\Btn-small-on-100.png
 
 
 

@@ -18,7 +18,7 @@ class PeriphClass {
         float       _Nullwert;
         float       _VperAmp;
         int         _Vin;
-        float       _Value;
+        volatile float       _Value;
         float       _OldValue;
         bool        _Changed;
         int         _PeerId;
@@ -89,9 +89,9 @@ class PeerClass
         
     public:
         PeerClass();
-        void  Setup(const char* Name, int Type, char *Version, const uint8_t *BroadcastAddress, 
+        void  Setup(const char* Name, int Type, const char *Version, const uint8_t *BroadcastAddress, 
                     bool SleepMode, bool DebugMode, bool DemoMode, bool PairMode);
-        void  Setup(const char* Name, int Type, char *Version, const uint8_t *BroadcastAddress, 
+        void  Setup(const char* Name, int Type, const char *Version, const uint8_t *BroadcastAddress, 
                     bool SleepMode, bool DebugMode, bool DemoMode, bool PairMode,
                     int VoltageMon, int RelayType, int ADCPort1, int ADCPort2, float VoltageDevider);
         char* Export();
@@ -179,7 +179,9 @@ class PeerClass
 
         PeriphClass *GetPeriphPtr(int P) { return &Periph[P]; }
         PeriphClass *GetPeriphPtr(char *Name);
+        
         bool isEmpty() { return (_Type == 0); }
+        bool isPeriphEmpty(int SNr) { return Periph[SNr].isEmpty(); }
 };
 
 PeerClass *FindPeerByMAC(const uint8_t *BroadcastAddress);

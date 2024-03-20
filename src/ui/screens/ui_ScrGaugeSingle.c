@@ -15,10 +15,45 @@ void ui_ScrGaugeSingle_screen_init(void)
     lv_img_set_src(ui_Image2, &ui_img_1404430020);
     lv_obj_set_width(ui_Image2, LV_SIZE_CONTENT);   /// 240
     lv_obj_set_height(ui_Image2, LV_SIZE_CONTENT);    /// 240
-    lv_obj_set_x(ui_Image2, -67);
-    lv_obj_set_y(ui_Image2, 1);
+    lv_obj_set_x(ui_Image2, -87);
+    lv_obj_set_y(ui_Image2, -11);
     lv_obj_set_align(ui_Image2, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_Image2, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
     lv_obj_clear_flag(ui_Image2, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+
+    ui_LblGaugeSingleValueDescription = lv_label_create(ui_ScrGaugeSingle);
+    lv_obj_set_width(ui_LblGaugeSingleValueDescription, LV_SIZE_CONTENT);   /// 100
+    lv_obj_set_height(ui_LblGaugeSingleValueDescription, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_LblGaugeSingleValueDescription, 142);
+    lv_obj_set_y(ui_LblGaugeSingleValueDescription, -69);
+    lv_obj_set_align(ui_LblGaugeSingleValueDescription, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_LblGaugeSingleValueDescription, "LED-Bar");
+    lv_obj_set_style_text_color(ui_LblGaugeSingleValueDescription, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_LblGaugeSingleValueDescription, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_LblGaugeSingleValueDescription, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_LblGaugeSingleValue = lv_label_create(ui_ScrGaugeSingle);
+    lv_obj_set_width(ui_LblGaugeSingleValue, LV_SIZE_CONTENT);   /// 157
+    lv_obj_set_height(ui_LblGaugeSingleValue, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_x(ui_LblGaugeSingleValue, 140);
+    lv_obj_set_y(ui_LblGaugeSingleValue, -22);
+    lv_obj_set_align(ui_LblGaugeSingleValue, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_LblGaugeSingleValue, "12.4V");
+    lv_obj_set_style_text_color(ui_LblGaugeSingleValue, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_LblGaugeSingleValue, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_LblGaugeSingleValue, &lv_font_montserrat_44, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui_LblGaugeSingleValue, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui_LblGaugeSingleValue, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_LblGaugeSingleValue, 100, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_color(ui_LblGaugeSingleValue, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_opa(ui_LblGaugeSingleValue, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui_LblGaugeSingleValue, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_side(ui_LblGaugeSingleValue, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui_LblGaugeSingleValue, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui_LblGaugeSingleValue, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui_LblGaugeSingleValue, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui_LblGaugeSingleValue, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_add_event_cb(ui_ScrGaugeSingle, ui_event_ScrGaugeSingle, LV_EVENT_ALL, NULL);
 
 }

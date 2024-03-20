@@ -10,7 +10,22 @@
 extern "C" {
 #endif
 
+void Ui_Menu_Loaded(lv_event_t * e);
+void Ui_MenuBtn4_Click(lv_event_t * e);
+void Ui_Settings_Loaded(lv_event_t * e);
+void Ui_SettingBtn1_Click(lv_event_t * e);
+void Ui_SettingBtn2_Click(lv_event_t * e);
+void Ui_SettingBtn3_Click(lv_event_t * e);
+void Ui_SettingBtn4_Click(lv_event_t * e);
+void Ui_Settings_Reset(lv_event_t * e);
+void Ui_GaugeSingle_Loaded(lv_event_t * e);
+void Ui_GaugeSingle_Next(lv_event_t * e);
+void Ui_GaugeSingle_Prev(lv_event_t * e);
 void Ui_Switch_Loaded(lv_event_t * e);
+void Ui_Switch_Next(lv_event_t * e);
+void UI_Switch_Prev(lv_event_t * e);
+void Ui_Switch_Leave(lv_event_t * e);
+void Ui_SwitchButton_Clicked(lv_event_t * e);
 
 #ifdef __cplusplus
 } /*extern "C"*/

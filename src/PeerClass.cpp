@@ -69,7 +69,7 @@ PeerClass::PeerClass()
     _Changed = false;
     _TSLastSeen = 0;
 }
-void  PeerClass::Setup(const char* Name, int Type, char *Version, const uint8_t *BroadcastAddress, bool SleepMode, bool DebugMode, bool DemoMode, bool PairMode)
+void  PeerClass::Setup(const char* Name, int Type, const char *Version, const uint8_t *BroadcastAddress, bool SleepMode, bool DebugMode, bool DemoMode, bool PairMode)
 {
     strcpy(_Name, Name);
     _Type = Type;
@@ -82,14 +82,14 @@ void  PeerClass::Setup(const char* Name, int Type, char *Version, const uint8_t 
     
     for (int Si=0; Si<MAX_PERIPHERALS; Si++) Periph[Si].SetPos(Si);
 }     
-void  PeerClass::Setup(const char* Name, int Type, char *Version, const uint8_t *BroadcastAddress, 
+void  PeerClass::Setup(const char* Name, int Type, const char *Version, const uint8_t *BroadcastAddress, 
                     bool SleepMode, bool DebugMode, bool DemoMode, bool PairMode,
                     int VoltageMon, int RelayType, int ADCPort1, int ADCPort2, float VoltageDevider)
 {
     strcpy(_Name, Name);
     _Type = Type;
     strcpy(_Version, Version);
-    memcpy(_BroadcastAddress, BroadcastAddress, 6);
+    if (BroadcastAddress) memcpy(_BroadcastAddress, BroadcastAddress, 6);
     _SleepMode = SleepMode;
     _DebugMode = DebugMode;
     _DemoMode  = DemoMode;

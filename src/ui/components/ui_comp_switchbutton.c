@@ -6,6 +6,16 @@
 #include "../ui.h"
 
 
+void ui_event_comp_SwitchButton_ImgButton(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    lv_obj_t ** comp_SwitchButton = lv_event_get_user_data(e);
+    if(event_code == LV_EVENT_CLICKED) {
+        Ui_SwitchButton_Clicked(e);
+    }
+}
+
 // COMPONENT SwitchButton
 
 lv_obj_t * ui_SwitchButton_create(lv_obj_t * comp_parent)
@@ -16,7 +26,7 @@ lv_obj_t * ui_SwitchButton_create(lv_obj_t * comp_parent)
     lv_obj_remove_style_all(cui_SwitchButton);
     lv_obj_set_width(cui_SwitchButton, 73);
     lv_obj_set_height(cui_SwitchButton, 197);
-    lv_obj_set_x(cui_SwitchButton, -190);
+    lv_obj_set_x(cui_SwitchButton, -175);
     lv_obj_set_y(cui_SwitchButton, -50);
     lv_obj_set_align(cui_SwitchButton, LV_ALIGN_CENTER);
     lv_obj_clear_flag(cui_SwitchButton, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
@@ -38,7 +48,7 @@ lv_obj_t * ui_SwitchButton_create(lv_obj_t * comp_parent)
     lv_obj_set_x(cui_LblSwitchPeer, 0);
     lv_obj_set_y(cui_LblSwitchPeer, 74);
     lv_obj_set_align(cui_LblSwitchPeer, LV_ALIGN_CENTER);
-    lv_obj_set_style_text_color(cui_LblSwitchPeer, lv_color_hex(0xDBDBDB), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_LblSwitchPeer, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_LblSwitchPeer, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     lv_obj_t * cui_LblSwitchPeriph;
@@ -48,7 +58,7 @@ lv_obj_t * ui_SwitchButton_create(lv_obj_t * comp_parent)
     lv_obj_set_x(cui_LblSwitchPeriph, 0);
     lv_obj_set_y(cui_LblSwitchPeriph, 50);
     lv_obj_set_align(cui_LblSwitchPeriph, LV_ALIGN_CENTER);
-    lv_obj_set_style_text_color(cui_LblSwitchPeriph, lv_color_hex(0xDBDBDB), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(cui_LblSwitchPeriph, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(cui_LblSwitchPeriph, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(cui_LblSwitchPeriph, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -69,6 +79,7 @@ lv_obj_t * ui_SwitchButton_create(lv_obj_t * comp_parent)
     children[UI_COMP_SWITCHBUTTON_LBLSWITCHID] = cui_LblSwitchId;
     lv_obj_add_event_cb(cui_SwitchButton, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
     lv_obj_add_event_cb(cui_SwitchButton, del_component_child_event_cb, LV_EVENT_DELETE, children);
+    lv_obj_add_event_cb(cui_ImgButton, ui_event_comp_SwitchButton_ImgButton, LV_EVENT_ALL, children);
     ui_comp_SwitchButton_create_hook(cui_SwitchButton);
     return cui_SwitchButton;
 }
