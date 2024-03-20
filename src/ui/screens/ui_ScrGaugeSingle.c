@@ -33,14 +33,15 @@ void ui_ScrGaugeSingle_screen_init(void)
     lv_obj_set_style_text_font(ui_LblGaugeSingleValueDescription, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_LblGaugeSingleValue = lv_label_create(ui_ScrGaugeSingle);
-    lv_obj_set_width(ui_LblGaugeSingleValue, LV_SIZE_CONTENT);   /// 157
+    lv_obj_set_width(ui_LblGaugeSingleValue, 145);
     lv_obj_set_height(ui_LblGaugeSingleValue, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_x(ui_LblGaugeSingleValue, 140);
     lv_obj_set_y(ui_LblGaugeSingleValue, -22);
     lv_obj_set_align(ui_LblGaugeSingleValue, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_LblGaugeSingleValue, "12.4V");
+    lv_label_set_text(ui_LblGaugeSingleValue, "99.9V");
     lv_obj_set_style_text_color(ui_LblGaugeSingleValue, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_LblGaugeSingleValue, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(ui_LblGaugeSingleValue, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_LblGaugeSingleValue, &lv_font_montserrat_44, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(ui_LblGaugeSingleValue, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_LblGaugeSingleValue, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);

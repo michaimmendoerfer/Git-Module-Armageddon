@@ -19,11 +19,36 @@ extern void SetSleepMode(bool Mode);
 extern uint32_t TSPair;
 
 int ScrSwitchPage = 0;
+int ActiveSensorNr = -1;
 
-void SingleUpdateTimer(lv_timer_t * timer);
-lv_timer_t *SingleTimer;
+void SwitchUpdateTimer(lv_timer_t * timer);
+void GaugeSingleUpdateTimer(lv_timer_t * timer);
 
+lv_timer_t *SwitchTimer;
+lv_timer_t *GaugeSingleTimer;
 
+#pragma region MENU
+void Ui_Menu_Loaded(lv_event_t * e)
+{
+	if (Module.GetPairMode()) lv_obj_add_state(ui_BtnMenu4, LV_STATE_CHECKED);
+}
+
+void Ui_MenuBtn4_Click(lv_event_t * e)
+{
+	Module.SetPairMode(!Module.GetPairMode());
+	if (Module.GetPairMode()) 
+	{
+		lv_obj_add_state(ui_BtnMenu4, LV_STATE_CHECKED);
+		TSPair = millis();
+	}
+	else
+	{
+		lv_obj_clear_state(ui_BtnMenu4, LV_STATE_CHECKED);
+		TSPair = 0;
+	}
+}
+#pragma endregion MENU
+#pragma region SWITCH
 void Ui_Switch_Loaded(lv_event_t * e)
 {
 	lv_obj_t *Container;
@@ -48,52 +73,14 @@ void Ui_Switch_Loaded(lv_event_t * e)
 	}
 
 	static uint32_t user_data = 10;
-	if (!SingleTimer) 
-		{
-			SingleTimer = lv_timer_create(SingleUpdateTimer, 500,  &user_data);
-			Serial.println("SingleTimer created");
-		}
-}
-
-void Ui_SwitchButton_Clicked(lv_event_t * e)
-{
-	lv_event_code_t event_code = lv_event_get_code(e);
-    lv_obj_t * target = lv_event_get_target(e);
-    
-	if(event_code == LV_EVENT_CLICKED) {
-        auto Container 	 = lv_obj_get_parent(target);
-		auto SwitchLabel = lv_obj_get_child(Container, 3);
-		auto SwitchName  = lv_obj_get_child(Container, 2);
-	    int SwitchNr = atoi(lv_label_get_text(SwitchLabel));
-		
-		//Serial.printf("Button %d pressed from Switch %s\n\r", SwitchNr, lv_label_get_text(SwitchName));
-		int ToToggle = ScrSwitchPage*SWITCHES_PER_SCREEN+SwitchNr-1;
-		Serial.printf("ToToggle = %d", ToToggle);
-		ToggleSwitch(ToToggle);	
-	}
-}
-
-void Ui_Menu_Loaded(lv_event_t * e)
-{
-	if (Module.GetPairMode()) lv_obj_add_state(ui_BtnMenu4, LV_STATE_CHECKED);
-}
-
-void Ui_MenuBtn4_Click(lv_event_t * e)
-{
-	Module.SetPairMode(!Module.GetPairMode());
-	if (Module.GetPairMode()) 
+	if (!SwitchTimer) 
 	{
-		lv_obj_add_state(ui_BtnMenu4, LV_STATE_CHECKED);
-		TSPair = millis();
-	}
-	else
-	{
-		lv_obj_clear_state(ui_BtnMenu4, LV_STATE_CHECKED);
-		TSPair = 0;
+		SwitchTimer = lv_timer_create(SwitchUpdateTimer, 500,  &user_data);
+		Serial.println("SwitchTimer created");
 	}
 }
 
-void SingleUpdateTimer(lv_timer_t * timer)
+void SwitchUpdateTimer(lv_timer_t * timer)
 {
 	Serial.println("SinglUpdateTimer");
 	lv_obj_t *Container;
@@ -119,6 +106,46 @@ void SingleUpdateTimer(lv_timer_t * timer)
 	}	
 }
 
+void Ui_SwitchButton_Clicked(lv_event_t * e)
+{
+	lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    
+	if(event_code == LV_EVENT_CLICKED) {
+        auto Container 	 = lv_obj_get_parent(target);
+		auto SwitchLabel = lv_obj_get_child(Container, 3);
+		auto SwitchName  = lv_obj_get_child(Container, 2);
+	    int SwitchNr = atoi(lv_label_get_text(SwitchLabel));
+		
+		//Serial.printf("Button %d pressed from Switch %s\n\r", SwitchNr, lv_label_get_text(SwitchName));
+		int ToToggle = ScrSwitchPage*SWITCHES_PER_SCREEN+SwitchNr-1;
+		Serial.printf("ToToggle = %d", ToToggle);
+		ToggleSwitch(ToToggle);	
+	}
+}
+
+void Ui_Switch_Next(lv_event_t * e)
+{
+	if ((ScrSwitchPage == 0) and (Module.GetType() == SWITCH_8_WAY))
+		ScrSwitchPage++;
+	Ui_Switch_Loaded(e);
+}
+
+void UI_Switch_Prev(lv_event_t * e)
+{
+	if (ScrSwitchPage > 0) ScrSwitchPage--;
+	Ui_Switch_Loaded(e);
+}
+
+void Ui_Switch_Leave(lv_event_t * e)
+{
+	lv_timer_del(SwitchTimer);
+	SwitchTimer = NULL;
+
+	Serial.println("SwitchTimer deleted");
+}
+#pragma endregion SWITCH
+#pragma region SETTINGS
 void Ui_SettingBtn1_Click(lv_event_t * e)
 {
 	Module.SetDemoMode(!Module.GetDemoMode());
@@ -150,9 +177,64 @@ void Ui_Settings_Loaded(lv_event_t * e)
 	if (Module.GetPairMode())  lv_obj_add_state(ui_SwSettingsPair,  LV_STATE_CHECKED);
 }
 
+void Ui_Settings_Reset(lv_event_t * e)
+{
+	nvs_flash_erase(); nvs_flash_init();
+    ESP.restart();
+}
+
+#pragma endregion SETTINGS
+#pragma region GAUGESINGLE
 void Ui_GaugeSingle_Loaded(lv_event_t * e)
 {
-	// Your code here
+	if (ActiveSensorNr < 0)
+	{
+		for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
+		{
+			if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT)
+			{
+				ActiveSensorNr = SNr;
+				Serial.printf("Sensor gefunden: %d\n\r", ActiveSensorNr);
+				break;
+			}
+		}
+	}
+	
+	if (ActiveSensorNr >= 0)
+	{
+		lv_label_set_text_fmt(ui_LblGaugeSingleValueDescription, "%10s", Module.GetPeriphName(ActiveSensorNr));
+	}
+	else
+	{
+		lv_label_set_text(ui_LblGaugeSingleValueDescription, "n.n.");
+		lv_label_set_text(ui_LblGaugeSingleValue, "--.-V");
+	}
+	
+	static uint32_t user_data = 10;
+	if (!GaugeSingleTimer) 
+	{
+		GaugeSingleTimer = lv_timer_create(GaugeSingleUpdateTimer, 500,  &user_data);
+		Serial.println("GaugeSingleTimer created");
+	}
+}
+void GaugeSingleUpdateTimer(lv_timer_t * timer)
+{
+	if ((ActiveSensorNr >= 0) and (Module.GetPeriphChanged(ActiveSensorNr)))
+	{	
+		char buf[10];
+		dtostrf(Module.GetPeriphValue(ActiveSensorNr), 0, 1, buf);
+		strcat(buf, "V");
+		lv_label_set_text(ui_LblGaugeSingleValue, buf);
+		//update Needle
+	}
+}
+
+void Ui_GaugeSingle_Leave(lv_event_t * e)
+{
+	lv_timer_del(GaugeSingleTimer);
+	GaugeSingleTimer = NULL;
+
+	Serial.println("GaugeSingleTimer deleted");
 }
 
 void Ui_GaugeSingle_Next(lv_event_t * e)
@@ -164,30 +246,4 @@ void Ui_GaugeSingle_Prev(lv_event_t * e)
 {
 	// Your code here
 }
-
-void Ui_Switch_Next(lv_event_t * e)
-{
-	if ((ScrSwitchPage == 0) and (Module.GetType() == SWITCH_8_WAY))
-		ScrSwitchPage++;
-	Ui_Switch_Loaded(e);
-}
-
-void UI_Switch_Prev(lv_event_t * e)
-{
-	if (ScrSwitchPage > 0) ScrSwitchPage--;
-	Ui_Switch_Loaded(e);
-}
-
-void Ui_Switch_Leave(lv_event_t * e)
-{
-	lv_timer_del(SingleTimer);
-	SingleTimer = NULL;
-
-	Serial.println("SingleTimer deleted");
-}
-
-void Ui_Settings_Reset(lv_event_t * e)
-{
-	nvs_flash_erase(); nvs_flash_init();
-    ESP.restart();
-}
+#pragma endregion GAUGESINGLE

@@ -21,6 +21,7 @@ void Ui_Settings_Reset(lv_event_t * e);
 void Ui_GaugeSingle_Loaded(lv_event_t * e);
 void Ui_GaugeSingle_Next(lv_event_t * e);
 void Ui_GaugeSingle_Prev(lv_event_t * e);
+void Ui_GaugeSingle_Leave(lv_event_t * e);
 void Ui_Switch_Loaded(lv_event_t * e);
 void Ui_Switch_Next(lv_event_t * e);
 void UI_Switch_Prev(lv_event_t * e);

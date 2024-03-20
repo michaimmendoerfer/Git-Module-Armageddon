@@ -77,12 +77,6 @@ void InitModule()
     
 }
 
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) { 
-    if (Module.GetDebugMode()) {
-        //Serial.print("\r\nLast Packet Send Status:\t");
-        //Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
-    }
-}
 #pragma region Send-Things
 void SendMessage () {
   Serial.println("SendMessage");
@@ -100,6 +94,8 @@ void SendMessage () {
   {
       if (Module.isPeriphEmpty(SNr) == false)
       {
+          //temp
+          Module.SetPeriphChanged(SNr, true);
           if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
           {
               dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
@@ -346,6 +342,7 @@ void  GoToSleep() {
 }
 #pragma endregion System-Things
 #pragma region OnDataRecv
+#pragma region ESP-Things
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) 
 {  
   char* buff = (char*) incomingData;        //char buffer
@@ -523,7 +520,13 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
           Serial.println(error.f_str());
     }
 }
-
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) { 
+    if (Module.GetDebugMode()) {
+        //Serial.print("\r\nLast Packet Send Status:\t");
+        //Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    }
+}
+#pragma endregion ESP-Things
 
 void setup()
 {
@@ -595,7 +598,6 @@ void setup()
 
     ui_init();
 }
-
 void loop()
 {
   if  ((millis() - TSSend ) > MSG_INTERVAL  ) {

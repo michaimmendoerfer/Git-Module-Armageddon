@@ -203,6 +203,9 @@ void ui_event_ScrGaugeSingle(lv_event_t * e)
         lv_indev_wait_release(lv_indev_get_act());
         Ui_GaugeSingle_Prev(e);
     }
+    if(event_code == LV_EVENT_SCREEN_UNLOAD_START) {
+        Ui_GaugeSingle_Leave(e);
+    }
 }
 void ui_event_ScrSwitch(lv_event_t * e)
 {
