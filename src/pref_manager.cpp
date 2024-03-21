@@ -8,7 +8,8 @@
 
 extern int PeerCount;
 
-extern Preferences preferences;
+Preferences preferences;
+
 void   PrintMAC(const uint8_t * mac_addr);
 
 MultiMonitorClass Screen[MULTI_SCREENS];

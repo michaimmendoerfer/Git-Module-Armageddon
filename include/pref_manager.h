@@ -1,9 +1,14 @@
+/*
+manage Peers and Periphs,
+defines MultiMonitorClass with one instance: Screen
+Preferences should be declared extern.
+*/
+
 #ifndef PREF_MANAGER_H
 #define PREF_MANAGER_H
 
 #include <Preferences.h>
 #include "lvgl.h"
-
 
 class MultiMonitorClass {
     
@@ -63,6 +68,5 @@ void   ClearPeers();
 void   ClearInit();
 void   ReportAll();
 
-extern Preferences preferences;
 extern MultiMonitorClass Screen[MULTI_SCREENS];
 #endif

@@ -1,3 +1,8 @@
+/*
+include PeerList and PeriphList
+Preferences should be declared extern
+
+*/
 #ifndef PEERCLASS_H
 #define PEERCLASS_H
 
