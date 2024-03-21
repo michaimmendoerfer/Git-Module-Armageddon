@@ -46,21 +46,19 @@ Preferences preferences;
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len);
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
 
+void   InitModule();
+
 float  ReadAmp (int A);
 float  ReadVolt(int V);
 void   SendMessage();
 void   SendPairingRequest();
-void   InitModule();
-void   SavePeers();
-void   GetPeers();
-void   ReportPeers();
-void   RegisterPeers();
-void   ClearPeers();
 
 void   UpdateSwitches();
 
+void   SetDemoMode (bool Mode);
 void   SetSleepMode(bool Mode);
 void   SetDebugMode(bool Mode);
+
 void   AddStatus(String Msg);
 
 void   PrintMAC(const uint8_t * mac_addr);
@@ -289,14 +287,14 @@ void AddStatus(String Msg) {
 void ToggleSwitch(int SNr)
 {
     int Value = Module.GetPeriphValue(SNr);
-    Serial.printf("Switch %d vorher: %d\n\r", SNr, Value);
+    //Serial.printf("Switch %d vorher: %d\n\r", SNr, Value);
     
     if (Value == 0) Value = 1;
     else Value = 0;
 
     Serial.printf("Value is now %d", Value);
     Module.SetPeriphValue(SNr, Value);
-    Serial.printf("Switch %d nachher: %f\n\r", SNr, Module.GetPeriphValue(SNr));
+    //Serial.printf("Switch %d nachher: %f\n\r", SNr, Module.GetPeriphValue(SNr));
     UpdateSwitches();
 }
 void UpdateSwitches() {
@@ -334,12 +332,12 @@ float ReadAmp (int SNr) {
   
   if (Module.GetADCPort1() != -1)
   {
-      /*
-      TempVal  = ads.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
-      TempVolt = ads.computeVolts(TempVal); 
-      TempAmp  = (TempVolt - Module.GetPeriphNullwertSNr()) / Module.GetPeriphVperAmp(SNr);
-      delay(10);
-      */
+      #ifdef ADC_USED
+        TempVal  = ads.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
+        TempVolt = ads.computeVolts(TempVal); 
+        TempAmp  = (TempVolt - Module.GetPeriphNullwertSNr()) / Module.GetPeriphVperAmp(SNr);
+        delay(10);
+      #endif
   }
   else
   {
@@ -359,7 +357,7 @@ float ReadAmp (int SNr) {
   } 
   if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
   
-  return (TempAmp); //TempAmp;
+  return (TempAmp); 
 }
 float ReadVolt(int SNr) {
   if (!Module.GetPeriphPtr(SNr)->GetVin()) { Serial.println("Vin must not be zero !!!"); return 0; }
@@ -379,7 +377,7 @@ void  GoToSleep() {
   StaticJsonDocument<500> doc;
   String jsondata;
 
-  jsondata = "";  //clearing String after data is being sent
+  jsondata = "";  
   doc.clear();
   
   doc["Node"] = Module.GetName();   
@@ -602,14 +600,14 @@ void setup()
     __attribute__((unused)) auto disp = lv_disp_get_default();
     lv_disp_set_rotation(disp, LV_DISP_ROT_90);
 
-    /*
+    #ifdef ADC_USED
     if (Module.ADCPort != -1)
     {
         Wire.begin(D5, D6);
         ads.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
         ads.begin();
     }
-    */
+    #endif
 
     InitModule();
 

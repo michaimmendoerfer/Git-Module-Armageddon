@@ -1,7 +1,6 @@
 /*
 manage Peers and Periphs,
 defines MultiMonitorClass with one instance: Screen
-Preferences should be declared extern.
 */
 
 #ifndef PREF_MANAGER_H
@@ -60,7 +59,7 @@ class MultiMonitorClass {
 };
 
 void   SavePeers();
-void   GetPeers();
+int    GetPeers(); // return PeerCount
 void   DeletePeer(PeerClass *P);
 void   ReportAll();
 void   RegisterPeers();

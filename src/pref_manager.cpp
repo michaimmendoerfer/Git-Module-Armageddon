@@ -6,8 +6,6 @@
 #include "pref_manager.h"
 #include "PeerClass.h"
 
-extern int PeerCount;
-
 Preferences preferences;
 
 void   PrintMAC(const uint8_t * mac_addr);
@@ -113,7 +111,7 @@ void SavePeers()
     }
     preferences.end();
 }
-void GetPeers() 
+int GetPeers() 
 {
     PeerClass *P;
     
@@ -125,7 +123,7 @@ void GetPeers()
 
     PeerList.clear();
 
-    PeerCount = preferences.getInt("PeerCount");
+    int PeerCount = preferences.getInt("PeerCount");
     
     for (int Pi=0 ; Pi<PeerCount; Pi++)
     {
@@ -161,6 +159,8 @@ void GetPeers()
     }
     ReportAll();
     preferences.end();
+
+    return PeerCount;
 }
 void ClearPeers() 
 {
