@@ -6,6 +6,7 @@
 #include "ui.h"
 #include "Jeepify.h"
 #include "PeerClass.h"
+#include "pref_manager.h"
 #include <nvs_flash.h>
 
 #define SWITCHES_PER_SCREEN 4
@@ -20,6 +21,7 @@ extern uint32_t TSPair;
 
 int ScrSwitchPage = 0;
 int ActiveSensorNr = -1;
+int ActiveChangeNameNr = -1;
 
 void SwitchUpdateTimer(lv_timer_t * timer);
 void GaugeSingleUpdateTimer(lv_timer_t * timer);
@@ -175,6 +177,17 @@ void Ui_Settings_Loaded(lv_event_t * e)
 	if (Module.GetSleepMode()) lv_obj_add_state(ui_SwSettingsSleep, LV_STATE_CHECKED);
 	if (Module.GetDebugMode()) lv_obj_add_state(ui_SwSettingsDebug, LV_STATE_CHECKED);
 	if (Module.GetPairMode())  lv_obj_add_state(ui_SwSettingsPair,  LV_STATE_CHECKED);
+
+	char ModuleName[100];
+	char ModuleType[100];
+
+	sprintf(ModuleName, "%s - %s", Module.GetName(), Module.GetVersion());
+	strcpy(ModuleType, TypeInText(Module.GetType()));
+
+	if (Module.GetVoltageMon() >= 0) strcat(ModuleType, " with Voltage-Monitor");
+
+	lv_label_set_text(ui_LblSettingName, ModuleName);
+	lv_label_set_text(ui_LblSettingType, ModuleType);
 }
 
 void Ui_Settings_Reset(lv_event_t * e)
@@ -247,3 +260,69 @@ void Ui_GaugeSingle_Prev(lv_event_t * e)
 	// Your code here
 }
 #pragma endregion GAUGESINGLE
+#pragma region CHANGENAME
+void Ui_ChangeName_Next(lv_event_t * e)
+{
+	int NewNr = ActiveChangeNameNr++;
+	if (NewNr == MAX_PERIPHERALS) NewNr = 0;
+
+	if (Module.isPeriphEmpty(NewNr) == false)
+	{
+		ActiveChangeNameNr = NewNr;
+		lv_textarea_set_text(ui_TxtAreaChangeName, Module.GetPeriphName(ActiveChangeNameNr));
+	}
+}
+
+void Ui_ChangeName_Prev(lv_event_t * e)
+{
+	int NewNr = ActiveChangeNameNr;
+	
+	for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
+	{
+		NewNr--;
+		if (NewNr == -1) NewNr = MAX_PERIPHERALS-1;
+
+		if (Module.isPeriphEmpty(NewNr) == false)
+		{
+			ActiveChangeNameNr = NewNr;
+			lv_textarea_set_text(ui_TxtAreaChangeName, Module.GetPeriphName(ActiveChangeNameNr));
+		}
+	}
+}
+
+void Ui_ChangeName_Loaded(lv_event_t * e)
+{
+	if (ActiveChangeNameNr < 0)
+	{
+		for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
+		{
+			if (Module.isPeriphEmpty(SNr) == false)
+			{
+				ActiveChangeNameNr = SNr;
+				//Serial.printf("Sensor gefunden: %d\n\r", ActiveChangeNameNr);
+				break;
+			}
+		}
+	}
+	
+	if (ActiveChangeNameNr >= 0)
+	{
+		lv_textarea_set_text(ui_TxtAreaChangeName, Module.GetPeriphName(ActiveChangeNameNr));
+	}
+	else
+	{
+		lv_textarea_set_text(ui_TxtAreaChangeName, "nothing found");
+	}
+}
+
+void Ui_ChangeName_Ready(lv_event_t * e)
+{
+	if (ActiveChangeNameNr >= 0)
+	{
+		Module.SetPeriphName(ActiveChangeNameNr, lv_textarea_get_text(ui_TxtAreaChangeName));
+		SavePeers();
+	}
+}
+#pragma endregion CHANGENAME
+
+

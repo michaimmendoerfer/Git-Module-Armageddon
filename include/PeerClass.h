@@ -137,7 +137,7 @@ class PeerClass
         void  PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId);
         
         char *GetPeriphName(int P) { return Periph[P].GetName(); }
-        bool  SetPeriphName(int P, char *Name) { Periph[P].SetName(Name); return true; }
+        bool  SetPeriphName(int P, const char *Name) { Periph[P].SetName(Name); return true; }
         
         int   GetPeriphId(char *Name);
         int   GetPeriphId(int PosPeriph) { return Periph[PosPeriph].GetId(); }
@@ -204,4 +204,6 @@ extern PeerClass *ActivePeer;
 extern PeriphClass *ActivePeriph;
 
 extern char ExportImportBuffer[300];
+
+char *TypeInText(int Type);
 #endif

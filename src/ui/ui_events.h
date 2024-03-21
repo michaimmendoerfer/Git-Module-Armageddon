@@ -27,6 +27,10 @@ void Ui_Switch_Next(lv_event_t * e);
 void UI_Switch_Prev(lv_event_t * e);
 void Ui_Switch_Leave(lv_event_t * e);
 void Ui_SwitchButton_Clicked(lv_event_t * e);
+void Ui_ChangeName_Next(lv_event_t * e);
+void Ui_ChangeName_Prev(lv_event_t * e);
+void Ui_ChangeName_Loaded(lv_event_t * e);
+void Ui_ChangeName_Ready(lv_event_t * e);
 
 #ifdef __cplusplus
 } /*extern "C"*/

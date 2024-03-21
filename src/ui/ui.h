@@ -28,6 +28,8 @@ void ui_event_BtnMenu3(lv_event_t * e);
 extern lv_obj_t * ui_BtnMenu3;
 void ui_event_BtnMenu4(lv_event_t * e);
 extern lv_obj_t * ui_BtnMenu4;
+void ui_event_BtnMenu5(lv_event_t * e);
+extern lv_obj_t * ui_BtnMenu5;
 extern lv_obj_t * ui_LblMenuJeepify;
 extern lv_obj_t * ui_LblMenuType;
 // SCREEN: ui_ScrSettings
@@ -77,6 +79,13 @@ extern lv_obj_t * ui_LblGaugeSingleValue2;
 extern lv_obj_t * ui_LblGaugeSingleValue3;
 extern lv_obj_t * ui_LblGaugeSingleValue4;
 extern lv_obj_t * ui_LblSwitchPage;
+// SCREEN: ui_ScrChangeName
+void ui_ScrChangeName_screen_init(void);
+void ui_event_ScrChangeName(lv_event_t * e);
+extern lv_obj_t * ui_ScrChangeName;
+void ui_event_Keyboard1(lv_event_t * e);
+extern lv_obj_t * ui_Keyboard1;
+extern lv_obj_t * ui_TxtAreaChangeName;
 extern lv_obj_t * ui____initial_actions0;
 
 LV_IMG_DECLARE(ui_img_bg_grill_png);    // assets\bg_grill.png

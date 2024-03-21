@@ -27,13 +27,13 @@
 #define RELAY_NORMAL        1
 
 // Sensor-Types
-#define SENS_TYPE_SWITCH  1
-#define SENS_TYPE_AMP     2
-#define SENS_TYPE_VOLT    3
-#define SENS_TYPE_SENS    4
-#define SENS_TYPE_EQUAL   5
-#define SENS_TYPE_ALL     6
-#define NOT_FOUND        99
+#define SENS_TYPE_SWITCH  101
+#define SENS_TYPE_AMP     102
+#define SENS_TYPE_VOLT    103
+#define SENS_TYPE_SENS    104
+#define SENS_TYPE_EQUAL   105
+#define SENS_TYPE_ALL     106
+#define NOT_FOUND         199
 
 // Intervals
 #define MSGLIGHT_INTERVAL 300
@@ -106,6 +106,7 @@ struct struct_MultiScreen {
   int            PeriphId[PERIPH_PER_SCREEN];
   bool           Used;
 };
+
 typedef struct struct_MultiScreen struct_MultiScreen;
 
 extern uint8_t broadcastAddressAll[6];

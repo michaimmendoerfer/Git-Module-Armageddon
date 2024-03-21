@@ -4,6 +4,7 @@ SET(SOURCES components/ui_comp_switchbutton.c
     screens/ui_ScrSettings.c
     screens/ui_ScrGaugeSingle.c
     screens/ui_ScrSwitch.c
+    screens/ui_ScrChangeName.c
     ui.c
     components/ui_comp_hook.c
     ui_helpers.c

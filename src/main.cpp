@@ -15,6 +15,9 @@
 #include <Wire.h>
 #include <Spi.h>
 
+const char _Version[] = "3.41";
+const char _ModuleName[] = "3.5-Arma";
+
 #define SWITCHES_PER_SCREEN 4
 
 struct struct_Status {
@@ -67,7 +70,10 @@ void   GoToSleep();
 
 void InitModule()
 {
-    Module.Setup("ARMa-3.5", SWITCH_4_WAY, "3.41", NULL, false, true, true, false, -1, RELAY_NORMAL, -1, -1, 1);
+    // 4-Way Switch with Voltage-Monitor ######################################################################################
+    //                Name        Type       Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
+    Module.Setup(_ModuleName, SWITCH_4_WAY, _Version, NULL,     false, true,  true, false, -1, RELAY_NORMAL, -1,  -1,     1);
+
     //                      Name     Type             ADS  IO  NULL   VpA   Vin  PeerID
     Module.PeriphSetup(0, "Extern", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0);
     Module.PeriphSetup(1, "In-Car", SENS_TYPE_SWITCH,  0,  26,   0,    0,    0,    0);
@@ -75,6 +81,62 @@ void InitModule()
     Module.PeriphSetup(3, "Load",   SENS_TYPE_SWITCH,  0,  33,   0,    0,    0,    0);
     Module.PeriphSetup(4, "Lipo",   SENS_TYPE_VOLT,    0,  39,   0,    0,   200,   0); 
     
+    /*
+    // 4-Way Switch no Voltage-Monitor ########################################################################################
+    //                Name        Type       Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
+    Module.Setup(_ModuleName, SWITCH_4_WAY, _Version, NULL,     false, true,  true, false, -1, RELAY_NORMAL, -1,  -1,     1);
+
+    //                      Name     Type             ADS  IO  NULL   VpA   Vin  PeerID
+    Module.PeriphSetup(0, "Switch_1", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0);
+    Module.PeriphSetup(1, "Switch_2", SENS_TYPE_SWITCH,  0,  26,   0,    0,    0,    0);
+    Module.PeriphSetup(2, "Switch_3", SENS_TYPE_SWITCH,  0,  32,   0,    0,    0,    0);
+    Module.PeriphSetup(3, "Switch_4", SENS_TYPE_SWITCH,  0,  33,   0,    0,    0,    0);
+    */
+
+    /*
+    // 1-Way Switch ###########################################################################################################
+    //                Name        Type       Version  Address   sleep  debug  demo   pair  vMon RelayType      adc1 adc2 voltagedevier 
+    Module.Setup(_ModuleName, SWITCH_1_WAY, _Version, NULL,     false, true,  false, false, -1, RELAY_REVERSED, -1,  -1,     1);
+
+    //                      Name     Type             ADS    IO  NULL   VpA   Vin  PeerID
+    Module.PeriphSetup(0, "Switch_1", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0);
+    */
+
+    /*
+    // 2-Way Switch ###########################################################################################################
+    //                Name        Type       Version  Address   sleep  debug  demo   pair  vMon RelayType      adc1 adc2 voltagedevier 
+    Module.Setup(_ModuleName, SWITCH_2_WAY, _Version, NULL,     false, true,  false, false, -1, RELAY_REVERSED, -1,  -1,     1);
+    
+    //                      Name     Type             ADS    IO  NULL   VpA   Vin  PeerID
+    Module.PeriphSetup(0, "Switch_1", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0);
+    Module.PeriphSetup(0, "Switch_2", SENS_TYPE_SWITCH,  0,  26,   0,    0,    0,    0);
+    */
+
+    /*
+    // 4-way Battery-Sensor with ADC and VMon #################################################################################
+    //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
+    Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, 14,  15,     1);
+
+    //                      Name     Type             ADS  IO  NULL   VpA   Vin  PeerID
+    Module.PeriphSetup(0, "Sensor_1", SENS_TYPE_AMP,  1,    1,   0,  0.066,  0,    0);
+    Module.PeriphSetup(1, "Sensor_2", SENS_TYPE_AMP,  1,    2,   0,  0.066,  0,    0);
+    Module.PeriphSetup(2, "Sensor_3", SENS_TYPE_AMP,  1,    3,   0,  0.066,  0,    0);
+    Module.PeriphSetup(3, "Sensor_4", SENS_TYPE_AMP,  1,    4,   0,  0.066,  0,    0);
+    Module.PeriphSetup(4, "VMon",     SENS_TYPE_VOLT, 0,   39,   0,    0,   200,   0); 
+    */
+
+    /*
+    // 4-way Battery-Sensor no ADC and VMon ###################################################################################
+    //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
+    Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, 14,  15,     1);
+
+    //                      Name     Type             ADS  IO  NULL   VpA   Vin  PeerID
+    Module.PeriphSetup(0, "Sensor_1", SENS_TYPE_AMP,  0,   35, 3134, 0.066,  0,    0);
+    Module.PeriphSetup(1, "Sensor_2", SENS_TYPE_AMP,  0,   36, 3134, 0.066,  0,    0);
+    Module.PeriphSetup(2, "Sensor_3", SENS_TYPE_AMP,  0,   32, 3134, 0.066,  0,    0);
+    Module.PeriphSetup(3, "Sensor_4", SENS_TYPE_AMP,  0,   33, 3134, 0.066,  0,    0);
+    Module.PeriphSetup(4, "VMon",     SENS_TYPE_VOLT, 0,   39,   0,    0,   200,   0); 
+    */
 }
 
 #pragma region Send-Things
@@ -177,6 +239,7 @@ void SendPairingRequest() {
   
   doc["Node"]    = Module.GetName();   
   doc["Type"]    = Module.GetType();
+  doc["Version"] = Module.GetVersion();
   doc["Pairing"] = "add me";
   
   for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) {
@@ -341,7 +404,6 @@ void  GoToSleep() {
 
 }
 #pragma endregion System-Things
-#pragma region OnDataRecv
 #pragma region ESP-Things
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) 
 {  
