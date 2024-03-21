@@ -6,7 +6,7 @@
 #include "LinkedList.h"
 #include <esp_now.h>
 #include <WiFi.h>
-//#include <nvs_flash.h>
+#include <nvs_flash.h>
 #include "Jeepify.h"
 #include "PeerClass.h"
 #include "pref_manager.h"
@@ -14,7 +14,7 @@
 #include <ArduinoJson.h>
 #include <Wire.h>
 #include <Spi.h>
-#include "Module_4A1V_ADS"
+
 #pragma endregion Includes
 
 const char _Version[]    = "3.41";
@@ -25,7 +25,7 @@ const char _ModuleName[] = "3.5-Arma";
 //#define MODULE_4A_1V_ADC
 //#define MODULE_4A_1V_NOADC
 //#define MODULE_4S_1V_ADC
-//#define MODULE_4S_1V_NOADC
+#define MODULE_4S_1V_NOADC
 
 #define SWITCHES_PER_SCREEN 4
 
@@ -75,18 +75,27 @@ void   PrintMAC(const uint8_t * mac_addr);
 void   GoToSleep();
 #pragma endregion Functions
 
+uint8_t *GenerateUId(uint8_t *MacUId, uint8_t Pos)
+{
+    uint8_t _Pos = Pos;
+    WiFi.macAddress(MacUId);
+    MacUId[6] = _Pos;
+    return MacUId;
+}
 void InitModule()
 {
+    uint8_t MacUId[7];
+    
     #ifdef MODULE_4S_1V_NOADC   // 4-Way Switch with Voltage-Monitor #################################################################
       //                Name        Type       Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, SWITCH_4_WAY, _Version, NULL,     false, true,  true, false, -1, RELAY_NORMAL, -1,  -1,     1);
 
       //                      Name     Type             ADS  IO  NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Extern", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0);
-      Module.PeriphSetup(1, "In-Car", SENS_TYPE_SWITCH,  0,  26,   0,    0,    0,    0);
-      Module.PeriphSetup(2, "Solar",  SENS_TYPE_SWITCH,  0,  32,   0,    0,    0,    0);
-      Module.PeriphSetup(3, "Load",   SENS_TYPE_SWITCH,  0,  33,   0,    0,    0,    0);
-      Module.PeriphSetup(4, "Lipo",   SENS_TYPE_VOLT,    0,  39,   0,    0,   200,   0); 
+      Module.PeriphSetup(0, "Extern", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0,    GenerateUId(MacUId, 0));
+      Module.PeriphSetup(1, "In-Car", SENS_TYPE_SWITCH,  0,  26,   0,    0,    0,    0,    GenerateUId(MacUId, 1));
+      Module.PeriphSetup(2, "Solar",  SENS_TYPE_SWITCH,  0,  32,   0,    0,    0,    0,    GenerateUId(MacUId, 2));
+      Module.PeriphSetup(3, "Load",   SENS_TYPE_SWITCH,  0,  33,   0,    0,    0,    0,    GenerateUId(MacUId, 3));
+      Module.PeriphSetup(4, "Lipo",   SENS_TYPE_VOLT,    0,  39,   0,    0,   200,   0,    GenerateUId(MacUId, 4)); 
     #endif
     #ifdef MODULE_4S_1V_ADC     // 4-Way Switch no Voltage-Monitor ###################################################################
       //                Name        Type       Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
@@ -233,7 +242,9 @@ void SendPairingRequest() {
   
   StaticJsonDocument<500> doc; String jsondata; jsondata = ""; doc.clear();
   char Buf[100] = {};
-  
+  char UIdStr[21];
+  uint8_t *BrTemp;
+
   doc["Node"]    = Module.GetName();   
   doc["Type"]    = Module.GetType();
   doc["Version"] = Module.GetVersion();
@@ -245,6 +256,11 @@ void SendPairingRequest() {
       doc[Buf] =Module.GetPeriphType(SNr);
       snprintf(Buf, sizeof(Buf), "N%d", SNr); 
       doc[Buf] = Module.GetPeriphName(SNr);
+      BrTemp = Module.GetPeriphUId(SNr);
+      snprintf(UIdStr, sizeof(UIdStr), "%02x:%02x:%02x:%02x:%02x:%02x:%02x",
+           BrTemp[0], BrTemp[1], BrTemp[2], BrTemp[3], BrTemp[4], BrTemp[5], BrTemp[6]);
+      snprintf(Buf, sizeof(Buf), "UId%d", SNr); 
+      doc[Buf] = UIdStr;
     }
   }
   serializeJson(doc, jsondata);  

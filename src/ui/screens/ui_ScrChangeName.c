@@ -17,6 +17,13 @@ void ui_ScrChangeName_screen_init(void)
     lv_obj_set_x(ui_Keyboard1, 2);
     lv_obj_set_y(ui_Keyboard1, -54);
     lv_obj_set_align(ui_Keyboard1, LV_ALIGN_CENTER);
+    lv_obj_set_style_radius(ui_Keyboard1, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui_Keyboard1, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_Keyboard1, 150, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui_Keyboard1, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui_Keyboard1, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui_Keyboard1, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui_Keyboard1, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_TxtAreaChangeName = lv_textarea_create(ui_ScrChangeName);
     lv_obj_set_width(ui_TxtAreaChangeName, 261);

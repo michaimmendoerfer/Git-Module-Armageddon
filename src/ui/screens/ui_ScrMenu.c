@@ -108,7 +108,7 @@ void ui_ScrMenu_screen_init(void)
     lv_obj_clear_flag(ui_BtnMenu5, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
     lv_obj_set_style_bg_color(ui_BtnMenu5, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_BtnMenu5, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_img_src(ui_BtnMenu5, &ui_img_icon_pair_off_png, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_img_src(ui_BtnMenu5, &ui_img_icon_keyboard_png, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_color(ui_BtnMenu5, lv_color_hex(0xC1851A), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(ui_BtnMenu5, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(ui_BtnMenu5, 1, LV_PART_MAIN | LV_STATE_DEFAULT);

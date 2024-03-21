@@ -32,7 +32,7 @@ PeriphClass::PeriphClass()
     _Changed = false;
     _PeerId = 0;
 }
-void  PeriphClass::Setup(const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId)
+void  PeriphClass::Setup(const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId, uint8_t *UId)
 {
     strcpy(_Name, Name);
     _Type = Type;
@@ -41,6 +41,7 @@ void  PeriphClass::Setup(const char* Name, int Type, bool isADS, int IOPort, flo
     _Nullwert = Nullwert;
     _VperAmp = VperAmp;
     _PeerId = PeerId;
+    memcpy(_UId, UId, 7);
 }
 bool PeriphClass::IsType(int Type)
 {
@@ -146,9 +147,9 @@ void PeerClass::Import(char *Buf)
     }
 }
         
-void  PeerClass::PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId)
+void  PeerClass::PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId, uint8_t *UId)
 {
-    Periph[Pos].Setup(Name, Type, isADS, IOPort, Nullwert, VperAmp, Vin, PeerId);
+    Periph[Pos].Setup(Name, Type, isADS, IOPort, Nullwert, VperAmp, Vin, PeerId, UId);
 }
 int   PeerClass::GetPeriphId(char *Name)
 {

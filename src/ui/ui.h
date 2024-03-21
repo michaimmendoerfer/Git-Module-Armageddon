@@ -94,6 +94,7 @@ LV_IMG_DECLARE(ui_img_icon_gauge_png);    // assets\icon_gauge.png
 LV_IMG_DECLARE(ui_img_icon_switch_png);    // assets\icon_switch.png
 LV_IMG_DECLARE(ui_img_icon_pair_off_png);    // assets\icon_pair_off.png
 LV_IMG_DECLARE(ui_img_icon_pair_png);    // assets\icon_pair.png
+LV_IMG_DECLARE(ui_img_icon_keyboard_png);    // assets\icon_keyboard.png
 LV_IMG_DECLARE(ui_img_1825836894);    // assets\bg_grill-small.png
 LV_IMG_DECLARE(ui_img_551600910);    // assets\Btn-small-on-100.png
 LV_IMG_DECLARE(ui_img_1404430020);    // assets\voltmeter-alt.png
