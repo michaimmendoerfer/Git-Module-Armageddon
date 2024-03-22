@@ -77,7 +77,15 @@ void   GoToSleep();
 
 void InitModule()
 {
-    uint8_t MacUId[7];
+    /*
+    ESP32 DevKit:
+    possible Inputs:  4,13,16,17,18,19,21,22,23,25,26,27,(ADC1:32,33,34,35,36,39)
+    possible Outputs: 4,13,16,17,18,19,21,22,23,25,26,27,32,33
+    SPI-Flash:        6,7,8,9,10,11 (don´t use)
+    ADC2 (when Wifi): 32,33,34,35,36,39
+
+    */
+    //uint8_t MacUId[7];
     
     #ifdef MODULE_4S_1V_NOADC   // 4-Way Switch with Voltage-Monitor #################################################################
       //                Name        Type       Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
@@ -409,6 +417,14 @@ void  GoToSleep() {
   esp_deep_sleep_start();
 
 }
+void SaveModule()
+{
+      ExportStringPeer = Module->Export();
+
+      Serial.printf("putSring = %d", preferences.putString("Module", ExportStringPeer));
+      Serial.printf("schreibe: Module: %s",ExportStringPeer.c_str());
+      Serial.println();
+}
 #pragma endregion System-Things
 #pragma region ESP-Things
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) 
@@ -571,6 +587,8 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
       }
       else if (doc["Order"] == "ToggleSwitch")  
       { 
+          if (Module.isPeriphEmpty(SNr) == false) ToggleSwitch(SNr);
+          /*
           const char *Name = doc["Value"];
           for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
           {
@@ -579,7 +597,8 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
                   Serial.printf("%d hat gepasst\n\r", SNr);
                   ToggleSwitch(SNr);
               }
-          }    
+          } 
+          */   
       }  
     } // end (!error)
     else // error
@@ -630,6 +649,9 @@ void setup()
     }
   */
     preferences.begin("JeepifyInit", true);
+        String SavedModule   = preferences.getString("Module", "");
+        if (SavedModule != "") Module.Import(SavedModule.c_str());
+        
         /*
         Module.SetDebugMode(preferences.getBool("DebugMode", Module.GetDebugMode()));
         Module.SetSleepMode(preferences.getBool("SleepMode", Module.GetSleepMode()));
@@ -637,9 +659,6 @@ void setup()
         String NewName   = preferences.getString("ModuleName", "");
         if (NewName != "") Module.SetName(NewName.c_str());
         */
-
-        
-
     preferences.end();
 
     WiFi.mode(WIFI_STA);
