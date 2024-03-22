@@ -33,7 +33,8 @@ PeriphClass::PeriphClass()
     _PeerId = 0;
     memset(_UId, 0, 7);
 }
-void  PeriphClass::Setup(const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId, uint8_t UId)
+void  PeriphClass::Setup(const char* Name, int Type, bool isADS, int IOPort, 
+                         float Nullwert, float VperAmp, int Vin, int PeerId, uint8_t *UId)
 {
     strcpy(_Name, Name);
     _Type = Type;
@@ -72,7 +73,8 @@ PeerClass::PeerClass()
     _TSLastSeen = 0;
     memset(_BroadcastAddress, 0, 6);
 }
-void  PeerClass::Setup(const char* Name, int Type, const char *Version, const uint8_t *BroadcastAddress, bool SleepMode, bool DebugMode, bool DemoMode, bool PairMode)
+void  PeerClass::Setup(const char* Name, int Type, const char *Version, const uint8_t *BroadcastAddress, 
+                       bool SleepMode, bool DebugMode, bool DemoMode, bool PairMode)
 {
     strcpy(_Name, Name);
     _Type = Type;
@@ -129,9 +131,12 @@ char* PeerClass::Export()
 
     return ExportImportBuffer;
 }
-void PeerClass::Import(char *Buf) 
+void PeerClass::Import(const char *Buf) 
 {
-    strcpy(_Name, strtok(Buf, ";"));
+    char BufCast[300];
+    if (strlen(Buf) > 299) exit(99);
+
+    strcpy(_Name, strtok(BufCast, ";"));
     _Type = atoi(strtok(NULL, ";"));
     _BroadcastAddress[0] = atoi(strtok(NULL, ";"));
     _BroadcastAddress[1] = atoi(strtok(NULL, ";"));
@@ -153,19 +158,20 @@ void PeerClass::Import(char *Buf)
         uint8_t UId[7];
         byte PosByte = Si;
 
-        memcpy(Uid, _BroadcastAddress, 6);
+        memcpy(UId, _BroadcastAddress, 6);
         UId[6] = PosByte;
         Periph[Si].SetUId(UId);
     }
 }
         
-void  PeerClass::PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId)
+void  PeerClass::PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, 
+                             float Nullwert, float VperAmp, int Vin, int PeerId)
 {
     uint8_t _UId[7];
     byte PosByte = Pos;
 
-    memcpy(_Uid, Module.GetBroadcastAddress, 6);
-    UId[6] = PosByte;
+    memcpy(_UId, _BroadcastAddress, 6);
+    _UId[6] = PosByte;
 
     Periph[Pos].Setup(Name, Type, isADS, IOPort, Nullwert, VperAmp, Vin, PeerId, _UId);
 }

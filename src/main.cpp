@@ -257,11 +257,12 @@ void SendPairingRequest() {
       doc[Buf] =Module.GetPeriphType(SNr);
       snprintf(Buf, sizeof(Buf), "N%d", SNr); 
       doc[Buf] = Module.GetPeriphName(SNr);
-      BrTemp = Module.GetPeriphUId(SNr);
+      /*BrTemp = Module.GetPeriphUId(SNr);
       snprintf(UIdStr, sizeof(UIdStr), "%02x:%02x:%02x:%02x:%02x:%02x:%02x",
            BrTemp[0], BrTemp[1], BrTemp[2], BrTemp[3], BrTemp[4], BrTemp[5], BrTemp[6]);
       snprintf(Buf, sizeof(Buf), "UId%d", SNr); 
       doc[Buf] = UIdStr;
+      */
     }
   }
   serializeJson(doc, jsondata);  
@@ -440,7 +441,7 @@ void  GoToSleep() {
 }
 void SaveModule()
 {
-      ExportStringPeer = Module->Export();
+      String ExportStringPeer = Module.Export();
 
       Serial.printf("putSring = %d", preferences.putString("Module", ExportStringPeer));
       Serial.printf("schreibe: Module: %s",ExportStringPeer.c_str());
@@ -608,7 +609,8 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
       }
       else if (doc["Order"] == "ToggleSwitch")  
       { 
-          if (Module.isPeriphEmpty(SNr) == false) ToggleSwitch(SNr);
+          int Pos = doc["Pos"];
+          if (Module.isPeriphEmpty(Pos) == false) ToggleSwitch(Pos);
           /*
           const char *Name = doc["Value"];
           for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
@@ -683,7 +685,7 @@ void setup()
     preferences.end();
 
     WiFi.mode(WIFI_STA);
-    uint8_t *MacTemp[6];
+    uint8_t MacTemp[6];
     WiFi.macAddress(MacTemp);
     Module.SetBroadcastAddress(MacTemp);
 
