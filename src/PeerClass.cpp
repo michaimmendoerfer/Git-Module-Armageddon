@@ -31,6 +31,7 @@ PeriphClass::PeriphClass()
     _OldValue = 0;
     _Changed = false;
     _PeerId = 0;
+    memset(_UId, 0, 7);
 }
 void  PeriphClass::Setup(const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId, uint8_t *UId)
 {
@@ -69,6 +70,7 @@ PeerClass::PeerClass()
     _PairMode = false;
     _Changed = false;
     _TSLastSeen = 0;
+    memset(_BroadcastAddress, 0, 6);
 }
 void  PeerClass::Setup(const char* Name, int Type, const char *Version, const uint8_t *BroadcastAddress, bool SleepMode, bool DebugMode, bool DemoMode, bool PairMode)
 {
@@ -102,7 +104,10 @@ void  PeerClass::Setup(const char* Name, int Type, const char *Version, const ui
     _ADCPort2       = ADCPort2;
     _VoltageDevider = VoltageDevider;
     
-    for (int Si=0; Si<MAX_PERIPHERALS; Si++) Periph[Si].SetPos(Si);
+    for (int Si=0; Si<MAX_PERIPHERALS; Si++) 
+    {
+        Periph[Si].SetPos(Si);
+    }
 }      
 char* PeerClass::Export() 
 {
