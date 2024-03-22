@@ -75,13 +75,6 @@ void   PrintMAC(const uint8_t * mac_addr);
 void   GoToSleep();
 #pragma endregion Functions
 
-uint8_t *GenerateUId(uint8_t *MacUId, uint8_t Pos)
-{
-    uint8_t _Pos = Pos;
-    WiFi.macAddress(MacUId);
-    MacUId[6] = _Pos;
-    return MacUId;
-}
 void InitModule()
 {
     uint8_t MacUId[7];
@@ -91,11 +84,11 @@ void InitModule()
       Module.Setup(_ModuleName, SWITCH_4_WAY, _Version, NULL,     false, true,  true, false, -1, RELAY_NORMAL, -1,  -1,     1);
 
       //                      Name     Type             ADS  IO  NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Extern", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0,    GenerateUId(MacUId, 0));
-      Module.PeriphSetup(1, "In-Car", SENS_TYPE_SWITCH,  0,  26,   0,    0,    0,    0,    GenerateUId(MacUId, 1));
-      Module.PeriphSetup(2, "Solar",  SENS_TYPE_SWITCH,  0,  32,   0,    0,    0,    0,    GenerateUId(MacUId, 2));
-      Module.PeriphSetup(3, "Load",   SENS_TYPE_SWITCH,  0,  33,   0,    0,    0,    0,    GenerateUId(MacUId, 3));
-      Module.PeriphSetup(4, "Lipo",   SENS_TYPE_VOLT,    0,  39,   0,    0,   200,   0,    GenerateUId(MacUId, 4)); 
+      Module.PeriphSetup(0, "Extern", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0);
+      Module.PeriphSetup(1, "In-Car", SENS_TYPE_SWITCH,  0,  26,   0,    0,    0,    0);
+      Module.PeriphSetup(2, "Solar",  SENS_TYPE_SWITCH,  0,  32,   0,    0,    0,    0);
+      Module.PeriphSetup(3, "Load",   SENS_TYPE_SWITCH,  0,  33,   0,    0,    0,    0);
+      Module.PeriphSetup(4, "Lipo",   SENS_TYPE_VOLT,    0,  39,   0,    0,   200,   0); 
     #endif
     #ifdef MODULE_4S_1V_ADC     // 4-Way Switch no Voltage-Monitor ###################################################################
       //                Name        Type       Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
@@ -637,14 +630,23 @@ void setup()
     }
   */
     preferences.begin("JeepifyInit", true);
+        /*
         Module.SetDebugMode(preferences.getBool("DebugMode", Module.GetDebugMode()));
         Module.SetSleepMode(preferences.getBool("SleepMode", Module.GetSleepMode()));
         Module.SetDemoMode (preferences.getBool("DemoMode",  Module.GetDemoMode()));
         String NewName   = preferences.getString("ModuleName", "");
         if (NewName != "") Module.SetName(NewName.c_str());
+        */
+
+        
+
     preferences.end();
 
     WiFi.mode(WIFI_STA);
+    uint8_t *MacTemp[6];
+    WiFi.macAddress(MacTemp);
+    Module.SetBroadcastAddress(MacTemp);
+
   
     if (esp_now_init() != ESP_OK) { Serial.println("Error initializing ESP-NOW"); }
   
@@ -662,7 +664,7 @@ void setup()
     AddStatus("Init fertig");
   
     Module.SetLastContact(millis());
-
+    
     /*
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
     {

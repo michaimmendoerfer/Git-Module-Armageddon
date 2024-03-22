@@ -141,7 +141,7 @@ class PeerClass
         
         bool  TogglePairMode() { _PairMode = !_PairMode; return _PairMode; }
     
-        void  PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId, uint8_t *UId);
+        void  PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId);
         
         char *GetPeriphName(int P) { return Periph[P].GetName(); }
         bool  SetPeriphName(int P, const char *Name) { Periph[P].SetName(Name); return true; }
