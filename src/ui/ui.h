@@ -30,6 +30,8 @@ void ui_event_BtnMenu4(lv_event_t * e);
 extern lv_obj_t * ui_BtnMenu4;
 void ui_event_BtnMenu5(lv_event_t * e);
 extern lv_obj_t * ui_BtnMenu5;
+void ui_event_BtnMenu6(lv_event_t * e);
+extern lv_obj_t * ui_BtnMenu6;
 extern lv_obj_t * ui_LblMenuJeepify;
 extern lv_obj_t * ui_LblMenuType;
 // SCREEN: ui_ScrSettings
@@ -86,6 +88,24 @@ extern lv_obj_t * ui_ScrChangeName;
 void ui_event_Keyboard1(lv_event_t * e);
 extern lv_obj_t * ui_Keyboard1;
 extern lv_obj_t * ui_TxtAreaChangeName;
+// SCREEN: ui_ScreenCalib
+void ui_ScreenCalib_screen_init(void);
+void ui_event_ScreenCalib(lv_event_t * e);
+extern lv_obj_t * ui_ScreenCalib;
+extern lv_obj_t * ui_Label7;
+void ui_event_LblCalibVoltage(lv_event_t * e);
+extern lv_obj_t * ui_LblCalibVoltage;
+extern lv_obj_t * ui_Label6;
+void ui_event_LblCalibCurrent(lv_event_t * e);
+extern lv_obj_t * ui_LblCalibCurrent;
+// SCREEN: ui_ScrNumKey
+void ui_ScrNumKey_screen_init(void);
+void ui_event_ScrNumKey(lv_event_t * e);
+extern lv_obj_t * ui_ScrNumKey;
+void ui_event_Keyboard2(lv_event_t * e);
+extern lv_obj_t * ui_Keyboard2;
+extern lv_obj_t * ui_Label10;
+extern lv_obj_t * ui_TxtAreaScrNumKeyVoltage;
 extern lv_obj_t * ui____initial_actions0;
 
 LV_IMG_DECLARE(ui_img_bg_grill_png);    // assets\bg_grill.png

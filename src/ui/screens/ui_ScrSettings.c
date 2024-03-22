@@ -110,7 +110,7 @@ void ui_ScrSettings_screen_init(void)
     lv_obj_set_width(ui_LblSettingName, 236);
     lv_obj_set_height(ui_LblSettingName, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_x(ui_LblSettingName, 10);
-    lv_obj_set_y(ui_LblSettingName, 270);
+    lv_obj_set_y(ui_LblSettingName, 260);
     lv_label_set_text(ui_LblSettingName, "ESP32 - LVGL8 - #3.51");
     lv_obj_set_style_text_color(ui_LblSettingName, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_LblSettingName, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -120,7 +120,7 @@ void ui_ScrSettings_screen_init(void)
     lv_obj_set_width(ui_LblSettingType, 290);
     lv_obj_set_height(ui_LblSettingType, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_x(ui_LblSettingType, 10);
-    lv_obj_set_y(ui_LblSettingType, 290);
+    lv_obj_set_y(ui_LblSettingType, 280);
     lv_label_set_text(ui_LblSettingType, "4-Way-Switch with Votage-Sensor");
     lv_obj_set_style_text_color(ui_LblSettingType, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_LblSettingType, 255, LV_PART_MAIN | LV_STATE_DEFAULT);

@@ -6,7 +6,7 @@
 #include "pref_manager.h"
 #include "PeerClass.h"
 
-Preferences preferences;
+extern Preferences preferences;
 
 void   PrintMAC(const uint8_t * mac_addr);
 

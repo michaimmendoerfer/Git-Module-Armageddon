@@ -18,6 +18,8 @@ extern void SetDebugMode(bool Mode);
 extern void SetSleepMode(bool Mode);
 extern void SaveModule();
 extern void SendNameChange(int Pos);
+extern void CurrentCalibration();
+extern void VoltageCalibration(int SNr, float V);
 
 extern uint32_t TSPair;
 
@@ -27,9 +29,11 @@ int ActiveChangeNameNr = -1;
 
 void SwitchUpdateTimer(lv_timer_t * timer);
 void GaugeSingleUpdateTimer(lv_timer_t * timer);
+void CalibrationUpdateTimer(lv_timer_t * timer);
 
 lv_timer_t *SwitchTimer;
 lv_timer_t *GaugeSingleTimer;
+lv_timer_t *CalibTimer;
 
 #pragma region MENU
 void Ui_Menu_Loaded(lv_event_t * e)
@@ -44,11 +48,13 @@ void Ui_MenuBtn4_Click(lv_event_t * e)
 	{
 		lv_obj_add_state(ui_BtnMenu4, LV_STATE_CHECKED);
 		TSPair = millis();
+		//smartdisplay_led_set_rgb(1,0,0);
 	}
 	else
 	{
 		lv_obj_clear_state(ui_BtnMenu4, LV_STATE_CHECKED);
 		TSPair = 0;
+		//smartdisplay_led_set_rgb(0,0,0);
 	}
 }
 #pragma endregion MENU
@@ -327,5 +333,75 @@ void Ui_ChangeName_Ready(lv_event_t * e)
 	}
 }
 #pragma endregion CHANGENAME
+void ui_Calib_Loaded(lv_event_t * e)
+{
+	static int user_data = 10;
 
+	if (!CalibTimer) 
+	{
+		CalibTimer = lv_timer_create(CalibrationUpdateTimer, 500,  &user_data);
+		Serial.println("CalibTimer created");
+	}
+}
 
+void Ui_NumKey_Ready(lv_event_t * e)
+{
+	float NewVoltage = atof(lv_label_get_text(ui_TxtAreaScrNumKeyVoltage));
+
+	if (Module.GetVoltageMon() != -1)
+	{
+		VoltageCalibration(Module.GetVoltageMon(), NewVoltage) ;
+	}
+	_ui_screen_change(&ui_ScreenCalib, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_ScreenCalib_screen_init);
+}
+
+void CalibrationUpdateTimer(lv_timer_t * timer)
+{
+	Serial.println("CalibUpdateTimer");
+
+	char CurrentLines[300];
+	char Buf[40];
+
+	bool FirstRun = true;
+
+	for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
+	{
+		if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP)
+		{
+			if (FirstRun) 
+			{
+				FirstRun = false;
+			}
+			else
+			{
+				strcat(CurrentLines, "\n\r");
+			}
+
+			sprintf(Buf, "(%.2fA) - %s\n\r", Module.GetPeriphValue(SNr), Module.GetPeriphName(SNr));
+			strcat(CurrentLines, Buf);
+		}
+	}
+	lv_textarea_set_text(ui_LblCalibCurrent, CurrentLines);
+
+	if (Module.GetVoltageMon() != -1)
+	{
+		char buf[10];
+		dtostrf(Module.GetPeriphValue(Module.GetVoltageMon()), 0, 1, buf);
+		strcat(buf, "V");
+
+		lv_label_set_text(ui_LblCalibVoltage, buf);
+	}
+}
+
+void Ui_Calib_Leave(lv_event_t * e)
+{
+	lv_timer_del(CalibTimer);
+	CalibTimer = NULL;
+
+	Serial.println("CalibTimer deleted");
+}
+
+void ui_Calib_Current_Click(lv_event_t * e)
+{
+	CurrentCalibration();
+}

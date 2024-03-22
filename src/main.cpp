@@ -363,54 +363,6 @@ void  PrintMAC(const uint8_t * mac_addr){
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   Serial.print(macStr);
 }
-float ReadAmp (int SNr) {
-  float TempVal      = 0;
-  float TempVolt     = 0;
-  float TempAmp      = 0;
-  
-  if (Module.GetADCPort1() != -1)
-  {
-      #ifdef ADC_USED
-        TempVal  = ads.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
-        TempVolt = ads.computeVolts(TempVal); 
-        TempAmp  = (TempVolt - Module.GetPeriphNullwertSNr()) / Module.GetPeriphVperAmp(SNr);
-        delay(10);
-      #endif
-  }
-  else
-  {
-      float TempVoltOverNull = 0;
-      TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
-      TempVolt = 3.3/4095*TempVal;
-      TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * Module.GetVoltageDevider();// 1.5 wegen Voltage-Devider
-      delay(10);
-  }
-  
-  if (Module.GetDebugMode()) {
-    Serial.print("TempVal:  "); Serial.println(TempVal,4);
-    Serial.print("TempVolt: "); Serial.println(TempVolt,4);
-    Serial.print("Nullwert: "); Serial.println(Module.GetPeriphNullwert(SNr),4);
-    Serial.print("VperAmp:  "); Serial.println(Module.GetPeriphVperAmp(SNr),4);
-    Serial.print("Amp (TempVolt - S[Si].NullWert) / S[Si].VperAmp * 1.5:  "); Serial.println(TempAmp,4);
-  } 
-  if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
-  
-  return (TempAmp); 
-}
-float ReadVolt(int SNr) {
-  if (!Module.GetPeriphPtr(SNr)->GetVin()) { Serial.println("Vin must not be zero !!!"); return 0; }
-  
-  float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
-  float TempVolt = TempVal / Module.GetPeriphVin(SNr);
-  
-  if (Module.GetDebugMode()) {
-    Serial.print("TempVal:  "); Serial.println(TempVal,4);
-    Serial.print("Vin:      "); Serial.println(Module.GetPeriphVin(SNr));
-    Serial.print("Volt (TempVal / S[V].Vin)): ");     Serial.println(TempVolt,4);
-    
-  } 
-  return TempVolt;
-}
 void  GoToSleep() {
   StaticJsonDocument<500> doc;
   String jsondata;
@@ -447,6 +399,114 @@ void SaveModule()
       Serial.printf("schreibe: Module: %s",ExportStringPeer.c_str());
       Serial.println();
 }
+#pragma region Data-Things
+void VoltageCalibration(int SNr, float V) 
+{
+    char Buf[100] = {}; char BufNr[10] = {}; 
+  
+    if (Module.GetDebugMode()) Serial.println("Volt-Messung kalibrieren...");
+    
+    preferences.begin("JeepifyInit", false);
+  
+    if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) {
+        int TempRead = analogRead(Module.GetPeriphIOPort(SNr));
+        
+        Module.SetPeriphVin(SNr, TempRead / V);
+        
+        if (Module.GetDebugMode()) {
+          Serial.print("S["); Serial.print(SNr); Serial.print("].Vin = ");
+          Serial.println(Module.GetPeriphVin(SNr), 4);
+          Serial.print("Volt(nachher) = ");
+          Serial.println(TempRead/Module.GetPeriphVin(SNr), 4);
+        }
+        
+        snprintf(Buf, sizeof(Buf), "[%d] %s (Type: %d): Spannung ist jetzt: %.2fV", SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), TempRead/Module.GetPeriphVin(SNr));
+        
+        AddStatus(Buf);
+
+        SaveModule();
+    }
+}
+void CurrentCalibration() {
+    char Buf[100] = {};
+    
+    for(int SNr=0; SNr<MAX_PERIPHERALS; SNr++) {
+      if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) {
+        float TempVal  = 0;
+        float TempVolt = 0;
+        
+        #ifdef ADC_USED
+        TempVal  = ads.readADC_SingleEnded(S[SNr].IOPort);
+        TempVolt = ads.computeVolts(TempVal);
+        #else
+        //Filter implementieren !!!
+        TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
+        TempVolt = 3.3/4095*TempVal; // 1.5???
+        #endif      
+
+        if (Module.GetDebugMode()) { 
+          Serial.print("TempVal:");     Serial.println(TempVal);
+          Serial.print(", TempVolt: "); Serial.println(TempVolt);
+        }
+        Module.SetPeriphNullwert(SNr, TempVolt);
+
+        snprintf(Buf, sizeof(Buf), "Eichen fertig: [%d] %s (Type: %d): Gemessene Spannung bei Null: %.2fV", 
+                                    SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), TempVolt);
+
+        AddStatus(Buf);
+      }
+    }
+    SaveModule();
+  }
+  float ReadAmp (int SNr) {
+  float TempVal      = 0;
+  float TempVolt     = 0;
+  float TempAmp      = 0;
+  
+  if (Module.GetADCPort1() != -1)
+  {
+      #ifdef ADC_USED
+        TempVal  = ads.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
+        TempVolt = ads.computeVolts(TempVal); 
+        TempAmp  = (TempVolt - Module.GetPeriphNullwertSNr()) / Module.GetPeriphVperAmp(SNr);
+        delay(10);
+      #endif
+  }
+  else
+  {
+      TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
+      TempVolt = 3.3/4095*TempVal;
+      TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * Module.GetVoltageDevider();// 1.5 wegen Voltage-Devider
+      delay(10);
+  }
+  
+  if (Module.GetDebugMode()) {
+    Serial.print("TempVal:  "); Serial.println(TempVal,4);
+    Serial.print("TempVolt: "); Serial.println(TempVolt,4);
+    Serial.print("Nullwert: "); Serial.println(Module.GetPeriphNullwert(SNr),4);
+    Serial.print("VperAmp:  "); Serial.println(Module.GetPeriphVperAmp(SNr),4);
+    Serial.print("Amp (TempVolt - S[Si].NullWert) / S[Si].VperAmp * 1.5:  "); Serial.println(TempAmp,4);
+  } 
+  if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
+  
+  return (TempAmp); 
+}
+float ReadVolt(int SNr) {
+  if (!Module.GetPeriphPtr(SNr)->GetVin()) { Serial.println("Vin must not be zero !!!"); return 0; }
+  
+  float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
+  float TempVolt = TempVal / Module.GetPeriphVin(SNr);
+  
+  if (Module.GetDebugMode()) {
+    Serial.print("TempVal:  "); Serial.println(TempVal,4);
+    Serial.print("Vin:      "); Serial.println(Module.GetPeriphVin(SNr));
+    Serial.print("Volt (TempVal / S[V].Vin)): ");     Serial.println(TempVolt,4);
+    
+  } 
+  return TempVolt;
+}
+
+#pragma endregion Data-Things
 #pragma endregion System-Things
 #pragma region ESP-Things
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) 
@@ -598,6 +658,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
           Module.SetPairMode(true); 
           AddStatus("Pairing beginnt"); 
           SendMessage(); 
+          smartdisplay_led_set_rgb(1,0,0);
       }
       else if (doc["Order"] == "Eichen")        
       {   
@@ -730,6 +791,7 @@ void loop()
     TSPair = 0;
     Module.SetPairMode(false);
     AddStatus("Pairing beendet...");
+    smartdisplay_led_set_rgb(0, 0, 0);
   }
 
 #ifdef BOARD_HAS_RGB_LED
