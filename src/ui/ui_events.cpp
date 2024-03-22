@@ -17,6 +17,7 @@ extern void SetDemoMode(bool Mode);
 extern void SetDebugMode(bool Mode);
 extern void SetSleepMode(bool Mode);
 extern void SaveModule();
+extern void SendNameChange(int Pos);
 
 extern uint32_t TSPair;
 
@@ -322,6 +323,7 @@ void Ui_ChangeName_Ready(lv_event_t * e)
 	{
 		Module.SetPeriphName(ActiveChangeNameNr, lv_textarea_get_text(ui_TxtAreaChangeName));
 		SaveModule();
+		SendNameChange(ActiveChangeNameNr);
 	}
 }
 #pragma endregion CHANGENAME

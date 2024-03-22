@@ -271,6 +271,27 @@ void SendPairingRequest() {
   if (Module.GetDebugMode()) { Serial.print("\nSending: "); Serial.println(jsondata); }
   AddStatus("Send Pairing request...");                                     
 }
+void SendNameChange(int Pos)
+{
+    // sendet auf Broadcast: "Order"="UpdateName"; "Pos"="32; "NewName"="Horst";
+  
+  TSLed = millis();
+  
+  StaticJsonDocument<500> doc; String jsondata; jsondata = ""; doc.clear();
+  char Buf[100] = {};
+  
+  doc["Node"]    = Module.GetName();   
+  doc["Order"]   = "UpdateName";
+  doc["Pos"]     = Pos;
+  doc["NewName"] = Module.GetPeriphName(Pos);
+  
+  serializeJson(doc, jsondata);  
+
+  esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
+  
+  if (Module.GetDebugMode()) { Serial.print("\nSending: "); Serial.println(jsondata); }
+  AddStatus("Send NameChange announce...");        
+}
 #pragma endregion Send-Things
 #pragma region System-Things
 void SetDemoMode(bool Mode) {
