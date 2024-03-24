@@ -35,6 +35,11 @@ lv_timer_t *SwitchTimer;
 lv_timer_t *GaugeSingleTimer;
 lv_timer_t *CalibTimer;
 
+lv_obj_t *SingleMeter;
+lv_meter_indicator_t * SingleIndic;
+lv_meter_indicator_t * SingleIndicNeedle;
+lv_meter_scale_t * scale;
+
 #pragma region MENU
 void Ui_Menu_Loaded(lv_event_t * e)
 {
@@ -134,6 +139,24 @@ void Ui_SwitchButton_Clicked(lv_event_t * e)
 	}
 }
 
+void Ui_Switch_SwitchButton_Long(lv_event_t * e)
+{
+	// wird nicht erreicht
+	
+	lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    
+	if(event_code == LV_EVENT_CLICKED) {
+        auto Container 	 = lv_obj_get_parent(target);
+		auto SwitchLabel = lv_obj_get_child(Container, 3);
+		auto SwitchName  = lv_obj_get_child(Container, 2);
+	    int SwitchNr = atoi(lv_label_get_text(SwitchLabel));
+		ActiveChangeNameNr = SwitchNr;
+
+		_ui_screen_change(&ui_ScrChangeName, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_ScrChangeName_screen_init);
+	}
+}
+
 void Ui_Switch_Next(lv_event_t * e)
 {
 	if ((ScrSwitchPage == 0) and (Module.GetType() == SWITCH_8_WAY))
@@ -206,6 +229,17 @@ void Ui_Settings_Reset(lv_event_t * e)
 
 #pragma endregion SETTINGS
 #pragma region GAUGESINGLE
+
+static void SingleMeter_cb(lv_event_t * e) {
+
+	lv_obj_draw_part_dsc_t	*dsc  = (lv_obj_draw_part_dsc_t *)lv_event_get_param(e);
+	double					value;
+
+	if( dsc->text != NULL ) {		// Filter major ticks...
+		value = dsc->value / 10;
+		snprintf(dsc->text, sizeof(dsc->text), "%5.1f", value);
+	}
+}
 void Ui_GaugeSingle_Loaded(lv_event_t * e)
 {
 	if (ActiveSensorNr < 0)
@@ -231,6 +265,42 @@ void Ui_GaugeSingle_Loaded(lv_event_t * e)
 		lv_label_set_text(ui_LblGaugeSingleValue, "--.-V");
 	}
 	
+	SingleMeter = lv_meter_create(ui_ImgGaugeSingleGauge);
+	lv_obj_center(SingleMeter);
+	lv_obj_set_style_bg_color(SingleMeter, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+	lv_obj_set_style_bg_opa(SingleMeter, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+	lv_obj_set_size(SingleMeter, 180, 180);
+	lv_obj_set_pos(SingleMeter, 0,0);
+	scale = lv_meter_add_scale(SingleMeter);
+	
+	lv_obj_move_background(ui_ImgGaugeSingleGauge);
+	lv_obj_set_style_text_color(SingleMeter, lv_color_hex(0xdbdbdb), LV_PART_TICKS);
+	
+	SingleIndicNeedle = lv_meter_add_needle_line(SingleMeter, scale, 4, lv_palette_main(LV_PALETTE_GREY), -10);
+	
+	if ((ActiveSensorNr>=0) and (Module.GetPeriphType(ActiveSensorNr) == SENS_TYPE_VOLT))
+	{
+		//lv_meter_set_scale_ticks(SingleMeter, scale, 41, 2, 10, lv_palette_main(LV_PALETTE_GREY));
+    	lv_meter_set_scale_major_ticks(SingleMeter, scale, 5, 4, 15, lv_color_black(), 15);
+    	lv_meter_set_scale_range(SingleMeter, scale, 0, 400, 90, 270);
+	
+		//Add a green arc to the start
+		SingleIndic = lv_meter_add_scale_lines(SingleMeter, scale, lv_palette_main(LV_PALETTE_GREEN), lv_palette_main(LV_PALETTE_GREEN), false, 0);
+    	lv_meter_set_indicator_start_value(SingleMeter, SingleIndic, 0);
+    	lv_meter_set_indicator_end_value(SingleMeter, SingleIndic, 250);
+
+		SingleIndic = lv_meter_add_arc(SingleMeter, scale, 3, lv_palette_main(LV_PALETTE_RED), 0);
+    	lv_meter_set_indicator_start_value(SingleMeter, SingleIndic, 300);
+    	lv_meter_set_indicator_end_value(SingleMeter, SingleIndic, 400);
+
+		//Make the tick lines red at the end of the scale
+		SingleIndic = lv_meter_add_scale_lines(SingleMeter, scale, lv_palette_main(LV_PALETTE_RED), lv_palette_main(LV_PALETTE_RED), false, 0);
+		lv_meter_set_indicator_start_value(SingleMeter, SingleIndic, 300);
+		lv_meter_set_indicator_end_value(SingleMeter, SingleIndic, 400);
+
+		lv_obj_add_event_cb(SingleMeter, SingleMeter_cb, LV_EVENT_DRAW_PART_BEGIN, NULL);
+	}
+
 	static uint32_t user_data = 10;
 	if (!GaugeSingleTimer) 
 	{
@@ -246,7 +316,7 @@ void GaugeSingleUpdateTimer(lv_timer_t * timer)
 		dtostrf(Module.GetPeriphValue(ActiveSensorNr), 0, 1, buf);
 		strcat(buf, "V");
 		lv_label_set_text(ui_LblGaugeSingleValue, buf);
-		//update Needle
+		lv_meter_set_indicator_value(SingleMeter, SingleIndicNeedle, Module.GetPeriphValue(ActiveSensorNr)*10);
 	}
 }
 
@@ -255,6 +325,12 @@ void Ui_GaugeSingle_Leave(lv_event_t * e)
 	lv_timer_del(GaugeSingleTimer);
 	GaugeSingleTimer = NULL;
 
+	lv_obj_del(SingleMeter);
+	
+	SingleMeter       = NULL;
+	scale             = NULL;
+	SingleIndicNeedle = NULL;
+	
 	Serial.println("GaugeSingleTimer deleted");
 }
 
@@ -408,3 +484,7 @@ void ui_Calib_Current_Click(lv_event_t * e)
 	CurrentCalibration();
 }
 #pragma endregion CALIB
+void Ui_Init_Custom(lv_event_t * e)
+{
+	
+}

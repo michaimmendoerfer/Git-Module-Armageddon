@@ -57,7 +57,7 @@ lv_obj_t * ui_Label9;
 void ui_ScrGaugeSingle_screen_init(void);
 void ui_event_ScrGaugeSingle(lv_event_t * e);
 lv_obj_t * ui_ScrGaugeSingle;
-lv_obj_t * ui_Image2;
+lv_obj_t * ui_ImgGaugeSingleGauge;
 lv_obj_t * ui_LblGaugeSingleValueDescription;
 lv_obj_t * ui_LblGaugeSingleValue;
 
@@ -111,6 +111,7 @@ void ui_event_Keyboard2(lv_event_t * e);
 lv_obj_t * ui_Keyboard2;
 lv_obj_t * ui_Label10;
 lv_obj_t * ui_TxtAreaScrNumKeyVoltage;
+void ui_event____initial_actions0(lv_event_t * e);
 lv_obj_t * ui____initial_actions0;
 const lv_img_dsc_t * ui_imgset_25820555[1] = {&ui_img_551600910};
 const lv_img_dsc_t * ui_imgset_toggle_vertical_on_[1] = {&ui_img_toggle_vertical_on_75_png};
@@ -364,6 +365,14 @@ void ui_event_Keyboard2(lv_event_t * e)
         Ui_NumKey_Ready(e);
     }
 }
+void ui_event____initial_actions0(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    if(event_code == LV_EVENT_SCREEN_LOAD_START) {
+        Ui_Init_Custom(e);
+    }
+}
 
 ///////////////////// SCREENS ////////////////////
 
@@ -383,5 +392,8 @@ void ui_init(void)
     ui_ScreenCalib_screen_init();
     ui_ScrNumKey_screen_init();
     ui____initial_actions0 = lv_obj_create(NULL);
+    lv_obj_add_event_cb(ui____initial_actions0, ui_event____initial_actions0, LV_EVENT_ALL, NULL);
+
+    lv_disp_load_scr(ui____initial_actions0);
     lv_disp_load_scr(ui_ScrMenu);
 }

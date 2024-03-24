@@ -14,6 +14,8 @@ int  PeerClass::_ClassId = 1;
 
 char ExportImportBuffer[300];
 
+extern void PrintMAC(const uint8_t * mac_addr);
+
 #pragma region PeriphClass::Declaration
 PeriphClass::PeriphClass()
 {
@@ -132,22 +134,22 @@ char* PeerClass::Export()
 
     return ExportImportBuffer;
 }
-void PeerClass::Import(const char *Buf) 
+void PeerClass::Import(char *Buf) 
 {
-    char BufCast[300];
-    if (strlen(Buf) > 299) exit(99);
-
-    strcpy(_Name, strtok(BufCast, ";"));
+    strcpy(_Name, strtok(Buf, ";"));
     _Type = atoi(strtok(NULL, ";"));
-    _BroadcastAddress[0] = atoi(strtok(NULL, ";"));
-    _BroadcastAddress[1] = atoi(strtok(NULL, ";"));
-    _BroadcastAddress[2] = atoi(strtok(NULL, ";"));
-    _BroadcastAddress[3] = atoi(strtok(NULL, ";"));
-    _BroadcastAddress[4] = atoi(strtok(NULL, ";"));
-    _BroadcastAddress[5] = atoi(strtok(NULL, ";"));
-    _SleepMode = atoi(strtok(NULL, ";"));
-    _DebugMode = atoi(strtok(NULL, ";"));
-    _DemoMode  = atoi(strtok(NULL, ";"));
+    
+    _BroadcastAddress[0] = (byte) atoi(strtok(NULL, ";"));
+    _BroadcastAddress[1] = (byte) atoi(strtok(NULL, ";"));
+    _BroadcastAddress[2] = (byte) atoi(strtok(NULL, ";"));
+    _BroadcastAddress[3] = (byte) atoi(strtok(NULL, ";"));
+    _BroadcastAddress[4] = (byte) atoi(strtok(NULL, ";"));
+    _BroadcastAddress[5] = (byte) atoi(strtok(NULL, ";"));
+    //PrintMAC(_BroadcastAddress);
+
+    _SleepMode = (bool) atoi(strtok(NULL, ";"));
+    _DebugMode = (bool) atoi(strtok(NULL, ";"));
+    _DemoMode  = (bool) atoi(strtok(NULL, ";"));
 
     for (int Si=0; Si<MAX_PERIPHERALS; Si++)
     {
@@ -155,26 +157,20 @@ void PeerClass::Import(const char *Buf)
         Periph[Si].SetType(atoi(strtok(NULL, ";")));
         Periph[Si].SetPos(Si);
         Periph[Si].SetPeerId(_Id);
-        
-        uint8_t UId[7];
-        byte PosByte = Si;
-
-        memcpy(UId, _BroadcastAddress, 6);
-        UId[6] = PosByte;
-        Periph[Si].SetUId(UId);
     }
+    //Serial.println("ende import");
 }
         
 void  PeerClass::PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, 
                              float Nullwert, float VperAmp, int Vin, int PeerId)
 {
-    uint8_t _UId[7];
+    uint8_t UId[7];
     byte PosByte = Pos;
 
-    memcpy(_UId, _BroadcastAddress, 6);
-    _UId[6] = PosByte;
+    memcpy(UId, _BroadcastAddress, 6);
+    UId[6] = PosByte;
 
-    Periph[Pos].Setup(Name, Type, isADS, IOPort, Nullwert, VperAmp, Vin, PeerId, _UId);
+    Periph[Pos].Setup(Name, Type, isADS, IOPort, Nullwert, VperAmp, Vin, PeerId, UId);
 }
 int   PeerClass::GetPeriphId(char *Name)
 {

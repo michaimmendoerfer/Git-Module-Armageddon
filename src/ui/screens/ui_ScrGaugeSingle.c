@@ -11,15 +11,15 @@ void ui_ScrGaugeSingle_screen_init(void)
     lv_obj_clear_flag(ui_ScrGaugeSingle, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
     lv_obj_set_style_bg_img_src(ui_ScrGaugeSingle, &ui_img_1825836894, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_Image2 = lv_img_create(ui_ScrGaugeSingle);
-    lv_img_set_src(ui_Image2, &ui_img_1404430020);
-    lv_obj_set_width(ui_Image2, LV_SIZE_CONTENT);   /// 240
-    lv_obj_set_height(ui_Image2, LV_SIZE_CONTENT);    /// 240
-    lv_obj_set_x(ui_Image2, -87);
-    lv_obj_set_y(ui_Image2, -11);
-    lv_obj_set_align(ui_Image2, LV_ALIGN_CENTER);
-    lv_obj_add_flag(ui_Image2, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
-    lv_obj_clear_flag(ui_Image2, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    ui_ImgGaugeSingleGauge = lv_img_create(ui_ScrGaugeSingle);
+    lv_img_set_src(ui_ImgGaugeSingleGauge, &ui_img_1404430020);
+    lv_obj_set_width(ui_ImgGaugeSingleGauge, LV_SIZE_CONTENT);   /// 240
+    lv_obj_set_height(ui_ImgGaugeSingleGauge, LV_SIZE_CONTENT);    /// 240
+    lv_obj_set_x(ui_ImgGaugeSingleGauge, -87);
+    lv_obj_set_y(ui_ImgGaugeSingleGauge, -11);
+    lv_obj_set_align(ui_ImgGaugeSingleGauge, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_ImgGaugeSingleGauge, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
+    lv_obj_clear_flag(ui_ImgGaugeSingleGauge, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
 
     ui_LblGaugeSingleValueDescription = lv_label_create(ui_ScrGaugeSingle);
     lv_obj_set_width(ui_LblGaugeSingleValueDescription, LV_SIZE_CONTENT);   /// 100

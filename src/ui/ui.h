@@ -60,7 +60,7 @@ extern lv_obj_t * ui_Label9;
 void ui_ScrGaugeSingle_screen_init(void);
 void ui_event_ScrGaugeSingle(lv_event_t * e);
 extern lv_obj_t * ui_ScrGaugeSingle;
-extern lv_obj_t * ui_Image2;
+extern lv_obj_t * ui_ImgGaugeSingleGauge;
 extern lv_obj_t * ui_LblGaugeSingleValueDescription;
 extern lv_obj_t * ui_LblGaugeSingleValue;
 // SCREEN: ui_ScrSwitch
@@ -106,6 +106,7 @@ void ui_event_Keyboard2(lv_event_t * e);
 extern lv_obj_t * ui_Keyboard2;
 extern lv_obj_t * ui_Label10;
 extern lv_obj_t * ui_TxtAreaScrNumKeyVoltage;
+void ui_event____initial_actions0(lv_event_t * e);
 extern lv_obj_t * ui____initial_actions0;
 
 LV_IMG_DECLARE(ui_img_bg_grill_png);    // assets\bg_grill.png

@@ -15,6 +15,15 @@ void ui_event_comp_SwitchButton_ImgButton(lv_event_t * e)
         Ui_SwitchButton_Clicked(e);
     }
 }
+void ui_event_comp_SwitchButton_LblSwitchPeriph(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    lv_obj_t ** comp_SwitchButton = lv_event_get_user_data(e);
+    if(event_code == LV_EVENT_LONG_PRESSED) {
+        Ui_Switch_SwitchButton_Long(e);
+    }
+}
 
 // COMPONENT SwitchButton
 
@@ -70,6 +79,7 @@ lv_obj_t * ui_SwitchButton_create(lv_obj_t * comp_parent)
     lv_obj_set_y(cui_LblSwitchId, 15);
     lv_obj_set_align(cui_LblSwitchId, LV_ALIGN_CENTER);
     lv_label_set_text(cui_LblSwitchId, "Nr");
+    lv_obj_add_flag(cui_LblSwitchId, LV_OBJ_FLAG_HIDDEN);     /// Flags
 
     lv_obj_t ** children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_SWITCHBUTTON_NUM);
     children[UI_COMP_SWITCHBUTTON_SWITCHBUTTON] = cui_SwitchButton;
@@ -80,6 +90,7 @@ lv_obj_t * ui_SwitchButton_create(lv_obj_t * comp_parent)
     lv_obj_add_event_cb(cui_SwitchButton, get_component_child_event_cb, LV_EVENT_GET_COMP_CHILD, children);
     lv_obj_add_event_cb(cui_SwitchButton, del_component_child_event_cb, LV_EVENT_DELETE, children);
     lv_obj_add_event_cb(cui_ImgButton, ui_event_comp_SwitchButton_ImgButton, LV_EVENT_ALL, children);
+    lv_obj_add_event_cb(cui_LblSwitchPeriph, ui_event_comp_SwitchButton_LblSwitchPeriph, LV_EVENT_ALL, children);
     ui_comp_SwitchButton_create_hook(cui_SwitchButton);
     return cui_SwitchButton;
 }

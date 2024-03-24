@@ -405,7 +405,7 @@ void SaveModule()
 #pragma region Data-Things
 void VoltageCalibration(int SNr, float V) 
 {
-    char Buf[100] = {}; char BufNr[10] = {}; 
+    char Buf[100] = {}; 
   
     if (Module.GetDebugMode()) Serial.println("Volt-Messung kalibrieren...");
     
@@ -734,8 +734,10 @@ void setup()
     if (preferences.begin("JeepifyInit", true))
     {
         String SavedModule   = preferences.getString("Module", "");
-        Serial.printf("Importiere Modul: %s", SaveModule);
-        if (SavedModule != "") Module.Import(SavedModule.c_str());
+        Serial.printf("Importiere Modul: %s", SavedModule.c_str());
+        char ToImport[250];
+        strcpy(ToImport,SavedModule.c_str());
+        if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
         
         /*
         Module.SetDebugMode(preferences.getBool("DebugMode", Module.GetDebugMode()));
