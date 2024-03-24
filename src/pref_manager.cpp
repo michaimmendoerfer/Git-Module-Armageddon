@@ -3,8 +3,7 @@
 #include <Preferences.h>
 #include <esp_now.h>
 #include <WiFi.h>
-#include "pref_manager.h"
-#include "PeerClass.h"
+#include <pref_manager.h>
 
 extern Preferences preferences;
 
@@ -124,6 +123,7 @@ int GetPeers()
     PeerList.clear();
 
     int PeerCount = preferences.getInt("PeerCount");
+    Serial.printf("Peercount = %d", PeerCount);
     
     for (int Pi=0 ; Pi<PeerCount; Pi++)
     {

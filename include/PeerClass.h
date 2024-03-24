@@ -1,5 +1,6 @@
 /*
 include PeerList and PeriphList
+Version 2.01
 */
 
 #ifndef PEERCLASS_H
@@ -210,10 +211,12 @@ PeriphClass *FindNextPeriph(PeerClass *P, PeriphClass *Periph, int Type, bool ci
 extern LinkedList<PeerClass*>   PeerList;
 extern LinkedList<PeriphClass*> PeriphList;
 
+char *TypeInText(int Type);
 extern PeerClass *ActivePeer;
 extern PeriphClass *ActivePeriph;
 
 extern char ExportImportBuffer[300];
 
 char *TypeInText(int Type);
+
 #endif

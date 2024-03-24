@@ -331,8 +331,10 @@ void Ui_ChangeName_Ready(lv_event_t * e)
 		SaveModule();
 		SendNameChange(ActiveChangeNameNr);
 	}
+	_ui_screen_change(&ui_ScrSwitch, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_ScrSwitch_screen_init);
 }
 #pragma endregion CHANGENAME
+#pragma region CALIB
 void ui_Calib_Loaded(lv_event_t * e)
 {
 	static int user_data = 10;
@@ -405,3 +407,4 @@ void ui_Calib_Current_Click(lv_event_t * e)
 {
 	CurrentCalibration();
 }
+#pragma endregion CALIB

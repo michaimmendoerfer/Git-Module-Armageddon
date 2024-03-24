@@ -1,6 +1,7 @@
 /*
 manage Peers and Periphs,
 defines MultiMonitorClass with one instance: Screen
+Version 1.01
 */
 
 #ifndef PREF_MANAGER_H
@@ -8,6 +9,7 @@ defines MultiMonitorClass with one instance: Screen
 
 #include <Preferences.h>
 #include "lvgl.h"
+#include "PeerClass.h"
 
 class MultiMonitorClass {
     

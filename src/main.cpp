@@ -1,9 +1,11 @@
+//#define KILL_NVS 0
+
 #pragma region Includes
 #include <Arduino.h>
 
 #include <esp32_smartdisplay.h>
 #include <ui/ui.h>
-#include "LinkedList.h"
+#include <LinkedList.h>
 #include <esp_now.h>
 #include <WiFi.h>
 #include <nvs_flash.h>
@@ -17,8 +19,9 @@
 
 #pragma endregion Includes
 
-const char _Version[]    = "3.41";
-const char _ModuleName[] = "3.5-Arma";
+const char _Version[]           = "3.01";
+const char _Protokoll_Version[] = "1.01";
+const char _ModuleName[]        = "3.5-Arma";
 
 //#define MODULE_1S
 //#define MODULE_2S
@@ -154,7 +157,7 @@ void SendMessage () {
     TSLed = millis();
     //digitalWrite(LED_BUILTIN, LED_ON);
 
-    StaticJsonDocument<500> doc; String jsondata; doc.clear(); jsondata = "";
+    JsonDocument doc;; String jsondata; 
     char buf[100]; 
 
     doc["Node"] = Module.GetName();   
@@ -241,7 +244,7 @@ void SendPairingRequest() {
   TSLed = millis();
   //digitalWrite(LED_BUILTIN, LED_ON);
   
-  StaticJsonDocument<500> doc; String jsondata; jsondata = ""; doc.clear();
+  JsonDocument doc;; String jsondata; 
   char Buf[100] = {};
   char UIdStr[21];
   uint8_t *BrTemp;
@@ -278,7 +281,7 @@ void SendNameChange(int Pos)
   
   TSLed = millis();
   
-  StaticJsonDocument<500> doc; String jsondata; jsondata = ""; doc.clear();
+  JsonDocument doc;; String jsondata; 
   char Buf[100] = {};
   
   doc["Node"]    = Module.GetName();   
@@ -364,11 +367,8 @@ void  PrintMAC(const uint8_t * mac_addr){
   Serial.print(macStr);
 }
 void  GoToSleep() {
-  StaticJsonDocument<500> doc;
+  JsonDocument doc;;
   String jsondata;
-
-  jsondata = "";  
-  doc.clear();
   
   doc["Node"] = Module.GetName();   
   doc["Type"] = Module.GetType();
@@ -393,12 +393,15 @@ void  GoToSleep() {
 }
 void SaveModule()
 {
-      String ExportStringPeer = Module.Export();
+      preferences.begin("JeepifyInit", false);
+          String ExportStringPeer = Module.Export();
 
-      Serial.printf("putSring = %d", preferences.putString("Module", ExportStringPeer));
-      Serial.printf("schreibe: Module: %s",ExportStringPeer.c_str());
-      Serial.println();
+          Serial.printf("putSring = %d", preferences.putString("Module", ExportStringPeer));
+          Serial.printf("schreibe: Module: %s",ExportStringPeer.c_str());
+          Serial.println();
+      preferences.end();
 }
+#pragma endregion System-Things
 #pragma region Data-Things
 void VoltageCalibration(int SNr, float V) 
 {
@@ -505,17 +508,13 @@ float ReadVolt(int SNr) {
   } 
   return TempVolt;
 }
-
 #pragma endregion Data-Things
-#pragma endregion System-Things
 #pragma region ESP-Things
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) 
 {  
   char* buff = (char*) incomingData;        //char buffer
-  StaticJsonDocument<500> doc;
+  JsonDocument doc;;
   String jsondata;
-  doc.clear();
-  jsondata = "";
   
   jsondata = String(buff);                  //converting into STRING
   
@@ -732,8 +731,10 @@ void setup()
         }
     }
   */
-    preferences.begin("JeepifyInit", true);
+    if (preferences.begin("JeepifyInit", true))
+    {
         String SavedModule   = preferences.getString("Module", "");
+        Serial.printf("Importiere Modul: %s", SaveModule);
         if (SavedModule != "") Module.Import(SavedModule.c_str());
         
         /*
@@ -743,7 +744,8 @@ void setup()
         String NewName   = preferences.getString("ModuleName", "");
         if (NewName != "") Module.SetName(NewName.c_str());
         */
-    preferences.end();
+        preferences.end();
+    }
 
     WiFi.mode(WIFI_STA);
     uint8_t MacTemp[6];
@@ -758,6 +760,11 @@ void setup()
 
     AddStatus("Init Module");
     
+    
+    #ifdef KILL_NVS
+      nvs_flash_erase(); nvs_flash_init(); ESP.restart();
+    #endif
+
     int PeerCount = GetPeers();       
     AddStatus("Get Peers");
     
