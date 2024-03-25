@@ -260,24 +260,18 @@ void SendPairingRequest() {
       doc[Buf] =Module.GetPeriphType(SNr);
       snprintf(Buf, sizeof(Buf), "N%d", SNr); 
       doc[Buf] = Module.GetPeriphName(SNr);
-      /*BrTemp = Module.GetPeriphUId(SNr);
-      snprintf(UIdStr, sizeof(UIdStr), "%02x:%02x:%02x:%02x:%02x:%02x:%02x",
-           BrTemp[0], BrTemp[1], BrTemp[2], BrTemp[3], BrTemp[4], BrTemp[5], BrTemp[6]);
-      snprintf(Buf, sizeof(Buf), "UId%d", SNr); 
-      doc[Buf] = UIdStr;
-      */
     }
   }
   serializeJson(doc, jsondata);  
 
-  esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
+  esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  
   
   if (Module.GetDebugMode()) { Serial.print("\nSending: "); Serial.println(jsondata); }
   AddStatus("Send Pairing request...");                                     
 }
 void SendNameChange(int Pos)
 {
-    // sendet auf Broadcast: "Order"="UpdateName"; "Pos"="32; "NewName"="Horst";
+    // sendet auf Broadcast: "Order"="UpdateName"; "Pos"="32; "NewName"="Horst"; Pos==99 is ModuleName
   
   TSLed = millis();
   
@@ -287,7 +281,10 @@ void SendNameChange(int Pos)
   doc["Node"]    = Module.GetName();   
   doc["Order"]   = "UpdateName";
   doc["Pos"]     = Pos;
-  doc["NewName"] = Module.GetPeriphName(Pos);
+
+  //ModuleName (99) or PeriphName(1-...);
+  if (Pos == 99) doc["NewName"] = Module.GetName();
+  else           doc["NewName"] = Module.GetPeriphName(Pos);
   
   serializeJson(doc, jsondata);  
 
@@ -328,14 +325,13 @@ void AddStatus(String Msg) {
 void ToggleSwitch(int SNr)
 {
     int Value = Module.GetPeriphValue(SNr);
-    //Serial.printf("Switch %d vorher: %d\n\r", SNr, Value);
     
     if (Value == 0) Value = 1;
     else Value = 0;
 
     Serial.printf("Value is now %d", Value);
     Module.SetPeriphValue(SNr, Value);
-    //Serial.printf("Switch %d nachher: %f\n\r", SNr, Module.GetPeriphValue(SNr));
+    
     UpdateSwitches();
 }
 void UpdateSwitches() {
@@ -662,27 +658,37 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
       else if (doc["Order"] == "Eichen")        
       {   
           AddStatus("Eichen beginnt"); 
+          CurrentCalibration();
       }
       else if (doc["Order"] == "VoltCalib")     
       { 
           AddStatus("VoltCalib beginnt");
+          float NewVoltage = doc["NewVoltage"];
+
+          if (Module.GetVoltageMon() != -1)
+          {
+              VoltageCalibration(Module.GetVoltageMon(), NewVoltage) ;
+          }
       }
       else if (doc["Order"] == "ToggleSwitch")  
       { 
           int Pos = doc["Pos"];
           if (Module.isPeriphEmpty(Pos) == false) ToggleSwitch(Pos);
-          /*
-          const char *Name = doc["Value"];
-          for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
-          {
-              if (strcmp(Name, Module.GetPeriphName(SNr)) == 0) 
-              {
-                  Serial.printf("%d hat gepasst\n\r", SNr);
-                  ToggleSwitch(SNr);
-              }
-          } 
-          */   
       }  
+      else if (doc["Order"] == "UpdateName")
+      {
+          int Pos = (int) doc["Pos"];
+                String NewName = doc["NewName"];
+
+                if (NewName != "") 
+                {
+                    if (Pos == 99) Module.SetName(NewName.c_str());
+                    else           Module.SetPeriphName(Pos, NewName.c_str());
+                }
+                
+                SaveModule();
+		            SendNameChange(Pos);
+      }
     } // end (!error)
     else // error
     { 

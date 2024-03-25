@@ -382,7 +382,6 @@ void Ui_ChangeName_Loaded(lv_event_t * e)
 			if (Module.isPeriphEmpty(SNr) == false)
 			{
 				ActiveChangeNameNr = SNr;
-				//Serial.printf("Sensor gefunden: %d\n\r", ActiveChangeNameNr);
 				break;
 			}
 		}
