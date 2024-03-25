@@ -330,7 +330,7 @@ void Ui_GaugeSingle_Leave(lv_event_t * e)
 	SingleMeter       = NULL;
 	scale             = NULL;
 	SingleIndicNeedle = NULL;
-	
+
 	Serial.println("GaugeSingleTimer deleted");
 }
 
@@ -347,7 +347,9 @@ void Ui_GaugeSingle_Prev(lv_event_t * e)
 #pragma region CHANGENAME
 void Ui_ChangeName_Next(lv_event_t * e)
 {
-	int NewNr = ActiveChangeNameNr++;
+	ActiveChangeNameNr++;
+	int NewNr = ActiveChangeNameNr;
+	
 	if (NewNr == MAX_PERIPHERALS) NewNr = 0;
 
 	if (Module.isPeriphEmpty(NewNr) == false)
@@ -359,18 +361,15 @@ void Ui_ChangeName_Next(lv_event_t * e)
 
 void Ui_ChangeName_Prev(lv_event_t * e)
 {
+	ActiveChangeNameNr--;
 	int NewNr = ActiveChangeNameNr;
 	
-	for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
-	{
-		NewNr--;
-		if (NewNr == -1) NewNr = MAX_PERIPHERALS-1;
+	if (NewNr == -1) NewNr = MAX_PERIPHERALS-1;
 
-		if (Module.isPeriphEmpty(NewNr) == false)
-		{
-			ActiveChangeNameNr = NewNr;
-			lv_textarea_set_text(ui_TxtAreaChangeName, Module.GetPeriphName(ActiveChangeNameNr));
-		}
+	if (Module.isPeriphEmpty(NewNr) == false)
+	{
+		ActiveChangeNameNr = NewNr;
+		lv_textarea_set_text(ui_TxtAreaChangeName, Module.GetPeriphName(ActiveChangeNameNr));
 	}
 }
 

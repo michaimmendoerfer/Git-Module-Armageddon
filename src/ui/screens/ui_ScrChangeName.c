@@ -33,7 +33,7 @@ void ui_ScrChangeName_screen_init(void)
     lv_obj_set_align(ui_TxtAreaChangeName, LV_ALIGN_CENTER);
     lv_textarea_set_placeholder_text(ui_TxtAreaChangeName, "PeriphName");
     lv_textarea_set_one_line(ui_TxtAreaChangeName, true);
-    lv_obj_set_style_text_color(ui_TxtAreaChangeName, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(ui_TxtAreaChangeName, lv_color_hex(0xF9D474), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_TxtAreaChangeName, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_align(ui_TxtAreaChangeName, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(ui_TxtAreaChangeName, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
