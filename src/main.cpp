@@ -30,8 +30,6 @@ const char _ModuleName[]        = "3.5-Arma";
 //#define MODULE_4S_1V_ADC
 #define MODULE_4S_1V_NOADC
 
-#define SWITCHES_PER_SCREEN 4
-
 struct struct_Status {
   String    Msg;
   uint32_t  TSMsg;
@@ -41,7 +39,6 @@ PeerClass Module;
 
 struct_Status Status[MAX_STATUS];
 
-//volatile u_int8_t TempBroadcast[6];
 u_int8_t broadcastAddressAll[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}; 
 
 //volatile uint32_t TSLastSend      = 0;
@@ -49,8 +46,6 @@ volatile uint32_t TSBootButton    = 0;
 volatile uint32_t TSSend  = 0;
 volatile uint32_t TSPair  = 0;
 volatile uint32_t TSLed   = 0;
-
-//int PeerCount = 0;
 
 Preferences preferences;
 
@@ -91,6 +86,8 @@ void InitModule()
     //uint8_t MacUId[7];
     
     #ifdef MODULE_4S_1V_NOADC   // 4-Way Switch with Voltage-Monitor #################################################################
+      #define SWITCHES_PER_SCREEN 4
+
       //                Name        Type       Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, SWITCH_4_WAY, _Version, NULL,     false, true,  true, false, -1, RELAY_NORMAL, -1,  -1,     1);
 
@@ -102,6 +99,8 @@ void InitModule()
       Module.PeriphSetup(4, "Lipo",   SENS_TYPE_VOLT,    0,  39,   0,    0,   200,   0); 
     #endif
     #ifdef MODULE_4S_1V_ADC     // 4-Way Switch no Voltage-Monitor ###################################################################
+      #define SWITCHES_PER_SCREEN 4
+
       //                Name        Type       Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, SWITCH_4_WAY, _Version, NULL,     false, true,  true, false, -1, RELAY_NORMAL, -1,  -1,     1);
 
@@ -112,6 +111,7 @@ void InitModule()
       Module.PeriphSetup(3, "Switch_4", SENS_TYPE_SWITCH,  0,  33,   0,    0,    0,    0);
     #endif
     #ifdef MODULE_1S            // 1-Way Switch ######################################################################################
+      #define SWITCHES_PER_SCREEN 1
       //                Name        Type       Version  Address   sleep  debug  demo   pair  vMon RelayType      adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, SWITCH_1_WAY, _Version, NULL,     false, true,  false, false, -1, RELAY_REVERSED, -1,  -1,     1);
 
@@ -119,6 +119,8 @@ void InitModule()
       Module.PeriphSetup(0, "Switch_1", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0);
     #endif
     #ifdef MODULE_2S            // 2-Way Switch ######################################################################################
+      #define SWITCHES_PER_SCREEN 2
+
       //                Name        Type       Version  Address   sleep  debug  demo   pair  vMon RelayType      adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, SWITCH_2_WAY, _Version, NULL,     false, true,  false, false, -1, RELAY_REVERSED, -1,  -1,     1);
       
@@ -127,6 +129,8 @@ void InitModule()
       Module.PeriphSetup(0, "Switch_2", SENS_TYPE_SWITCH,  0,  26,   0,    0,    0,    0);
     #endif
     #ifdef MODULE_4A_1V_ADC     // 4-way Battery-Sensor with ADC and VMon ############################################################
+      #define SWITCHES_PER_SCREEN 4
+      
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, 14,  15,     1);
 
@@ -138,6 +142,8 @@ void InitModule()
       Module.PeriphSetup(4, "VMon",     SENS_TYPE_VOLT, 0,   39,   0,    0,   200,   0); 
     #endif
     #ifdef MODULE_4A_1V_NOADC   // 4-way Battery-Sensor no ADC and VMon ##############################################################
+      #define SWITCHES_PER_SCREEN 4
+
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, 14,  15,     1);
 
@@ -151,7 +157,8 @@ void InitModule()
 }
 
 #pragma region Send-Things
-void SendMessage () {
+void SendMessage () 
+{
   
     //sendet NAME0:Value0, NAME1:Value1, SLEEP:Status, Debug:Status
     TSLed = millis();
@@ -239,7 +246,8 @@ void SendMessage () {
 
   //AddStatus("SendStatus");
 }
-void SendPairingRequest() {
+void SendPairingRequest() 
+{
   // sendet auf Broadcast: "addme", T0:Type, N0:Name, T1:Type, N1:Name...
   TSLed = millis();
   //digitalWrite(LED_BUILTIN, LED_ON);
@@ -295,25 +303,29 @@ void SendNameChange(int Pos)
 }
 #pragma endregion Send-Things
 #pragma region System-Things
-void SetDemoMode(bool Mode) {
+void SetDemoMode(bool Mode) 
+{
   preferences.begin("JeepifyInit", false);
     Module.SetDemoMode(Mode);
     if (preferences.getBool("DemoMode", false) != Module.GetDemoMode()) preferences.putBool("DemoMode", Module.GetDemoMode());
   preferences.end();
 }
-void SetSleepMode(bool Mode) {
+void SetSleepMode(bool Mode) 
+{
   preferences.begin("JeepifyInit", false);
     Module.SetSleepMode(Mode);
     if (preferences.getBool("SleepMode", false) != Module.GetSleepMode()) preferences.putBool("SleepMode", Module.GetSleepMode());
   preferences.end();
 }
-void SetDebugMode(bool Mode) {
+void SetDebugMode(bool Mode) 
+{
   preferences.begin("JeepifyInit", false);
     Module.SetDebugMode(Mode);
     if (preferences.getBool("DebugMode", false) != Module.GetDebugMode()) preferences.putBool("DebugMode", Module.GetDebugMode());
   preferences.end();
 }
-void AddStatus(String Msg) {
+void AddStatus(String Msg) 
+{
   /*for (int Si=MAX_STATUS-1; Si>0; Si--) {
     Status[Si].Msg   = Status[Si-1].Msg;
     Status[Si].TSMsg = Status[Si-1].TSMsg;
@@ -334,7 +346,8 @@ void ToggleSwitch(int SNr)
     
     UpdateSwitches();
 }
-void UpdateSwitches() {
+void UpdateSwitches() 
+{
   for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
   {
       if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
@@ -356,7 +369,8 @@ void UpdateSwitches() {
   }
   SendMessage();
 }
-void  PrintMAC(const uint8_t * mac_addr){
+void  PrintMAC(const uint8_t * mac_addr)
+{
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
@@ -426,7 +440,8 @@ void VoltageCalibration(int SNr, float V)
         SaveModule();
     }
 }
-void CurrentCalibration() {
+void CurrentCalibration() 
+{
     char Buf[100] = {};
     
     for(int SNr=0; SNr<MAX_PERIPHERALS; SNr++) {
@@ -456,8 +471,9 @@ void CurrentCalibration() {
       }
     }
     SaveModule();
-  }
-  float ReadAmp (int SNr) {
+}
+float ReadAmp (int SNr) 
+{
   float TempVal      = 0;
   float TempVolt     = 0;
   float TempAmp      = 0;
@@ -490,7 +506,8 @@ void CurrentCalibration() {
   
   return (TempAmp); 
 }
-float ReadVolt(int SNr) {
+float ReadVolt(int SNr) 
+{
   if (!Module.GetPeriphPtr(SNr)->GetVin()) { Serial.println("Vin must not be zero !!!"); return 0; }
   
   float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
@@ -696,7 +713,8 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
           Serial.println(error.f_str());
     }
 }
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) { 
+void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
+{ 
     if (Module.GetDebugMode()) {
         //Serial.print("\r\nLast Packet Send Status:\t");
         //Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
@@ -808,11 +826,6 @@ void loop()
     AddStatus("Pairing beendet...");
     smartdisplay_led_set_rgb(0, 0, 0);
   }
-
-#ifdef BOARD_HAS_RGB_LED
-        auto const rgb = (millis() / 2000) % 8;
-        //smartdisplay_led_set_rgb(rgb & 0x01, rgb & 0x02, rgb & 0x04);
-#endif
-
     lv_timer_handler();
+    delay(5);
 }
