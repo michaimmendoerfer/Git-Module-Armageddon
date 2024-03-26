@@ -10,6 +10,7 @@
 #include <nvs_flash.h>
 
 #define SWITCHES_PER_SCREEN 4
+#define GAUGES_PER_SCREEN   5
 
 extern PeerClass Module;
 extern void ToggleSwitch(int SNr);
@@ -24,15 +25,18 @@ extern void VoltageCalibration(int SNr, float V);
 extern uint32_t TSPair;
 
 int ScrSwitchPage = 0;
+int ScrGaugeMultiPage = 0;
 int ActiveSensorNr = -1;
 int ActiveChangeNameNr = -1;
 
 void SwitchUpdateTimer(lv_timer_t * timer);
 void GaugeSingleUpdateTimer(lv_timer_t * timer);
+void GaugeMultiUpdateTimer(lv_timer_t * timer);
 void CalibrationUpdateTimer(lv_timer_t * timer);
 
 lv_timer_t *SwitchTimer;
 lv_timer_t *GaugeSingleTimer;
+lv_timer_t *GaugeMultiTimer;
 lv_timer_t *CalibTimer;
 
 lv_obj_t *SingleMeter;
@@ -485,4 +489,90 @@ void ui_Calib_Current_Click(lv_event_t * e)
 void Ui_Init_Custom(lv_event_t * e)
 {
 	
+}
+
+void Ui_MultiGauge_Loaded(lv_event_t * e)
+{
+	lv_obj_t *Gauge;
+	lv_obj_t *GaugeName;
+	lv_obj_t *GaugeValue;
+
+	int PeriphPos;
+	
+	for (int G=0; G<GAUGES_PER_SCREEN; G++)
+	{
+		Gauge = lv_obj_get_child(lv_scr_act(), 2*GAUGES_PER_SCREEN+G);
+		GaugeName  = lv_obj_get_child(lv_scr_act(), G);
+		GaugeValue = lv_obj_get_child(lv_scr_act(), G+GAUGES_PER_SCREEN);
+		
+		PeriphPos = ScrGaugeMultiPage*GAUGES_PER_SCREEN+G;
+
+		if (!Module.isPeriphEmpty(PeriphPos))
+		{
+			lv_label_set_text(GaugeName, Module.GetPeriphName(PeriphPos));
+		}
+		else 
+		{
+			lv_obj_add_flag(Gauge, LV_OBJ_FLAG_HIDDEN);
+			lv_obj_add_flag(GaugeName, LV_OBJ_FLAG_HIDDEN);
+			lv_obj_add_flag(GaugeValue, LV_OBJ_FLAG_HIDDEN);
+			
+		}
+	}
+
+	static uint32_t user_data = 10;
+	if (!GaugeMultiTimer) 
+	{
+		GaugeMultiTimer = lv_timer_create(GaugeMultiUpdateTimer, 500,  &user_data);
+		Serial.println("GaugeMultiTimer created");
+	}
+}
+
+void MultiGaugeUpdateTimer(lv_timer_t * timer)
+{
+	lv_obj_t *Gauge;
+	lv_obj_t *GaugeName;
+	lv_obj_t *GaugeValue;
+	int PeriphPos;
+	
+	Serial.println("MultiGaugeUpdateTimer");
+	
+	for (int G=0; G<GAUGES_PER_SCREEN; G++)
+	{
+		Gauge = lv_obj_get_child(lv_scr_act(), 2*GAUGES_PER_SCREEN+G);
+		GaugeName  = lv_obj_get_child(lv_scr_act(), G);
+		GaugeValue = lv_obj_get_child(lv_scr_act(), G+GAUGES_PER_SCREEN);
+		
+		PeriphPos = ScrGaugeMultiPage*GAUGES_PER_SCREEN+G;
+
+		if (!Module.isPeriphEmpty(PeriphPos))
+		{
+			GaugeValue = lv_obj_get_child(lv_scr_act(), G+GAUGES_PER_SCREEN);
+			Gauge      = lv_obj_get_child(lv_scr_act(), G+2*GAUGES_PER_SCREEN);
+
+			if (Module.GetPeriphChanged(PeriphPos))
+				{	
+					char buf[10];
+					dtostrf(Module.GetPeriphValue(PeriphPos), 0, 1, buf);
+					if (Module.GetPeriphType(PeriphPos) == SENS_TYPE_VOLT) strcat(buf, "V");
+					if (Module.GetPeriphType(PeriphPos) == SENS_TYPE_AMP ) strcat(buf, "A");
+					
+					lv_label_set_text(GaugeValue, buf);
+					//lv_meter_set_indicator_value(SingleMeter, SingleIndicNeedle, Module.GetPeriphValue(ActiveSensorNr)*10);
+				}
+		}
+	}
+}
+void Ui_GaugeMulti_Leave(lv_event_t * e)
+{
+	lv_timer_del(GaugeMultiTimer);
+	GaugeMultiTimer = NULL;
+
+	/*lv_obj_del(SingleMeter);
+	
+	SingleMeter       = NULL;
+	scale             = NULL;
+	SingleIndicNeedle = NULL;
+	*/
+	Serial.println("GaugeMultiTimer deleted");
 }

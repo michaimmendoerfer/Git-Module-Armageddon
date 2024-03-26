@@ -31,6 +31,7 @@ void ui_ScrChangeName_screen_init(void)
     lv_obj_set_x(ui_TxtAreaChangeName, -79);
     lv_obj_set_y(ui_TxtAreaChangeName, 99);
     lv_obj_set_align(ui_TxtAreaChangeName, LV_ALIGN_CENTER);
+    lv_textarea_set_max_length(ui_TxtAreaChangeName, 20);
     lv_textarea_set_placeholder_text(ui_TxtAreaChangeName, "PeriphName");
     lv_textarea_set_one_line(ui_TxtAreaChangeName, true);
     lv_obj_set_style_text_color(ui_TxtAreaChangeName, lv_color_hex(0xF9D474), LV_PART_MAIN | LV_STATE_DEFAULT);

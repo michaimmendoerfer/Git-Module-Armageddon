@@ -32,6 +32,7 @@ void ui_event_BtnMenu5(lv_event_t * e);
 extern lv_obj_t * ui_BtnMenu5;
 void ui_event_BtnMenu6(lv_event_t * e);
 extern lv_obj_t * ui_BtnMenu6;
+extern lv_obj_t * ui_Label8;
 extern lv_obj_t * ui_LblMenuJeepify;
 extern lv_obj_t * ui_LblMenuType;
 // SCREEN: ui_ScrSettings
@@ -106,6 +107,25 @@ void ui_event_Keyboard2(lv_event_t * e);
 extern lv_obj_t * ui_Keyboard2;
 extern lv_obj_t * ui_Label10;
 extern lv_obj_t * ui_TxtAreaScrNumKeyVoltage;
+// SCREEN: ui_ScreenGaugeMulti
+void ui_ScreenGaugeMulti_screen_init(void);
+void ui_event_ScreenGaugeMulti(lv_event_t * e);
+extern lv_obj_t * ui_ScreenGaugeMulti;
+extern lv_obj_t * ui_LblGaugeMultiPeer1;
+extern lv_obj_t * ui_LblGaugeMultiPeer2;
+extern lv_obj_t * ui_LblGaugeMultiPeer3;
+extern lv_obj_t * ui_LblGaugeMultiPeer4;
+extern lv_obj_t * ui_LblGaugeMultiPeer5;
+extern lv_obj_t * ui_LblGaugeMultiValue1;
+extern lv_obj_t * ui_LblGaugeMultiValue2;
+extern lv_obj_t * ui_LblGaugeMultiValue3;
+extern lv_obj_t * ui_LblGaugeMultiValue4;
+extern lv_obj_t * ui_LblGaugeMultiValue5;
+extern lv_obj_t * ui_Image1;
+extern lv_obj_t * ui_Image2;
+extern lv_obj_t * ui_Image4;
+extern lv_obj_t * ui_Image5;
+extern lv_obj_t * ui_Image6;
 void ui_event____initial_actions0(lv_event_t * e);
 extern lv_obj_t * ui____initial_actions0;
 
@@ -121,6 +141,7 @@ LV_IMG_DECLARE(ui_img_551600910);    // assets\Btn-small-on-100.png
 LV_IMG_DECLARE(ui_img_1404430020);    // assets\voltmeter-alt.png
 LV_IMG_DECLARE(ui_img_toggle_vertical_off_75_png);    // assets\Toggle_vertical_off_75.png
 LV_IMG_DECLARE(ui_img_toggle_vertical_on_75_png);    // assets\Toggle_vertical_on_75.png
+LV_IMG_DECLARE(ui_img_1844714932);    // assets\voltmeter-alt-klein.png
 
 
 

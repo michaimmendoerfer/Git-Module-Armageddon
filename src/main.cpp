@@ -30,6 +30,10 @@ const char _ModuleName[]        = "3.5-Arma";
 //#define MODULE_4S_1V_ADC
 #define MODULE_4S_1V_NOADC
 
+//#define DISPLAY_NO
+//#define DISPLAY_C3_ROUND
+#define DISPLAY_480
+
 struct struct_Status {
   String    Msg;
   uint32_t  TSMsg;
@@ -730,10 +734,12 @@ void setup()
 
     Serial.begin(115200);
 
-    smartdisplay_init();
+    #ifdef DISPLAY_480
+        smartdisplay_init();
 
-    __attribute__((unused)) auto disp = lv_disp_get_default();
-    lv_disp_set_rotation(disp, LV_DISP_ROT_90);
+        __attribute__((unused)) auto disp = lv_disp_get_default();
+        lv_disp_set_rotation(disp, LV_DISP_ROT_90);
+    #endif
 
     #ifdef ADC_USED
     if (Module.ADCPort != -1)
@@ -758,18 +764,10 @@ void setup()
     if (preferences.begin("JeepifyInit", true))
     {
         String SavedModule   = preferences.getString("Module", "");
-        Serial.printf("Importiere Modul: %s", SavedModule.c_str());
-        char ToImport[250];
-        strcpy(ToImport,SavedModule.c_str());
-        if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
-        
-        /*
-        Module.SetDebugMode(preferences.getBool("DebugMode", Module.GetDebugMode()));
-        Module.SetSleepMode(preferences.getBool("SleepMode", Module.GetSleepMode()));
-        Module.SetDemoMode (preferences.getBool("DemoMode",  Module.GetDemoMode()));
-        String NewName   = preferences.getString("ModuleName", "");
-        if (NewName != "") Module.SetName(NewName.c_str());
-        */
+            Serial.printf("Importiere Modul: %s", SavedModule.c_str());
+            char ToImport[250];
+            strcpy(ToImport,SavedModule.c_str());
+            if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
         preferences.end();
     }
 
@@ -811,7 +809,9 @@ void setup()
   */
     //UpdateSwitches();
 
-    ui_init();
+    #ifndef DISPLAY_NO
+      ui_init();
+    #endif
 }
 void loop()
 {

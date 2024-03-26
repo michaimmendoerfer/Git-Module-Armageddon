@@ -14,8 +14,8 @@ void ui_ScrMenu_screen_init(void)
     ui_BtnMenu1 = lv_btn_create(ui_ScrMenu);
     lv_obj_set_width(ui_BtnMenu1, 50);
     lv_obj_set_height(ui_BtnMenu1, 50);
-    lv_obj_set_x(ui_BtnMenu1, -180);
-    lv_obj_set_y(ui_BtnMenu1, -120);
+    lv_obj_set_x(ui_BtnMenu1, -194);
+    lv_obj_set_y(ui_BtnMenu1, -121);
     lv_obj_set_align(ui_BtnMenu1, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_BtnMenu1, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_BtnMenu1, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
@@ -35,7 +35,7 @@ void ui_ScrMenu_screen_init(void)
     ui_BtnMenu2 = lv_btn_create(ui_ScrMenu);
     lv_obj_set_width(ui_BtnMenu2, 50);
     lv_obj_set_height(ui_BtnMenu2, 50);
-    lv_obj_set_x(ui_BtnMenu2, -100);
+    lv_obj_set_x(ui_BtnMenu2, -113);
     lv_obj_set_y(ui_BtnMenu2, -120);
     lv_obj_set_align(ui_BtnMenu2, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_BtnMenu2, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
@@ -56,7 +56,7 @@ void ui_ScrMenu_screen_init(void)
     ui_BtnMenu3 = lv_btn_create(ui_ScrMenu);
     lv_obj_set_width(ui_BtnMenu3, 50);
     lv_obj_set_height(ui_BtnMenu3, 50);
-    lv_obj_set_x(ui_BtnMenu3, -20);
+    lv_obj_set_x(ui_BtnMenu3, -35);
     lv_obj_set_y(ui_BtnMenu3, -120);
     lv_obj_set_align(ui_BtnMenu3, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_BtnMenu3, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
@@ -77,8 +77,8 @@ void ui_ScrMenu_screen_init(void)
     ui_BtnMenu4 = lv_btn_create(ui_ScrMenu);
     lv_obj_set_width(ui_BtnMenu4, 50);
     lv_obj_set_height(ui_BtnMenu4, 50);
-    lv_obj_set_x(ui_BtnMenu4, 60);
-    lv_obj_set_y(ui_BtnMenu4, -120);
+    lv_obj_set_x(ui_BtnMenu4, 45);
+    lv_obj_set_y(ui_BtnMenu4, -121);
     lv_obj_set_align(ui_BtnMenu4, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_BtnMenu4, LV_OBJ_FLAG_CHECKABLE | LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_BtnMenu4, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
@@ -101,8 +101,8 @@ void ui_ScrMenu_screen_init(void)
     ui_BtnMenu5 = lv_btn_create(ui_ScrMenu);
     lv_obj_set_width(ui_BtnMenu5, 50);
     lv_obj_set_height(ui_BtnMenu5, 50);
-    lv_obj_set_x(ui_BtnMenu5, 140);
-    lv_obj_set_y(ui_BtnMenu5, -121);
+    lv_obj_set_x(ui_BtnMenu5, 121);
+    lv_obj_set_y(ui_BtnMenu5, -119);
     lv_obj_set_align(ui_BtnMenu5, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_BtnMenu5, LV_OBJ_FLAG_CHECKABLE | LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_BtnMenu5, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
@@ -125,14 +125,13 @@ void ui_ScrMenu_screen_init(void)
     ui_BtnMenu6 = lv_btn_create(ui_ScrMenu);
     lv_obj_set_width(ui_BtnMenu6, 50);
     lv_obj_set_height(ui_BtnMenu6, 50);
-    lv_obj_set_x(ui_BtnMenu6, -181);
-    lv_obj_set_y(ui_BtnMenu6, -47);
+    lv_obj_set_x(ui_BtnMenu6, 198);
+    lv_obj_set_y(ui_BtnMenu6, -121);
     lv_obj_set_align(ui_BtnMenu6, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_BtnMenu6, LV_OBJ_FLAG_CHECKABLE | LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_BtnMenu6, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
     lv_obj_set_style_bg_color(ui_BtnMenu6, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(ui_BtnMenu6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_img_src(ui_BtnMenu6, &ui_img_icon_keyboard_png, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_color(ui_BtnMenu6, lv_color_hex(0xC1851A), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_opa(ui_BtnMenu6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(ui_BtnMenu6, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -145,6 +144,12 @@ void ui_ScrMenu_screen_init(void)
     lv_obj_set_style_bg_color(ui_BtnMenu6, lv_color_hex(0x8B6729), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_bg_opa(ui_BtnMenu6, 255, LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_bg_img_src(ui_BtnMenu6, &ui_img_icon_pair_png, LV_PART_MAIN | LV_STATE_CHECKED);
+
+    ui_Label8 = lv_label_create(ui_BtnMenu6);
+    lv_obj_set_width(ui_Label8, LV_SIZE_CONTENT);   /// 1
+    lv_obj_set_height(ui_Label8, LV_SIZE_CONTENT);    /// 1
+    lv_obj_set_align(ui_Label8, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_Label8, "Cal");
 
     ui_LblMenuJeepify = lv_label_create(ui_ScrMenu);
     lv_obj_set_width(ui_LblMenuJeepify, LV_SIZE_CONTENT);   /// 1

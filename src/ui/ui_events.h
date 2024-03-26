@@ -37,6 +37,8 @@ void ui_Calib_Loaded(lv_event_t * e);
 void Ui_Calib_Leave(lv_event_t * e);
 void ui_Calib_Current_Click(lv_event_t * e);
 void Ui_NumKey_Ready(lv_event_t * e);
+void Ui_MultiGauge_Loaded(lv_event_t * e);
+void Ui_GaugeMulti_Leave(lv_event_t * e);
 
 #ifdef __cplusplus
 } /*extern "C"*/

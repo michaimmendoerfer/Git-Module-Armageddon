@@ -87,17 +87,5 @@ const int Rotation = 0;
 #define MULTI_SCREEN_COLS 2
 #define PERIPH_PER_SCREEN 4
 
-struct struct_MultiScreen {
-  char           Name[20];
-  int            Id;
-  struct_Peer   *Peer    [PERIPH_PER_SCREEN];
-  int            PeerId  [PERIPH_PER_SCREEN];
-  struct_Periph *Periph  [PERIPH_PER_SCREEN];
-  int            PeriphId[PERIPH_PER_SCREEN];
-  bool           Used;
-};
-
-typedef struct struct_MultiScreen struct_MultiScreen;
-
 extern uint8_t broadcastAddressAll[6];
 #endif

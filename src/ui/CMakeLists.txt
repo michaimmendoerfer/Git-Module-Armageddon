@@ -7,6 +7,7 @@ SET(SOURCES components/ui_comp_switchbutton.c
     screens/ui_ScrChangeName.c
     screens/ui_ScreenCalib.c
     screens/ui_ScrNumKey.c
+    screens/ui_ScreenGaugeMulti.c
     ui.c
     components/ui_comp_hook.c
     ui_helpers.c
@@ -22,6 +23,7 @@ SET(SOURCES components/ui_comp_switchbutton.c
     images/ui_img_551600910.c
     images/ui_img_1404430020.c
     images/ui_img_toggle_vertical_off_75_png.c
-    images/ui_img_toggle_vertical_on_75_png.c)
+    images/ui_img_toggle_vertical_on_75_png.c
+    images/ui_img_1844714932.c)
 
 add_library(ui ${SOURCES})
