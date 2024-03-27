@@ -79,7 +79,6 @@ lv_obj_t * ui_SwitchButton_create(lv_obj_t * comp_parent)
     lv_obj_set_y(cui_LblSwitchId, 15);
     lv_obj_set_align(cui_LblSwitchId, LV_ALIGN_CENTER);
     lv_label_set_text(cui_LblSwitchId, "Nr");
-    lv_obj_add_flag(cui_LblSwitchId, LV_OBJ_FLAG_HIDDEN);     /// Flags
 
     lv_obj_t ** children = lv_mem_alloc(sizeof(lv_obj_t *) * _UI_COMP_SWITCHBUTTON_NUM);
     children[UI_COMP_SWITCHBUTTON_SWITCHBUTTON] = cui_SwitchButton;

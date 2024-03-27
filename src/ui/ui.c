@@ -49,8 +49,8 @@ lv_obj_t * ui_Label4;
 lv_obj_t * ui_Label5;
 lv_obj_t * ui_LblSettingName;
 lv_obj_t * ui_LblSettingType;
-void ui_event_ImgSettingsReset(lv_event_t * e);
-lv_obj_t * ui_ImgSettingsReset;
+void ui_event_Button4(lv_event_t * e);
+lv_obj_t * ui_Button4;
 lv_obj_t * ui_Label9;
 
 
@@ -97,11 +97,16 @@ void ui_ScreenCalib_screen_init(void);
 void ui_event_ScreenCalib(lv_event_t * e);
 lv_obj_t * ui_ScreenCalib;
 lv_obj_t * ui_Label7;
+lv_obj_t * ui_Label6;
+void ui_event_BtnCalibCurrent(lv_event_t * e);
+lv_obj_t * ui_BtnCalibCurrent;
+void ui_event_LblCalibCurrentValues(lv_event_t * e);
+lv_obj_t * ui_LblCalibCurrentValues;
+void ui_event_LblCalibCurrentNames(lv_event_t * e);
+lv_obj_t * ui_LblCalibCurrentNames;
+lv_obj_t * ui_BtnCalibVoltage;
 void ui_event_LblCalibVoltage(lv_event_t * e);
 lv_obj_t * ui_LblCalibVoltage;
-lv_obj_t * ui_Label6;
-void ui_event_LblCalibCurrent(lv_event_t * e);
-lv_obj_t * ui_LblCalibCurrent;
 
 
 // SCREEN: ui_ScrNumKey
@@ -128,11 +133,16 @@ lv_obj_t * ui_LblGaugeMultiValue2;
 lv_obj_t * ui_LblGaugeMultiValue3;
 lv_obj_t * ui_LblGaugeMultiValue4;
 lv_obj_t * ui_LblGaugeMultiValue5;
-lv_obj_t * ui_Image1;
-lv_obj_t * ui_Image2;
-lv_obj_t * ui_Image4;
-lv_obj_t * ui_Image5;
-lv_obj_t * ui_Image6;
+void ui_event_BtnGaugeMultiGauge1(lv_event_t * e);
+lv_obj_t * ui_BtnGaugeMultiGauge1;
+void ui_event_BtnGaugeMultiGauge2(lv_event_t * e);
+lv_obj_t * ui_BtnGaugeMultiGauge2;
+void ui_event_BtnGaugeMultiGauge3(lv_event_t * e);
+lv_obj_t * ui_BtnGaugeMultiGauge3;
+void ui_event_BtnGaugeMultiGauge4(lv_event_t * e);
+lv_obj_t * ui_BtnGaugeMultiGauge4;
+void ui_event_BtnGaugeMultiGauge5(lv_event_t * e);
+lv_obj_t * ui_BtnGaugeMultiGauge5;
 void ui_event____initial_actions0(lv_event_t * e);
 lv_obj_t * ui____initial_actions0;
 const lv_img_dsc_t * ui_imgset_25820555[1] = {&ui_img_551600910};
@@ -171,7 +181,7 @@ void ui_event_BtnMenu2(lv_event_t * e)
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t * target = lv_event_get_target(e);
     if(event_code == LV_EVENT_CLICKED) {
-        _ui_screen_change(&ui_ScrGaugeSingle, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_ScrGaugeSingle_screen_init);
+        _ui_screen_change(&ui_ScreenGaugeMulti, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_ScreenGaugeMulti_screen_init);
     }
 }
 void ui_event_BtnMenu3(lv_event_t * e)
@@ -250,7 +260,7 @@ void ui_event_SwSettingsPair(lv_event_t * e)
         Ui_SettingBtn4_Click(e);
     }
 }
-void ui_event_ImgSettingsReset(lv_event_t * e)
+void ui_event_Button4(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t * target = lv_event_get_target(e);
@@ -290,14 +300,6 @@ void ui_event_ScrSwitch(lv_event_t * e)
         _ui_screen_change(&ui_ScrMenu, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, &ui_ScrMenu_screen_init);
     }
     if(event_code == LV_EVENT_SCREEN_LOADED) {
-        _ui_label_set_property(ui_comp_get_child(ui_SwitchButton2, UI_COMP_SWITCHBUTTON_LBLSWITCHID), _UI_LABEL_PROPERTY_TEXT,
-                               "2");
-        _ui_label_set_property(ui_comp_get_child(ui_SwitchButton3, UI_COMP_SWITCHBUTTON_LBLSWITCHID), _UI_LABEL_PROPERTY_TEXT,
-                               "3");
-        _ui_label_set_property(ui_comp_get_child(ui_SwitchButton4, UI_COMP_SWITCHBUTTON_LBLSWITCHID), _UI_LABEL_PROPERTY_TEXT,
-                               "4");
-        _ui_label_set_property(ui_comp_get_child(ui_SwitchButton1, UI_COMP_SWITCHBUTTON_LBLSWITCHID), _UI_LABEL_PROPERTY_TEXT,
-                               "1");
         Ui_Switch_Loaded(e);
     }
     if(event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_LEFT) {
@@ -355,20 +357,36 @@ void ui_event_ScreenCalib(lv_event_t * e)
         Ui_Calib_Leave(e);
     }
 }
+void ui_event_BtnCalibCurrent(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    if(event_code == LV_EVENT_CLICKED) {
+        ui_Calib_Current_Click(e);
+    }
+}
+void ui_event_LblCalibCurrentValues(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    if(event_code == LV_EVENT_CLICKED) {
+        ui_Calib_Current_Click(e);
+    }
+}
+void ui_event_LblCalibCurrentNames(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    if(event_code == LV_EVENT_CLICKED) {
+        ui_Calib_Current_Click(e);
+    }
+}
 void ui_event_LblCalibVoltage(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t * target = lv_event_get_target(e);
     if(event_code == LV_EVENT_CLICKED) {
         _ui_screen_change(&ui_ScrNumKey, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_ScrNumKey_screen_init);
-    }
-}
-void ui_event_LblCalibCurrent(lv_event_t * e)
-{
-    lv_event_code_t event_code = lv_event_get_code(e);
-    lv_obj_t * target = lv_event_get_target(e);
-    if(event_code == LV_EVENT_CLICKED) {
-        ui_Calib_Current_Click(e);
     }
 }
 void ui_event_ScrNumKey(lv_event_t * e)
@@ -400,6 +418,46 @@ void ui_event_ScreenGaugeMulti(lv_event_t * e)
     }
     if(event_code == LV_EVENT_SCREEN_UNLOAD_START) {
         Ui_GaugeMulti_Leave(e);
+    }
+}
+void ui_event_BtnGaugeMultiGauge1(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    if(event_code == LV_EVENT_CLICKED) {
+        Ui_GaugeMulti_Gauge_Click(e);
+    }
+}
+void ui_event_BtnGaugeMultiGauge2(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    if(event_code == LV_EVENT_CLICKED) {
+        Ui_GaugeMulti_Gauge_Click(e);
+    }
+}
+void ui_event_BtnGaugeMultiGauge3(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    if(event_code == LV_EVENT_CLICKED) {
+        Ui_GaugeMulti_Gauge_Click(e);
+    }
+}
+void ui_event_BtnGaugeMultiGauge4(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    if(event_code == LV_EVENT_CLICKED) {
+        Ui_GaugeMulti_Gauge_Click(e);
+    }
+}
+void ui_event_BtnGaugeMultiGauge5(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    if(event_code == LV_EVENT_CLICKED) {
+        Ui_GaugeMulti_Gauge_Click(e);
     }
 }
 void ui_event____initial_actions0(lv_event_t * e)

@@ -155,7 +155,7 @@ void ui_ScrMenu_screen_init(void)
     lv_obj_set_width(ui_LblMenuJeepify, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_LblMenuJeepify, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_x(ui_LblMenuJeepify, 15);
-    lv_obj_set_y(ui_LblMenuJeepify, 241);
+    lv_obj_set_y(ui_LblMenuJeepify, 261);
     lv_label_set_text(ui_LblMenuJeepify, "Jeepify");
     lv_obj_set_style_text_color(ui_LblMenuJeepify, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_LblMenuJeepify, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -164,8 +164,8 @@ void ui_ScrMenu_screen_init(void)
     ui_LblMenuType = lv_label_create(ui_ScrMenu);
     lv_obj_set_width(ui_LblMenuType, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_LblMenuType, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_LblMenuType, 15);
-    lv_obj_set_y(ui_LblMenuType, 268);
+    lv_obj_set_x(ui_LblMenuType, 14);
+    lv_obj_set_y(ui_LblMenuType, 286);
     lv_label_set_text(ui_LblMenuType, "4-Switch PDC");
     lv_obj_set_style_text_color(ui_LblMenuType, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_LblMenuType, 255, LV_PART_MAIN | LV_STATE_DEFAULT);

@@ -22,29 +22,6 @@ void ui_ScreenCalib_screen_init(void)
     lv_obj_set_style_text_opa(ui_Label7, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui_Label7, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_LblCalibVoltage = lv_label_create(ui_ScreenCalib);
-    lv_obj_set_width(ui_LblCalibVoltage, 145);
-    lv_obj_set_height(ui_LblCalibVoltage, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_LblCalibVoltage, 106);
-    lv_obj_set_y(ui_LblCalibVoltage, -20);
-    lv_obj_set_align(ui_LblCalibVoltage, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_LblCalibVoltage, "--.-V");
-    lv_obj_set_style_text_color(ui_LblCalibVoltage, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(ui_LblCalibVoltage, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_align(ui_LblCalibVoltage, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_LblCalibVoltage, &lv_font_montserrat_44, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_radius(ui_LblCalibVoltage, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(ui_LblCalibVoltage, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(ui_LblCalibVoltage, 100, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_color(ui_LblCalibVoltage, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_opa(ui_LblCalibVoltage, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(ui_LblCalibVoltage, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_side(ui_LblCalibVoltage, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(ui_LblCalibVoltage, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(ui_LblCalibVoltage, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(ui_LblCalibVoltage, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(ui_LblCalibVoltage, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
-
     ui_Label6 = lv_label_create(ui_ScreenCalib);
     lv_obj_set_width(ui_Label6, LV_SIZE_CONTENT);   /// 1
     lv_obj_set_height(ui_Label6, LV_SIZE_CONTENT);    /// 1
@@ -55,31 +32,78 @@ void ui_ScreenCalib_screen_init(void)
     lv_obj_set_style_text_color(ui_Label6, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_Label6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-    ui_LblCalibCurrent = lv_label_create(ui_ScreenCalib);
-    lv_obj_set_width(ui_LblCalibCurrent, 194);
-    lv_obj_set_height(ui_LblCalibCurrent, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_LblCalibCurrent, -101);
-    lv_obj_set_y(ui_LblCalibCurrent, -20);
-    lv_obj_set_align(ui_LblCalibCurrent, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_LblCalibCurrent, "(0A) - LED-Bar\n(0A) - Cooler\n(0.1A) - Something");
-    lv_obj_set_style_text_color(ui_LblCalibCurrent, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_opa(ui_LblCalibCurrent, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_align(ui_LblCalibCurrent, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_LblCalibCurrent, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_radius(ui_LblCalibCurrent, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(ui_LblCalibCurrent, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(ui_LblCalibCurrent, 100, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_color(ui_LblCalibCurrent, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_opa(ui_LblCalibCurrent, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(ui_LblCalibCurrent, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_side(ui_LblCalibCurrent, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_left(ui_LblCalibCurrent, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_right(ui_LblCalibCurrent, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_top(ui_LblCalibCurrent, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_pad_bottom(ui_LblCalibCurrent, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+    ui_BtnCalibCurrent = lv_btn_create(ui_ScreenCalib);
+    lv_obj_set_width(ui_BtnCalibCurrent, 213);
+    lv_obj_set_height(ui_BtnCalibCurrent, 100);
+    lv_obj_set_x(ui_BtnCalibCurrent, -100);
+    lv_obj_set_y(ui_BtnCalibCurrent, -20);
+    lv_obj_set_align(ui_BtnCalibCurrent, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_BtnCalibCurrent, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
+    lv_obj_clear_flag(ui_BtnCalibCurrent, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_set_style_bg_color(ui_BtnCalibCurrent, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_BtnCalibCurrent, 100, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    ui_LblCalibCurrentValues = lv_label_create(ui_BtnCalibCurrent);
+    lv_obj_set_width(ui_LblCalibCurrentValues, 74);
+    lv_obj_set_height(ui_LblCalibCurrentValues, LV_SIZE_CONTENT);    /// 70
+    lv_obj_set_x(ui_LblCalibCurrentValues, -62);
+    lv_obj_set_y(ui_LblCalibCurrentValues, 0);
+    lv_obj_set_align(ui_LblCalibCurrentValues, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_LblCalibCurrentValues, "(0A)\n(12A)\n(14A)\n99.9(A)");
+    lv_obj_set_style_text_color(ui_LblCalibCurrentValues, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_LblCalibCurrentValues, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(ui_LblCalibCurrentValues, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_LblCalibCurrentValues, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui_LblCalibCurrentValues, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui_LblCalibCurrentValues, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui_LblCalibCurrentValues, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui_LblCalibCurrentValues, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_LblCalibCurrentNames = lv_label_create(ui_BtnCalibCurrent);
+    lv_obj_set_width(ui_LblCalibCurrentNames, 121);
+    lv_obj_set_height(ui_LblCalibCurrentNames, LV_SIZE_CONTENT);    /// 70
+    lv_obj_set_x(ui_LblCalibCurrentNames, 30);
+    lv_obj_set_y(ui_LblCalibCurrentNames, 0);
+    lv_obj_set_align(ui_LblCalibCurrentNames, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_LblCalibCurrentNames, "(0A)\n(12A)\n(14A)\n17(A)");
+    lv_obj_set_style_text_color(ui_LblCalibCurrentNames, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_LblCalibCurrentNames, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(ui_LblCalibCurrentNames, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_LblCalibCurrentNames, &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui_LblCalibCurrentNames, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui_LblCalibCurrentNames, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui_LblCalibCurrentNames, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui_LblCalibCurrentNames, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_BtnCalibVoltage = lv_btn_create(ui_ScreenCalib);
+    lv_obj_set_width(ui_BtnCalibVoltage, 170);
+    lv_obj_set_height(ui_BtnCalibVoltage, 100);
+    lv_obj_set_x(ui_BtnCalibVoltage, 114);
+    lv_obj_set_y(ui_BtnCalibVoltage, -20);
+    lv_obj_set_align(ui_BtnCalibVoltage, LV_ALIGN_CENTER);
+    lv_obj_add_flag(ui_BtnCalibVoltage, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
+    lv_obj_clear_flag(ui_BtnCalibVoltage, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
+    lv_obj_set_style_bg_color(ui_BtnCalibVoltage, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(ui_BtnCalibVoltage, 100, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    ui_LblCalibVoltage = lv_label_create(ui_BtnCalibVoltage);
+    lv_obj_set_width(ui_LblCalibVoltage, 145);
+    lv_obj_set_height(ui_LblCalibVoltage, LV_SIZE_CONTENT);    /// 70
+    lv_obj_set_align(ui_LblCalibVoltage, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_LblCalibVoltage, "--.-V");
+    lv_obj_set_style_text_color(ui_LblCalibVoltage, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui_LblCalibVoltage, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(ui_LblCalibVoltage, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_LblCalibVoltage, &lv_font_montserrat_44, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(ui_LblCalibVoltage, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(ui_LblCalibVoltage, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(ui_LblCalibVoltage, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(ui_LblCalibVoltage, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    lv_obj_add_event_cb(ui_LblCalibCurrentValues, ui_event_LblCalibCurrentValues, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_LblCalibCurrentNames, ui_event_LblCalibCurrentNames, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_BtnCalibCurrent, ui_event_BtnCalibCurrent, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_LblCalibVoltage, ui_event_LblCalibVoltage, LV_EVENT_ALL, NULL);
-    lv_obj_add_event_cb(ui_LblCalibCurrent, ui_event_LblCalibCurrent, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_ScreenCalib, ui_event_ScreenCalib, LV_EVENT_ALL, NULL);
 
 }

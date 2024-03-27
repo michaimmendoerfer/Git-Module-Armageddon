@@ -193,6 +193,8 @@ class PeerClass
         
         bool isEmpty() { return (_Type == 0); }
         bool isPeriphEmpty(int SNr) { return Periph[SNr].isEmpty(); }
+        bool isPeriphSensor(int SNr) { return Periph[SNr].IsSensor(); }
+        bool isPeriphSwitch(int SNr) { return Periph[SNr].IsSwitch(); }
 };
 
 PeerClass *FindPeerByMAC(const uint8_t *BroadcastAddress);
