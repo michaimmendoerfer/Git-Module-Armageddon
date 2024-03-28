@@ -3,8 +3,13 @@
 #pragma region Includes
 #include <Arduino.h>
 
-#include <esp32_smartdisplay.h>
-#include <ui/ui.h>
+#ifdef DISPLAY_480
+  #include <esp32_smartdisplay.h>
+#endif
+#ifndef DISPLAY_NO
+  #include <ui/ui.h>
+#endif
+
 #include <LinkedList.h>
 #include <esp_now.h>
 #include <WiFi.h>
