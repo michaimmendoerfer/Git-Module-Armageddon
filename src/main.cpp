@@ -21,19 +21,19 @@
 
 const char _Version[]           = "3.01";
 const char _Protokoll_Version[] = "1.01";
-const char _ModuleName[]        = "3.5-Arma";
+const char _ModuleName[]        = "C3-Arma";
 
 //#define MODULE_1S
 //#define MODULE_2S
 //#define MODULE_4A_1V_ADC
-//#define MODULE_4A_1V_NOADC
+#define MODULE_4A_1V_NOADC
 //#define MODULE_4S_1V_ADC
 //#define MODULE_4S_1V_NOADC
-#define MODULE_2A_2S_1V_NOADC
+//#define MODULE_2A_2S_1V_NOADC
 
-//#define DISPLAY_NO
+#define DISPLAY_NO
 //#define DISPLAY_C3_ROUND
-#define DISPLAY_480
+//#define DISPLAY_480
 
 struct struct_Status {
   String    Msg;
@@ -48,7 +48,6 @@ struct_Status Status[MAX_STATUS];
 
 u_int8_t broadcastAddressAll[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}; 
 
-//volatile uint32_t TSLastSend      = 0;
 volatile uint32_t TSBootButton    = 0;
 volatile uint32_t TSSend  = 0;
 volatile uint32_t TSPair  = 0;
@@ -194,8 +193,7 @@ void InitModule()
 #pragma region Send-Things
 void SendMessage () 
 {
-  
-    //sendet NAME0:Value0, NAME1:Value1, SLEEP:Status, Debug:Status
+    //sendet NAME0:Value0, NAME1:Value1... Status:(bitwise)int
     TSLed = millis();
     //digitalWrite(LED_BUILTIN, LED_ON);
 
@@ -210,10 +208,12 @@ void SendMessage ()
         {
             //temp
             Module.SetPeriphChanged(SNr, true);
+            //SWITCH
             if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
             {
                 dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
             }
+            //AMP
             else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
             {
               if (Module.GetDemoMode()) Module.SetPeriphValue(SNr, random(0,30));
@@ -232,6 +232,7 @@ void SendMessage ()
                   Module.SetPeriphChanged(SNr, false);
               }
             }
+            //VOLT
             else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) {
               if (Module.GetDemoMode()) Module.SetPeriphValue(SNr, random(10,15));
               else                      Module.SetPeriphValue(SNr, ReadVolt(SNr));
@@ -491,7 +492,9 @@ void CurrentCalibration()
         //Filter implementieren !!!
         TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
         TempVolt = 3.3/4095*TempVal; // 1.5???
-        #endif      
+        #endif    
+
+        delay(10);  
 
         if (Module.GetDebugMode()) { 
           Serial.print("TempVal:");     Serial.println(TempVal);
@@ -807,14 +810,12 @@ void setup()
     WiFi.macAddress(MacTemp);
     Module.SetBroadcastAddress(MacTemp);
 
-  
     if (esp_now_init() != ESP_OK) { Serial.println("Error initializing ESP-NOW"); }
   
     esp_now_register_send_cb(OnDataSent);
     esp_now_register_recv_cb(OnDataRecv);    
 
     AddStatus("Init Module");
-    
     
     #ifdef KILL_NVS
       nvs_flash_erase(); nvs_flash_init(); ESP.restart();
