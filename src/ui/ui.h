@@ -32,7 +32,6 @@ void ui_event_BtnMenu5(lv_event_t * e);
 extern lv_obj_t * ui_BtnMenu5;
 void ui_event_BtnMenu6(lv_event_t * e);
 extern lv_obj_t * ui_BtnMenu6;
-extern lv_obj_t * ui_Label8;
 extern lv_obj_t * ui_LblMenuJeepify;
 extern lv_obj_t * ui_LblMenuType;
 // SCREEN: ui_ScrSettings
@@ -146,6 +145,7 @@ LV_IMG_DECLARE(ui_img_icon_switch_png);    // assets\icon_switch.png
 LV_IMG_DECLARE(ui_img_icon_pair_off_png);    // assets\icon_pair_off.png
 LV_IMG_DECLARE(ui_img_icon_pair_png);    // assets\icon_pair.png
 LV_IMG_DECLARE(ui_img_icon_keyboard_png);    // assets\icon_keyboard.png
+LV_IMG_DECLARE(ui_img_icon_calib_png);    // assets\icon_calib.png
 LV_IMG_DECLARE(ui_img_1825836894);    // assets\bg_grill-small.png
 LV_IMG_DECLARE(ui_img_551600910);    // assets\Btn-small-on-100.png
 LV_IMG_DECLARE(ui_img_1404430020);    // assets\voltmeter-alt.png

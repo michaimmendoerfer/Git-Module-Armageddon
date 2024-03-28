@@ -1,10 +1,23 @@
 //#define KILL_NVS 0
 
+//#define MODULE_1S
+//#define MODULE_2S
+//#define MODULE_4A_1V_ADC
+#define MODULE_4A_1V_NOADC
+//#define MODULE_4S_1V_ADC
+//#define MODULE_4S_1V_NOADC
+//#define MODULE_2A_2S_1V_NOADC
+
+#define DISPLAY_NO
+//#define DISPLAY_C3_ROUND
+//#define DISPLAY_480
+
 #pragma region Includes
 #include <Arduino.h>
 
 #include <esp32_smartdisplay.h>
 #include <ui/ui.h>
+
 #include <LinkedList.h>
 #include <esp_now.h>
 #include <WiFi.h>
@@ -22,18 +35,6 @@
 const char _Version[]           = "3.01";
 const char _Protokoll_Version[] = "1.01";
 const char _ModuleName[]        = "C3-Arma";
-
-//#define MODULE_1S
-//#define MODULE_2S
-//#define MODULE_4A_1V_ADC
-#define MODULE_4A_1V_NOADC
-//#define MODULE_4S_1V_ADC
-//#define MODULE_4S_1V_NOADC
-//#define MODULE_2A_2S_1V_NOADC
-
-#define DISPLAY_NO
-//#define DISPLAY_C3_ROUND
-//#define DISPLAY_480
 
 struct struct_Status {
   String    Msg;
@@ -708,7 +709,9 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
           Module.SetPairMode(true); 
           AddStatus("Pairing beginnt"); 
           SendMessage(); 
-          smartdisplay_led_set_rgb(1,0,0);
+          #ifdef DISPLAY_480
+            smartdisplay_led_set_rgb(1,0,0);
+          #endif
       }
       else if (doc["Order"] == "Eichen")        
       {   
@@ -856,7 +859,9 @@ void loop()
     TSPair = 0;
     Module.SetPairMode(false);
     AddStatus("Pairing beendet...");
-    smartdisplay_led_set_rgb(0, 0, 0);
+    #ifdef DISPLAY_480
+      smartdisplay_led_set_rgb(0, 0, 0);
+    #endif
   }
     lv_timer_handler();
     delay(5);

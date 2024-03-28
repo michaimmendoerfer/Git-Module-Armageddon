@@ -25,7 +25,6 @@ void ui_event_BtnMenu5(lv_event_t * e);
 lv_obj_t * ui_BtnMenu5;
 void ui_event_BtnMenu6(lv_event_t * e);
 lv_obj_t * ui_BtnMenu6;
-lv_obj_t * ui_Label8;
 lv_obj_t * ui_LblMenuJeepify;
 lv_obj_t * ui_LblMenuType;
 
