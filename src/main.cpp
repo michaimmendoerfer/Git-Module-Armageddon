@@ -8,9 +8,9 @@
 //#define MODULE_4S_1V_NOADC
 //#define MODULE_2A_2S_1V_NOADC
 
-#define DISPLAY_NO
+//#define DISPLAY_NO
 //#define DISPLAY_C3_ROUND
-//#define DISPLAY_480
+#define DISPLAY_480
 
 #pragma region Includes
 #include <Arduino.h>
