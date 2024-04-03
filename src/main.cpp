@@ -1,12 +1,12 @@
-//#define KILL_NVS 0
+//#define KILL_NVS 1
 
 //#define MODULE_1S
 //#define MODULE_2S
 //#define MODULE_4A_1V_ADC
-#define MODULE_4A_1V_NOADC
+//#define MODULE_4A_1V_NOADC
 //#define MODULE_4S_1V_ADC
 //#define MODULE_4S_1V_NOADC
-//#define MODULE_2A_2S_1V_NOADC
+#define MODULE_2A_2S_1V_NOADC
 
 //#define DISPLAY_NO
 //#define DISPLAY_C3_ROUND
@@ -39,6 +39,7 @@
 const char _Version[]           = "3.01";
 const char _Protokoll_Version[] = "1.01";
 const char _ModuleName[]        = "C3-Arma";
+const bool _LED_SIGNAL          = false;
 
 struct struct_Status {
   String    Msg;
@@ -76,6 +77,8 @@ void   UpdateSwitches();
 void   SetDemoMode (bool Mode);
 void   SetSleepMode(bool Mode);
 void   SetDebugMode(bool Mode);
+
+void   SaveModule();
 
 void   AddStatus(String Msg);
 
@@ -160,10 +163,10 @@ void InitModule()
       Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, -1,  -1,     1.5);
 
       //                      Name     Type             ADS  IO  NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     0,  25,   0,    0,    0,    0);
-      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     0,  26,   0,    0,    0,    0);
-      Module.PeriphSetup(2, "Amp 3",  SENS_TYPE_AMP,     0,  32,   0,    0,    0,    0);
-      Module.PeriphSetup(3, "Amp 4",  SENS_TYPE_AMP,     0,  33,   0,    0,    0,    0);
+      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     0,  32,   0,    0,    0,    0);
+      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     0,  33,   0,    0,    0,    0);
+      Module.PeriphSetup(2, "Amp 3",  SENS_TYPE_AMP,     0,  34,   0,    0,    0,    0);
+      Module.PeriphSetup(3, "Amp 4",  SENS_TYPE_AMP,     0,  35,   0,    0,    0,    0);
       Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  39,   0,    0,   200,   0); 
     #endif
     #ifdef MODULE_2A_2S_1V_NOADC   // 4-way Battery-Sensor no ADC and VMon ##############################################################
@@ -172,12 +175,12 @@ void InitModule()
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, PDC_SENSOR_MIX, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, -1,  -1,     1.5);
 
-      //                      Name     Type             ADS  IO  NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     0,  25,   0,    0,    0,    0);
-      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     0,  26,   0,    0,    0,    0);
-      Module.PeriphSetup(2, "Sw 1",   SENS_TYPE_SWITCH,  0,  32,   0,    0,    0,    0);
-      Module.PeriphSetup(3, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  33,   0,    0,    0,    0);
-      Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  39,   0,    0,   200,   0); 
+      //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     0,  34,   2.5,     0.166,    0,    0);
+      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     0,  35,   2.5,     0.166,    0,    0);
+      Module.PeriphSetup(2, "Sw 1",   SENS_TYPE_SWITCH,  0,  32,   0,       0,        0,    0);
+      Module.PeriphSetup(3, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  33,   0,       0,        0,    0);
+      Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  39,   0,       0,      200,    0); 
     #endif
 
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
@@ -200,7 +203,7 @@ void SendMessage ()
 {
     //sendet NAME0:Value0, NAME1:Value1... Status:(bitwise)int
     TSLed = millis();
-    //digitalWrite(LED_BUILTIN, LED_ON);
+    if (_LED_SIGNAL) smartdisplay_led_set_rgb(0, 1, 0);
 
     JsonDocument doc;; String jsondata; 
     char buf[100]; 
@@ -291,7 +294,7 @@ void SendPairingRequest()
 {
   // sendet auf Broadcast: "addme", T0:Type, N0:Name, T1:Type, N1:Name...
   TSLed = millis();
-  //digitalWrite(LED_BUILTIN, LED_ON);
+  if (_LED_SIGNAL) smartdisplay_led_set_rgb(0, 0, 1);
   
   JsonDocument doc;; String jsondata; 
   char Buf[100] = {};
@@ -348,23 +351,30 @@ void SetDemoMode(bool Mode)
 {
   preferences.begin("JeepifyInit", false);
     Module.SetDemoMode(Mode);
-    if (preferences.getBool("DemoMode", false) != Module.GetDemoMode()) preferences.putBool("DemoMode", Module.GetDemoMode());
+    SaveModule();
   preferences.end();
 }
 void SetSleepMode(bool Mode) 
 {
   preferences.begin("JeepifyInit", false);
     Module.SetSleepMode(Mode);
-    if (preferences.getBool("SleepMode", false) != Module.GetSleepMode()) preferences.putBool("SleepMode", Module.GetSleepMode());
+    SaveModule();
   preferences.end();
 }
 void SetDebugMode(bool Mode) 
 {
   preferences.begin("JeepifyInit", false);
     Module.SetDebugMode(Mode);
-    if (preferences.getBool("DebugMode", false) != Module.GetDebugMode()) preferences.putBool("DebugMode", Module.GetDebugMode());
+    SaveModule();
   preferences.end();
 }
+void SetPairMode(bool Mode) 
+{
+    TSPair = millis();
+    if (_LED_SIGNAL) smartdisplay_led_set_rgb(1, 0, 0);
+    Module.SetPairMode(Mode);
+}
+
 void AddStatus(String Msg) 
 {
   /*for (int Si=MAX_STATUS-1; Si>0; Si--) {
@@ -709,8 +719,8 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
       }
       else if (doc["Order"] == "Pair")          
       {   
-          TSPair = millis(); 
-          Module.SetPairMode(true); 
+          SetPairMode(true);
+
           AddStatus("Pairing beginnt"); 
           SendMessage(); 
           #ifdef DISPLAY_480
@@ -854,19 +864,29 @@ void setup()
 }
 void loop()
 {
-  if  ((millis() - TSSend ) > MSG_INTERVAL  ) {
-    TSSend = millis();
-    if (Module.GetPairMode()) SendPairingRequest();
-    else SendMessage();
-  }
-  if (((millis() - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode())) {
-    TSPair = 0;
-    Module.SetPairMode(false);
-    AddStatus("Pairing beendet...");
-    #ifdef DISPLAY_480
-      smartdisplay_led_set_rgb(0, 0, 0);
-    #endif
-  }
+    if  ((millis() - TSSend ) > MSG_INTERVAL  ) {
+        TSSend = millis();
+        if (Module.GetPairMode()) SendPairingRequest();
+        else SendMessage();
+    }
+
+    if (((millis() - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode())) {
+        TSPair = 0;
+        Module.SetPairMode(false);
+        AddStatus("Pairing beendet...");
+        smartdisplay_led_set_rgb(0, 0, 0);
+    }
+
+    if ((millis() - TSLed > MSGLIGHT_INTERVAL) and (TSLed > 0))
+    {
+        TSLed = 0;
+        
+        if ((Module.GetPairMode()) and (_LED_SIGNAL))
+            smartdisplay_led_set_rgb(1, 0, 0);
+        else
+            smartdisplay_led_set_rgb(0, 0, 0);
+    }
+
     lv_timer_handler();
     delay(5);
 }

@@ -17,6 +17,7 @@ extern void ToggleSwitch(int SNr);
 extern void SetDemoMode(bool Mode);
 extern void SetDebugMode(bool Mode);
 extern void SetSleepMode(bool Mode);
+extern void SetPairMode(bool Mode);
 extern void SaveModule();
 extern void SendNameChange(int Pos);
 extern void CurrentCalibration();
@@ -24,15 +25,16 @@ extern void VoltageCalibration(int SNr, float V);
 extern LinkedList<PeriphClass*> SwitchList;
 extern LinkedList<PeriphClass*> SensorList;
 
-
 extern uint32_t TSPair;
 
 int ScrSwitchPage = 0;
 int ScrGaugeMultiPage = 0;
-int ActiveSensorNr = -1;
+//int ActiveSensorNr = -1;
 int ActiveChangeNameNr = -1;
+PeriphClass *ActiveSensor = NULL;
 
 void SwitchUpdateTimer(lv_timer_t * timer);
+void SettingsUpdateTimer(lv_timer_t * timer);
 void GaugeSingleUpdateTimer(lv_timer_t * timer);
 void GaugeMultiUpdateTimer(lv_timer_t * timer);
 void CalibrationUpdateTimer(lv_timer_t * timer);
@@ -41,6 +43,7 @@ lv_timer_t *SwitchTimer;
 lv_timer_t *GaugeSingleTimer;
 lv_timer_t *GaugeMultiTimer;
 lv_timer_t *CalibTimer;
+lv_timer_t *SettingsTimer;
 
 lv_obj_t *SingleMeter;
 lv_meter_indicator_t * SingleIndic;
@@ -196,34 +199,26 @@ void Ui_Switch_Leave(lv_event_t * e)
 #pragma region SETTINGS
 void Ui_SettingBtn1_Click(lv_event_t * e)
 {
-	Module.SetDemoMode(!Module.GetDemoMode());
-	SetDemoMode(Module.GetDemoMode());
+	SetDemoMode(!Module.GetDemoMode());
 }
 
 void Ui_SettingBtn2_Click(lv_event_t * e)
 {
-	Module.SetSleepMode(!Module.GetSleepMode());
-	SetSleepMode(Module.GetSleepMode());
+	SetSleepMode(!Module.GetSleepMode());
 }
 
 void Ui_SettingBtn3_Click(lv_event_t * e)
 {
-	Module.SetDebugMode(!Module.GetDebugMode());
-	SetDebugMode(Module.GetDebugMode());
+	SetDebugMode(!Module.GetDebugMode());
 }
 
 void Ui_SettingBtn4_Click(lv_event_t * e)
 {
-	Module.SetPairMode(!Module.GetPairMode());
+	SetPairMode(!Module.GetPairMode());
 }
 
 void Ui_Settings_Loaded(lv_event_t * e)
 {
-	if (Module.GetDemoMode())  lv_obj_add_state(ui_SwSettingsDemo,  LV_STATE_CHECKED);
-	if (Module.GetSleepMode()) lv_obj_add_state(ui_SwSettingsSleep, LV_STATE_CHECKED);
-	if (Module.GetDebugMode()) lv_obj_add_state(ui_SwSettingsDebug, LV_STATE_CHECKED);
-	if (Module.GetPairMode())  lv_obj_add_state(ui_SwSettingsPair,  LV_STATE_CHECKED);
-
 	char ModuleName[100];
 	char ModuleType[100];
 
@@ -234,6 +229,46 @@ void Ui_Settings_Loaded(lv_event_t * e)
 
 	lv_label_set_text(ui_LblSettingName, ModuleName);
 	lv_label_set_text(ui_LblSettingType, ModuleType);
+
+	static uint32_t user_data = 10;
+	if (!SettingsTimer) 
+	{
+		SettingsTimer = lv_timer_create(SettingsUpdateTimer, 500,  &user_data);
+		Serial.println("SettingsTimer created");
+	}
+}
+
+void Ui_Settings_Leave(lv_event_t * e)
+{
+	lv_timer_del(SettingsTimer);
+	SettingsTimer = NULL;
+
+	Serial.println("SettingsTimer deleted");
+}
+
+void SettingsUpdateTimer(lv_timer_t * timer)
+{
+	Serial.println("SettingsUpdateTimer");
+	
+	if (Module.GetDemoMode())  
+		lv_obj_add_state(ui_SwSettingsDemo,  LV_STATE_CHECKED);
+	else 
+		lv_obj_clear_state(ui_SwSettingsDemo,  LV_STATE_CHECKED);
+	
+	if (Module.GetSleepMode()) 
+		lv_obj_add_state(ui_SwSettingsSleep, LV_STATE_CHECKED);
+	else
+		lv_obj_clear_state(ui_SwSettingsSleep, LV_STATE_CHECKED);
+	
+	if (Module.GetDebugMode()) 
+		lv_obj_add_state(ui_SwSettingsDebug, LV_STATE_CHECKED);
+	else
+		lv_obj_clear_state(ui_SwSettingsDebug, LV_STATE_CHECKED);
+	
+	if (Module.GetPairMode())  
+		lv_obj_add_state(ui_SwSettingsPair,  LV_STATE_CHECKED);
+	else
+		lv_obj_clear_state(ui_SwSettingsPair,  LV_STATE_CHECKED);
 }
 
 void Ui_Settings_Reset(lv_event_t * e)
@@ -257,68 +292,54 @@ static void SingleMeter_cb(lv_event_t * e) {
 }
 void Ui_GaugeSingle_Loaded(lv_event_t * e)
 {
-	if (ActiveSensorNr < 0)
-	{
-		for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
-		{
-			if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT)
-			{
-				ActiveSensorNr = SNr;
-				Serial.printf("Sensor gefunden: %d\n\r", ActiveSensorNr);
-				break;
-			}
-		}
-	}
+	int G = 0;
+
+	if (!ActiveSensor) ActiveSensor = PeriphList.get(0);
 	
-	if (ActiveSensorNr >= 0)
+	if (ActiveSensor)
 	{
-		lv_label_set_text_fmt(ui_LblGaugeSingleValueDescription, "%10s", Module.GetPeriphName(ActiveSensorNr));
-
-		int G = 0;
-
-		Meter[0] = lv_meter_create(lv_scr_act());
+		lv_label_set_text_fmt(ui_LblGaugeSingleValueDescription, "%10s", ActiveSensor->GetName());
 		
 		lv_obj_t *Gauge = ui_ImgGaugeSingleGauge;
 		lv_obj_t *GaugeType  = ui_LblGaugeSingleType;
-		PeriphClass *Sensor = Module.GetPeriphPtr(ActiveSensorNr);
             
-		lv_obj_set_pos(Meter[G], lv_obj_get_x(Gauge)+35, lv_obj_get_y(Gauge)+78);
+		Meter[0] = lv_meter_create(lv_scr_act());
+		lv_obj_set_pos(Meter[G], 35, 78);
 		lv_obj_set_size(Meter[G], 248, 234);
 		
 		Scale[G] = lv_meter_add_scale(Meter[G]);
 		
-		if (Sensor->GetType() == SENS_TYPE_AMP)
+		if (ActiveSensor->GetType() == SENS_TYPE_AMP)
 		{
 			lv_meter_set_scale_ticks(Meter[G], Scale[G], 21, 1, 5, lv_color_hex(0xff926b3f));
-			lv_meter_set_scale_major_ticks(Meter[G], Scale[G], 5, 1, 8, lv_color_hex(0xff785212), 5);
-			lv_meter_set_scale_range(Meter[G], Scale[G], 0, 40, 90, 225);
+			lv_meter_set_scale_major_ticks(Meter[G], Scale[G], 5, 1, 8, lv_color_hex(0xff785212), 8);
+			lv_meter_set_scale_range(Meter[G], Scale[G], 0, 400, 90, 225);
 			lv_label_set_text(GaugeType, "A");
 		
 		}
-		if (Sensor->GetType() == SENS_TYPE_SENS)
+		if (ActiveSensor->GetType() == SENS_TYPE_VOLT)
 		{
-			lv_meter_set_scale_ticks(Meter[G], Scale[G], 21, 1, 5, lv_color_hex(0xff926b3f));
-			lv_meter_set_scale_major_ticks(Meter[G], Scale[G], 5, 1, 8, lv_color_hex(0xff785212), 5);
-			lv_meter_set_scale_range(Meter[G], Scale[G], 9, 15, 90, 225);
+			lv_meter_set_scale_ticks(Meter[G], Scale[G], 31, 1, 5, lv_color_hex(0xff926b3f));
+			lv_meter_set_scale_major_ticks(Meter[G], Scale[G], 5, 1, 8, lv_color_hex(0xff785212), 8);
+			lv_meter_set_scale_range(Meter[G], Scale[G], 90, 150, 90, 225);
 			lv_label_set_text(GaugeType, "V");
 		}	
 
 
 		lv_obj_set_style_border_width(Meter[G], 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-		Indic[G] = lv_meter_add_needle_line(Meter[G], Scale[G], 2, lv_color_hex(0xff8f7a5b), -5);
+		Indic[G] = lv_meter_add_needle_line(Meter[G], Scale[G], 4, lv_color_hex(0xff8f7a5b), -5);
 		
 		lv_obj_set_style_bg_opa(Meter[G], 0, LV_PART_MAIN | LV_STATE_DEFAULT);
 		lv_obj_set_style_text_font(Meter[G], &lv_font_montserrat_14, LV_PART_MAIN | LV_STATE_DEFAULT);
 		lv_obj_set_style_text_color(Meter[G], lv_color_hex(0xff5f430d), LV_PART_MAIN | LV_STATE_DEFAULT);
 		lv_obj_clear_flag(Meter[G],LV_OBJ_FLAG_CLICKABLE);
 
+		lv_obj_add_event_cb(Meter[G], SingleMeter_cb, LV_EVENT_DRAW_PART_BEGIN, NULL);
 	}
 	else
 	{
 		lv_label_set_text(ui_LblGaugeSingleValueDescription, "n.n.");
 		lv_label_set_text(ui_LblGaugeSingleValue, "--.-V");
-
-		//lv_obj_add_event_cb(SingleMeter, SingleMeter_cb, LV_EVENT_DRAW_PART_BEGIN, NULL);
 	}
 
 	static uint32_t user_data = 10;
@@ -331,13 +352,15 @@ void Ui_GaugeSingle_Loaded(lv_event_t * e)
 void GaugeSingleUpdateTimer(lv_timer_t * timer)
 {
 	int G = 0;
-	if ((ActiveSensorNr >= 0) and (Module.GetPeriphChanged(ActiveSensorNr)))
+	if ((ActiveSensor) and (ActiveSensor->GetChanged()))
 	{	
 		char buf[10];
-		dtostrf(Module.GetPeriphValue(ActiveSensorNr), 0, 1, buf);
-		strcat(buf, "V");
+		dtostrf(ActiveSensor->GetValue(), 0, 1, buf);
+		if (ActiveSensor->GetType() == SENS_TYPE_VOLT) strcat(buf, "V");
+		if (ActiveSensor->GetType() == SENS_TYPE_AMP)  strcat(buf, "A");
+		
 		lv_label_set_text(ui_LblGaugeSingleValue, buf);
-		lv_meter_set_indicator_value(Meter[G], Indic[G], Module.GetPeriphValue(ActiveSensorNr));
+		lv_meter_set_indicator_value(Meter[G], Indic[G], ActiveSensor->GetValue()*10);
 	}
 }
 
@@ -358,12 +381,16 @@ void Ui_GaugeSingle_Leave(lv_event_t * e)
 
 void Ui_GaugeSingle_Next(lv_event_t * e)
 {
-	// Your code here
+	ActiveSensor = FindNextPeriph(NULL, ActiveSensor, SENS_TYPE_SENS, true);
+	Ui_GaugeSingle_Leave(e);
+	Ui_GaugeSingle_Loaded(e);
 }
 
 void Ui_GaugeSingle_Prev(lv_event_t * e)
 {
-	// Your code here
+	ActiveSensor = FindPrevPeriph(NULL, ActiveSensor, SENS_TYPE_SENS, true);
+	Ui_GaugeSingle_Leave(e);
+	Ui_GaugeSingle_Loaded(e);
 }
 #pragma endregion GAUGESINGLE
 #pragma region GAUGEMULTI
@@ -405,10 +432,10 @@ void Ui_MultiGauge_Loaded(lv_event_t * e)
 				lv_label_set_text(GaugeType, "A");
 			
 			}
-			if (Sensor->GetType() == SENS_TYPE_SENS)
+			if (Sensor->GetType() == SENS_TYPE_VOLT)
 			{
-				lv_meter_set_scale_ticks(Meter[G], Scale[G], 21, 1, 5, lv_color_hex(0xff926b3f));
-				lv_meter_set_scale_major_ticks(Meter[G], Scale[G], 5, 1, 8, lv_color_hex(0xff785212), 5);
+				lv_meter_set_scale_ticks(Meter[G], Scale[G], 13, 1, 5, lv_color_hex(0xff926b3f));
+				lv_meter_set_scale_major_ticks(Meter[G], Scale[G], 4, 1, 8, lv_color_hex(0xff785212), 5);
 				lv_meter_set_scale_range(Meter[G], Scale[G], 9, 15, 90, 225);
 				lv_label_set_text(GaugeType, "V");
 			}	
@@ -503,7 +530,7 @@ void Ui_GaugeMulti_Gauge_Click(lv_event_t * e)
 	}
 	if (Sensor) 
 	{
-		ActiveSensorNr = Sensor->GetPos();
+		ActiveSensor = Sensor;
 		_ui_screen_change(&ui_ScrGaugeSingle, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_ScrGaugeSingle_screen_init);
 	}
 	

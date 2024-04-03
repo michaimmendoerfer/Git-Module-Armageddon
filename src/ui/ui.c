@@ -233,6 +233,9 @@ void ui_event_ScrSettings(lv_event_t * e)
     if(event_code == LV_EVENT_SCREEN_LOADED) {
         Ui_Settings_Loaded(e);
     }
+    if(event_code == LV_EVENT_SCREEN_UNLOAD_START) {
+        Ui_Settings_Leave(e);
+    }
 }
 void ui_event_SwSettingsDemo(lv_event_t * e)
 {
@@ -287,11 +290,11 @@ void ui_event_ScrGaugeSingle(lv_event_t * e)
     }
     if(event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT) {
         lv_indev_wait_release(lv_indev_get_act());
-        Ui_GaugeSingle_Next(e);
+        Ui_GaugeSingle_Prev(e);
     }
     if(event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_LEFT) {
         lv_indev_wait_release(lv_indev_get_act());
-        Ui_GaugeSingle_Prev(e);
+        Ui_GaugeSingle_Next(e);
     }
     if(event_code == LV_EVENT_SCREEN_UNLOAD_START) {
         Ui_GaugeSingle_Leave(e);

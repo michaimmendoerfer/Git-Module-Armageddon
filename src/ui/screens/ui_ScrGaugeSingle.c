@@ -23,7 +23,7 @@ void ui_ScrGaugeSingle_screen_init(void)
     ui_LblGaugeSingleValueDescription = lv_label_create(ui_ScrGaugeSingle);
     lv_obj_set_width(ui_LblGaugeSingleValueDescription, LV_SIZE_CONTENT);   /// 100
     lv_obj_set_height(ui_LblGaugeSingleValueDescription, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_LblGaugeSingleValueDescription, 142);
+    lv_obj_set_x(ui_LblGaugeSingleValueDescription, 140);
     lv_obj_set_y(ui_LblGaugeSingleValueDescription, -69);
     lv_obj_set_align(ui_LblGaugeSingleValueDescription, LV_ALIGN_CENTER);
     lv_label_set_text(ui_LblGaugeSingleValueDescription, "LED-Bar");
@@ -32,7 +32,7 @@ void ui_ScrGaugeSingle_screen_init(void)
     lv_obj_set_style_text_font(ui_LblGaugeSingleValueDescription, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_LblGaugeSingleValue = lv_label_create(ui_ScrGaugeSingle);
-    lv_obj_set_width(ui_LblGaugeSingleValue, 145);
+    lv_obj_set_width(ui_LblGaugeSingleValue, 162);
     lv_obj_set_height(ui_LblGaugeSingleValue, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_x(ui_LblGaugeSingleValue, 140);
     lv_obj_set_y(ui_LblGaugeSingleValue, -22);
