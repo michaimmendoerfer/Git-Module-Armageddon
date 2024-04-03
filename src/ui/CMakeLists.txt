@@ -22,9 +22,9 @@ SET(SOURCES components/ui_comp_switchbutton.c
     images/ui_img_icon_calib_png.c
     images/ui_img_1825836894.c
     images/ui_img_551600910.c
-    images/ui_img_1404430020.c
+    images/ui_img_gauge_leer_240_png.c
     images/ui_img_toggle_vertical_off_75_png.c
     images/ui_img_toggle_vertical_on_75_png.c
-    images/ui_img_1844714932.c)
+    images/ui_img_gauge_leer_100_png.c)
 
 add_library(ui ${SOURCES})

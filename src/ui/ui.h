@@ -63,6 +63,7 @@ extern lv_obj_t * ui_ScrGaugeSingle;
 extern lv_obj_t * ui_ImgGaugeSingleGauge;
 extern lv_obj_t * ui_LblGaugeSingleValueDescription;
 extern lv_obj_t * ui_LblGaugeSingleValue;
+extern lv_obj_t * ui_LblGaugeSingleType;
 // SCREEN: ui_ScrSwitch
 void ui_ScrSwitch_screen_init(void);
 void ui_event_ScrSwitch(lv_event_t * e);
@@ -125,6 +126,11 @@ extern lv_obj_t * ui_LblGaugeMultiValue2;
 extern lv_obj_t * ui_LblGaugeMultiValue3;
 extern lv_obj_t * ui_LblGaugeMultiValue4;
 extern lv_obj_t * ui_LblGaugeMultiValue5;
+extern lv_obj_t * ui_LblGaugeMultiType1;
+extern lv_obj_t * ui_LblGaugeMultiType2;
+extern lv_obj_t * ui_LblGaugeMultiType3;
+extern lv_obj_t * ui_LblGaugeMultiType4;
+extern lv_obj_t * ui_LblGaugeMultiType5;
 void ui_event_BtnGaugeMultiGauge1(lv_event_t * e);
 extern lv_obj_t * ui_BtnGaugeMultiGauge1;
 void ui_event_BtnGaugeMultiGauge2(lv_event_t * e);
@@ -148,10 +154,10 @@ LV_IMG_DECLARE(ui_img_icon_keyboard_png);    // assets\icon_keyboard.png
 LV_IMG_DECLARE(ui_img_icon_calib_png);    // assets\icon_calib.png
 LV_IMG_DECLARE(ui_img_1825836894);    // assets\bg_grill-small.png
 LV_IMG_DECLARE(ui_img_551600910);    // assets\Btn-small-on-100.png
-LV_IMG_DECLARE(ui_img_1404430020);    // assets\voltmeter-alt.png
+LV_IMG_DECLARE(ui_img_gauge_leer_240_png);    // assets\gauge_leer_240.png
 LV_IMG_DECLARE(ui_img_toggle_vertical_off_75_png);    // assets\Toggle_vertical_off_75.png
 LV_IMG_DECLARE(ui_img_toggle_vertical_on_75_png);    // assets\Toggle_vertical_on_75.png
-LV_IMG_DECLARE(ui_img_1844714932);    // assets\voltmeter-alt-klein.png
+LV_IMG_DECLARE(ui_img_gauge_leer_100_png);    // assets\gauge_leer_100.png
 
 
 

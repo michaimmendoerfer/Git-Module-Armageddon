@@ -60,6 +60,7 @@ lv_obj_t * ui_ScrGaugeSingle;
 lv_obj_t * ui_ImgGaugeSingleGauge;
 lv_obj_t * ui_LblGaugeSingleValueDescription;
 lv_obj_t * ui_LblGaugeSingleValue;
+lv_obj_t * ui_LblGaugeSingleType;
 
 
 // SCREEN: ui_ScrSwitch
@@ -132,6 +133,11 @@ lv_obj_t * ui_LblGaugeMultiValue2;
 lv_obj_t * ui_LblGaugeMultiValue3;
 lv_obj_t * ui_LblGaugeMultiValue4;
 lv_obj_t * ui_LblGaugeMultiValue5;
+lv_obj_t * ui_LblGaugeMultiType1;
+lv_obj_t * ui_LblGaugeMultiType2;
+lv_obj_t * ui_LblGaugeMultiType3;
+lv_obj_t * ui_LblGaugeMultiType4;
+lv_obj_t * ui_LblGaugeMultiType5;
 void ui_event_BtnGaugeMultiGauge1(lv_event_t * e);
 lv_obj_t * ui_BtnGaugeMultiGauge1;
 void ui_event_BtnGaugeMultiGauge2(lv_event_t * e);
@@ -147,6 +153,7 @@ lv_obj_t * ui____initial_actions0;
 const lv_img_dsc_t * ui_imgset_25820555[1] = {&ui_img_551600910};
 const lv_img_dsc_t * ui_imgset_toggle_vertical_on_[1] = {&ui_img_toggle_vertical_on_75_png};
 const lv_img_dsc_t * ui_imgset_toggle_vertical_off_[1] = {&ui_img_toggle_vertical_off_75_png};
+const lv_img_dsc_t * ui_imgset_gauge_leer_[2] = {&ui_img_gauge_leer_100_png, &ui_img_gauge_leer_240_png};
 
 ///////////////////// TEST LVGL SETTINGS ////////////////////
 #if LV_COLOR_DEPTH != 16
