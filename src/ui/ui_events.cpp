@@ -282,8 +282,8 @@ void Ui_GaugeSingle_Loaded(lv_event_t * e)
 		lv_obj_t *GaugeType  = ui_LblGaugeSingleType;
 		PeriphClass *Sensor = Module.GetPeriphPtr(ActiveSensorNr);
             
-		lv_obj_set_pos(Meter[G], lv_obj_get_x(Gauge)-13, lv_obj_get_y(Gauge)+5);
-		lv_obj_set_size(Meter[G], 126, 145);
+		lv_obj_set_pos(Meter[G], lv_obj_get_x(Gauge)+35, lv_obj_get_y(Gauge)+78);
+		lv_obj_set_size(Meter[G], 248, 234);
 		
 		Scale[G] = lv_meter_add_scale(Meter[G]);
 		

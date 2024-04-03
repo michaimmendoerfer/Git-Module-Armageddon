@@ -15,9 +15,8 @@ void ui_ScrGaugeSingle_screen_init(void)
     lv_img_set_src(ui_ImgGaugeSingleGauge, &ui_img_gauge_leer_240_png);
     lv_obj_set_width(ui_ImgGaugeSingleGauge, LV_SIZE_CONTENT);   /// 240
     lv_obj_set_height(ui_ImgGaugeSingleGauge, LV_SIZE_CONTENT);    /// 240
-    lv_obj_set_x(ui_ImgGaugeSingleGauge, -87);
-    lv_obj_set_y(ui_ImgGaugeSingleGauge, -11);
-    lv_obj_set_align(ui_ImgGaugeSingleGauge, LV_ALIGN_CENTER);
+    lv_obj_set_x(ui_ImgGaugeSingleGauge, 35);
+    lv_obj_set_y(ui_ImgGaugeSingleGauge, 35);
     lv_obj_add_flag(ui_ImgGaugeSingleGauge, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
     lv_obj_clear_flag(ui_ImgGaugeSingleGauge, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
 
