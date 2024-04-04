@@ -224,7 +224,7 @@ void SendMessage ()
             //AMP
             else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
             {
-              if (Module.GetDemoMode()) Module.SetPeriphValue(SNr, random(0,30));
+              if (Module.GetDemoMode()) Module.SetPeriphValue(SNr, random(0,300)/10);
               else                      Module.SetPeriphValue(SNr, ReadAmp(SNr));
               
               if (abs(Module.GetPeriphValue(SNr)) > 99) Module.SetPeriphValue(SNr, -99);
@@ -242,7 +242,7 @@ void SendMessage ()
             }
             //VOLT
             else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) {
-              if (Module.GetDemoMode()) Module.SetPeriphValue(SNr, random(10,15));
+              if (Module.GetDemoMode()) Module.SetPeriphValue(SNr, random(90,150)/10);
               else                      Module.SetPeriphValue(SNr, ReadVolt(SNr));
 
               dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);

@@ -493,7 +493,7 @@ void GaugeMultiUpdateTimer(lv_timer_t * timer)
 					if (Sensor->GetType() == SENS_TYPE_AMP ) strcat(buf, "A");
 					
 					lv_label_set_text(GaugeValue, buf);
-					lv_meter_set_indicator_value(Meter[G], Indic[G], Sensor->GetValue());
+					lv_meter_set_indicator_value(Meter[G], Indic[G], abs(Sensor->GetValue()));
 				}
 		}
 	}
@@ -505,11 +505,14 @@ void Ui_GaugeMulti_Leave(lv_event_t * e)
 
 	for (int G=0; G<GAUGES_PER_SCREEN; G++)
 	{
-		lv_obj_del(Meter[G]);
+		if (Meter[G])
+		{
+			lv_obj_del(Meter[G]);
 	
-		Meter[G]  = NULL;
-		Scale[G]  = NULL;
-		Indic[G]  = NULL;
+			Meter[G]  = NULL;
+			Scale[G]  = NULL;
+			Indic[G]  = NULL;
+		}
 	}
 
 	Serial.println("GaugeMultiTimer deleted");
