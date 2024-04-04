@@ -595,7 +595,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
       Serial.print("("); Serial.print(TempName); Serial.print(") - ");
       Serial.println(jsondata);    
       
-      if ((doc["Order"] == SEND_CMD_) and (doc["Peer"] == Module.GetName())) 
+      if ((doc["Order"] == SEND_CMD_YOU_ARE_PAIRED) and (doc["Peer"] == Module.GetName())) 
       { 
           //Serial.println("in you are paired und node");
         
@@ -623,161 +623,132 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
                 Module.SetPairMode(false);
             }
       }
-      if      (doc["Order"] == "stay alive")       
-      {   Module.SetLastContact(millis());
-          if (Module.GetDebugMode()) { Serial.print("LastContact: "); Serial.println(Module.GetLastContact()); }
-      }
-      else if (doc["Order"] == "SleepMode On")     
-      { 
-          AddStatus("Sleep: on");  
-          SetSleepMode(true);  
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "SleepMode Off")    
-      { 
-          AddStatus("Sleep: off"); 
-          SetSleepMode(false); 
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "SleepMode Toggle") 
-      { 
-          if (Module.GetSleepMode()) 
-          { 
-              AddStatus("Sleep: off");   
-              SetSleepMode(false); 
-              SendMessage(); 
-          }
-          else 
-          { 
-              AddStatus("Sleep: on");    
-              SetSleepMode(true);  
-              SendMessage(); 
-          }
-      } 
-      else if (doc["Order"] == "DebugMode on")     
-      { 
-          AddStatus("DebugMode: on");  
-          SetDebugMode(true);  
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "DebugMode off")    
-      { 
-          AddStatus("DebugMode: off"); 
-          SetDebugMode(false); 
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "DebugMode Toggle") 
-      { 
-          if (Module.GetDebugMode()) 
-          {   
-              AddStatus("DebugMode: off");   
-              SetDebugMode(false); 
-              SendMessage(); 
-          }
-          else 
-          { 
-              AddStatus("DebugMode: on");    
-              SetDebugMode(true);  
-              SendMessage(); 
-          }
-      }
-      else if (doc["Order"] == "DemoMode on")      
-      { 
-          AddStatus("Demo: on");   
-          SetDemoMode(true);   
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "DemoMode off")     
-      { 
-          AddStatus("Demo: off");  
-          SetDemoMode(false);  
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "DemoMode Toggle")  
-      { 
-          if (Module.GetDemoMode()) 
-          { 
-              AddStatus("DemoMode: off"); 
-              SetDemoMode(false); 
-              SendMessage(); 
-          }
-          else 
-          { 
-              AddStatus("DemoMode: on");  
-              SetDemoMode(true);  
-              SendMessage(); 
-          }
-      }
-      else if (doc["Order"] == "Reset")         
-      { 
-          AddStatus("Clear all"); 
-          nvs_flash_erase(); 
-          nvs_flash_init();
-          ESP.restart();
-      }
-      else if (doc["Order"] == "Restart")       
-      { 
-          ESP.restart(); 
-      }
-      else if (doc["Order"] == "Pair")          
-      {   
-          SetPairMode(true);
-
-          AddStatus("Pairing beginnt"); 
-          SendMessage(); 
-          #ifdef DISPLAY_480
-            smartdisplay_led_set_rgb(1,0,0);
-          #endif
-      }
-      else if (doc["Order"] == "Eichen")        
-      {   
-          AddStatus("Eichen beginnt"); 
-          CurrentCalibration();
-      }
-      else if (doc["Order"] == "VoltCalib")     
-      { 
-          AddStatus("VoltCalib beginnt");
-          float NewVoltage = doc["NewVoltage"];
-
-          if (Module.GetVoltageMon() != -1)
-          {
-              VoltageCalibration(Module.GetVoltageMon(), NewVoltage) ;
-          }
-      }
-      else if (doc["Order"] == "ToggleSwitch")  
-      { 
-          int Pos = doc["Pos"];
-          if (Module.isPeriphEmpty(Pos) == false) ToggleSwitch(Pos);
-      }  
-      else if (doc["Order"] == "UpdateName")
+      switch ((int) doc["Order"]) 
       {
-          int Pos = (int) doc["Pos"];
-                String NewName = doc["NewName"];
+        case SEND_CMD_STAY_ALIVE: 
+            Module.SetLastContact(millis());
+            if (Module.GetDebugMode()) { Serial.print("LastContact: "); Serial.println(Module.GetLastContact()); }
+            break;
+        case SEND_CMD_SLEEPMODE_ON:
+            AddStatus("Sleep: on");  
+            SetSleepMode(true);  
+            SendMessage(); 
+            break;
+        case SEND_CMD_SLEEPMODE_OFF:
+            AddStatus("Sleep: off"); 
+            SetSleepMode(false); 
+            SendMessage(); 
+            break;
+        case SEND_CMD_SLEEPMODE_TOGGLE:
+            if (Module.GetSleepMode()) 
+            { 
+                AddStatus("Sleep: off");   
+                SetSleepMode(false); 
+                SendMessage(); 
+            }
+            else 
+            { 
+                AddStatus("Sleep: on");    
+                SetSleepMode(true);  
+                SendMessage(); 
+            }
+            break;
+        case SEND_CMD_DEBUGMODE_ON:
+            AddStatus("DebugMode: on");  
+            SetDebugMode(true);  
+            SendMessage(); 
+            break;
+        case SEND_CMD_DEBUGMODE_OFF:
+            AddStatus("DebugMode: off"); 
+            SetDebugMode(false); 
+            SendMessage(); 
+            break;
+        case SEND_CMD_DEBUGMODE_TOGGLE:
+            if (Module.GetDebugMode()) 
+            {   
+                AddStatus("DebugMode: off");   
+                SetDebugMode(false); 
+                SendMessage(); 
+            }
+            else 
+            { 
+                AddStatus("DebugMode: on");    
+                SetDebugMode(true);  
+                SendMessage(); 
+            }
+            break;
+        case SEND_CMD_DEMOMODE_ON:
+            AddStatus("Demo: on");   
+            SetDemoMode(true);   
+            SendMessage(); 
+            break;
+        case SEND_CMD_DEMOMODE_OFF:
+            AddStatus("Demo: off");  
+            SetDemoMode(false);  
+            SendMessage(); 
+            break;
+        case SEND_CMD_DEMOMODE_TOGGLE:
+            if (Module.GetDemoMode()) 
+            { 
+                AddStatus("DemoMode: off"); 
+                SetDemoMode(false); 
+                SendMessage(); 
+            }
+            else 
+            { 
+                AddStatus("DemoMode: on");  
+                SetDemoMode(true);  
+                SendMessage(); 
+            }
+            break;
+        case SEND_CMD_RESET:
+            AddStatus("Clear all"); 
+            nvs_flash_erase(); 
+            nvs_flash_init();
+            ESP.restart();
+            break;
+        case SEND_CMD_RESTART:
+            ESP.restart(); 
+            break;
+        case SEND_CMD_PAIRMODE_ON;
+            SetPairMode(true);
+            AddStatus("Pairing beginnt"); 
+            SendMessage(); 
+            #ifdef DISPLAY_480
+              smartdisplay_led_set_rgb(1,0,0);
+            #endif
+            break;
+        case SEND_CMD_CURRENT_CALIB:
+            AddStatus("Eichen beginnt"); 
+            CurrentCalibration();
+            break;
+        case SEND_CMD_VOLTAGE_CALIB:
+            AddStatus("VoltCalib beginnt");
+            float NewVoltage = doc["NewVoltage"];
 
-                if (NewName != "") 
-                {
-                    if (Pos == 99) Module.SetName(NewName.c_str());
-                    else           Module.SetPeriphName(Pos, NewName.c_str());
-                }
-                
-                SaveModule();
-		            SendNameChange(Pos);
+            if (Module.GetVoltageMon() != -1)
+            {
+                VoltageCalibration(Module.GetVoltageMon(), NewVoltage) ;
+            }
+            break;
+        case SEND_CMD_SWITCH_TOGGLE:
+            int Pos = doc["Pos"];
+            if (Module.isPeriphEmpty(Pos) == false) ToggleSwitch(Pos);
+            break;
+        case SEND_CMD_UPDATE_NAME:
+            int Pos = (int) doc["Pos"];
+            String NewName = doc["NewName"];
+
+            if (NewName != "") 
+            {
+                if (Pos == 99) Module.SetName(NewName.c_str());
+                else           Module.SetPeriphName(Pos, NewName.c_str());
+            }
+            
+            SaveModule();
+            SendNameChange(Pos);
+            break;
       }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       /*
       if ((doc["Pairing"] == "you are paired") and (doc["Peer"] == Module.GetName())) 
       { 
