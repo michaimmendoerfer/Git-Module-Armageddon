@@ -304,7 +304,7 @@ void SendPairingRequest()
   doc["Node"]    = Module.GetName();   
   doc["Type"]    = Module.GetType();
   doc["Version"] = Module.GetVersion();
-  doc["Pairing"] = "add me";
+  doc["Order"]   = SEND_CMD_PAIR_ME;
   
   for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) {
     if (!Module.isPeriphEmpty(SNr)) {
