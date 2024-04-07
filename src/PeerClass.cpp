@@ -82,7 +82,7 @@ void  PeerClass::Setup(const char* Name, int Type, const char *Version, const ui
     strcpy(_Name, Name);
     _Type = Type;
     strcpy(_Version, Version);
-    memcpy(_BroadcastAddress, BroadcastAddress, 6);
+    if (BroadcastAddress) memcpy(_BroadcastAddress, BroadcastAddress, 6);
     _SleepMode = SleepMode;
     _DebugMode = DebugMode;
     _DemoMode  = DemoMode;
@@ -94,14 +94,7 @@ void  PeerClass::Setup(const char* Name, int Type, const char *Version, const ui
                     bool SleepMode, bool DebugMode, bool DemoMode, bool PairMode,
                     int VoltageMon, int RelayType, int ADCPort1, int ADCPort2, float VoltageDevider)
 {
-    strcpy(_Name, Name);
-    _Type = Type;
-    strcpy(_Version, Version);
-    if (BroadcastAddress) memcpy(_BroadcastAddress, BroadcastAddress, 6);
-    _SleepMode = SleepMode;
-    _DebugMode = DebugMode;
-    _DemoMode  = DemoMode;
-    _PairMode  = PairMode;
+    Setup(Name, Type, Version, BroadcastAddress, SleepMode, DebugMode, DemoMode, PairMode);
 
     _VoltageMon     = VoltageMon;
     _RelayType      = RelayType;

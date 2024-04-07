@@ -300,8 +300,6 @@ void SendPairingRequest()
   
   JsonDocument doc;; String jsondata; 
   char Buf[100] = {};
-  char UIdStr[21];
-  uint8_t *BrTemp;
 
   doc["Node"]    = Module.GetName();   
   doc["Type"]    = Module.GetType();
@@ -330,7 +328,6 @@ void SendNameChange(int Pos)
   TSLed = millis();
   
   JsonDocument doc;; String jsondata; 
-  char Buf[100] = {};
   
   doc["Node"]    = Module.GetName();   
   doc["Order"]   = "UpdateName";
@@ -583,7 +580,9 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
   char* buff = (char*) incomingData;        //char buffer
   JsonDocument doc;;
   String jsondata;
-  
+  int Pos = -1;
+  float NewVoltage = 0;
+
   jsondata = String(buff);                  //converting into STRING
   
   Serial.print("Recieved from: "); PrintMAC(mac); 
@@ -595,7 +594,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
       Serial.print("("); Serial.print(TempName); Serial.print(") - ");
       Serial.println(jsondata);    
       
-      if ((doc["Order"] == SEND_CMD_YOU_ARE_PAIRED) and (doc["Peer"] == Module.GetName())) 
+      if (((int)doc["Order"] == SEND_CMD_YOU_ARE_PAIRED) and (doc["Peer"] == Module.GetName())) 
       { 
           //Serial.println("in you are paired und node");
         
@@ -710,8 +709,8 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
         case SEND_CMD_RESTART:
             ESP.restart(); 
             break;
-        case SEND_CMD_PAIRMODE_ON;
-            SetPairMode(true);
+        case SEND_CMD_PAIRMODE_ON:
+            Module.SetPairMode(true);
             AddStatus("Pairing beginnt"); 
             SendMessage(); 
             #ifdef DISPLAY_480
@@ -724,7 +723,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
             break;
         case SEND_CMD_VOLTAGE_CALIB:
             AddStatus("VoltCalib beginnt");
-            float NewVoltage = doc["NewVoltage"];
+            NewVoltage = doc["NewVoltage"];
 
             if (Module.GetVoltageMon() != -1)
             {
@@ -732,11 +731,11 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
             }
             break;
         case SEND_CMD_SWITCH_TOGGLE:
-            int Pos = doc["Pos"];
+            Pos = doc["Pos"];
             if (Module.isPeriphEmpty(Pos) == false) ToggleSwitch(Pos);
             break;
         case SEND_CMD_UPDATE_NAME:
-            int Pos = (int) doc["Pos"];
+            Pos = (int) doc["Pos"];
             String NewName = doc["NewName"];
 
             if (NewName != "") 
