@@ -330,7 +330,7 @@ void SendNameChange(int Pos)
   JsonDocument doc;; String jsondata; 
   
   doc["Node"]    = Module.GetName();   
-  doc["Order"]   = "UpdateName";
+  doc["Order"]   = SEND_CMD_UPDATE_NAME;
   doc["Pos"]     = Pos;
 
   //ModuleName (99) or PeriphName(1-...);
