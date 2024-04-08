@@ -346,6 +346,14 @@ void SendNameChange(int Pos)
 }
 #pragma endregion Send-Things
 #pragma region System-Things
+void ChangeBrightness(int B)
+{
+  preferences.begin("JeepifyInit", false);
+    Module.SetBrightness(B);
+    smartdisplay_lcd_set_backlight((float) B/100);
+    SaveModule();
+  preferences.end();
+}
 void SetDemoMode(bool Mode) 
 {
   preferences.begin("JeepifyInit", false);
@@ -483,7 +491,7 @@ void VoltageCalibration(int SNr, float V)
           Serial.println(TempRead/Module.GetPeriphVin(SNr), 4);
         }
         
-        snprintf(Buf, sizeof(Buf), "[%d] %s (Type: %d): Spannung ist jetzt: %.2fV", SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), TempRead/Module.GetPeriphVin(SNr));
+        snprintf(Buf, sizeof(Buf), "[%d] %s (Type: %d): Spannung ist jetzt: %.2fV", SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), (float)TempRead/Module.GetPeriphVin(SNr));
         
         AddStatus(Buf);
 
@@ -995,7 +1003,7 @@ void setup()
       nvs_flash_erase(); nvs_flash_init(); ESP.restart();
     #endif
 
-    int PeerCount = GetPeers();       
+    GetPeers();       
     AddStatus("Get Peers");
     
     ReportAll();    

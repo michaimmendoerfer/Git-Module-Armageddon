@@ -56,6 +56,10 @@ extern lv_obj_t * ui_LblSettingType;
 void ui_event_Button4(lv_event_t * e);
 extern lv_obj_t * ui_Button4;
 extern lv_obj_t * ui_Label9;
+void ui_event_SlSettingsBrightness(lv_event_t * e);
+extern lv_obj_t * ui_SlSettingsBrightness;
+extern lv_obj_t * ui_Label8;
+extern lv_obj_t * ui_SlSettingsBrightnessValue;
 // SCREEN: ui_ScrGaugeSingle
 void ui_ScrGaugeSingle_screen_init(void);
 void ui_event_ScrGaugeSingle(lv_event_t * e);

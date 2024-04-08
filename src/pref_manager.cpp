@@ -148,7 +148,7 @@ int GetPeers()
         ImportStringMulti = preferences.getString(Buf, "nix");
         if (ImportStringMulti != "nix") 
         {   
-            Serial.printf("%s - %d Bytes gelesen: %s\n\r", Buf, sizeof(ImportStringMulti), ImportStringMulti);
+            Serial.printf("%s - %d Bytes gelesen: %s\n\r", Buf, sizeof(ImportStringMulti), ImportStringMulti.c_str());
             strcpy(ScreenExportImportBuffer, ImportStringMulti.c_str());
             
             ReportAll();

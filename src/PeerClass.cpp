@@ -75,6 +75,7 @@ PeerClass::PeerClass()
     _Changed = false;
     _TSLastSeen = 0;
     memset(_BroadcastAddress, 0, 6);
+    _Brightness = 50;
 }
 void  PeerClass::Setup(const char* Name, int Type, const char *Version, const uint8_t *BroadcastAddress, 
                        bool SleepMode, bool DebugMode, bool DemoMode, bool PairMode)
@@ -260,7 +261,7 @@ PeerClass *FindNextPeer(PeerClass *P, int Type, bool circular)
 // returns next Peer, tries PeerList.size() times, otherwise returns NULL
 {
     PeerClass *Peer;
-    int ActualPeerIndex;
+    int ActualPeerIndex = 0;
 
     //Get PeerIndex in List
     for(int i = 0; i < PeerList.size(); i++) 
@@ -288,7 +289,7 @@ PeerClass *FindPrevPeer(PeerClass *P, int Type, bool circular)
 // returns previous Peer, tries PeerList.size() times, otherwise returns NULL
 {
     PeerClass *Peer;
-    int ActualPeerIndex;
+    int ActualPeerIndex = 0;
 
     //Get PeerIndex in List
     for(int i = 0; i < PeerList.size(); i++) 

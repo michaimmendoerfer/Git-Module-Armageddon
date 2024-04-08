@@ -14,6 +14,7 @@
 
 extern PeerClass Module;
 extern void ToggleSwitch(int SNr);
+extern void ChangeBrightness(int B);
 extern void SetDemoMode(bool Mode);
 extern void SetDebugMode(bool Mode);
 extern void SetSleepMode(bool Mode);
@@ -148,7 +149,7 @@ void Ui_SwitchButton_Clicked(lv_event_t * e)
 	if(event_code == LV_EVENT_CLICKED) {
         auto Container 	 = lv_obj_get_parent(target);
 		auto SwitchLabel = lv_obj_get_child(Container, 3);
-		auto SwitchName  = lv_obj_get_child(Container, 2);
+		//auto SwitchName  = lv_obj_get_child(Container, 2);
 	    int  SwitchPos   = atoi(lv_label_get_text(SwitchLabel));
 		
 		//Serial.printf("Button %d pressed from Switch %s\n\r", SwitchNr, lv_label_get_text(SwitchName));
@@ -167,7 +168,7 @@ void Ui_Switch_SwitchButton_Long(lv_event_t * e)
 	if(event_code == LV_EVENT_CLICKED) {
         auto Container 	 = lv_obj_get_parent(target);
 		auto SwitchLabel = lv_obj_get_child(Container, 3);
-		auto SwitchName  = lv_obj_get_child(Container, 2);
+		//auto SwitchName  = lv_obj_get_child(Container, 2);
 	    int SwitchNr = atoi(lv_label_get_text(SwitchLabel));
 		ActiveChangeNameNr = SwitchNr;
 
@@ -197,6 +198,11 @@ void Ui_Switch_Leave(lv_event_t * e)
 }
 #pragma endregion SWITCH
 #pragma region SETTINGS
+void Ui_Settings_Brightness_Changed(lv_event_t * e)
+{
+	ChangeBrightness(atoi(lv_label_get_text(ui_SlSettingsBrightnessValue)));
+}
+
 void Ui_SettingBtn1_Click(lv_event_t * e)
 {
 	SetDemoMode(!Module.GetDemoMode());
@@ -221,6 +227,7 @@ void Ui_Settings_Loaded(lv_event_t * e)
 {
 	char ModuleName[100];
 	char ModuleType[100];
+	char ModuleBrightness[20];
 
 	sprintf(ModuleName, "%s - %s", Module.GetName(), Module.GetVersion());
 	strcpy(ModuleType, TypeInText(Module.GetType()));
@@ -229,6 +236,10 @@ void Ui_Settings_Loaded(lv_event_t * e)
 
 	lv_label_set_text(ui_LblSettingName, ModuleName);
 	lv_label_set_text(ui_LblSettingType, ModuleType);
+	
+	sprintf(ModuleBrightness, "%d", Module.GetBrightness());
+	lv_label_set_text(ui_SlSettingsBrightnessValue, ModuleBrightness);
+	lv_slider_set_value(ui_SlSettingsBrightness, Module.GetBrightness(), LV_ANIM_ON);
 
 	static uint32_t user_data = 10;
 	if (!SettingsTimer) 

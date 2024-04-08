@@ -94,6 +94,7 @@ class PeerClass
         int        _ADCPort2;
         float      _VoltageDevider;
         uint32_t   _LastContact;
+        int        _Brightness;
         
     public:
         PeerClass();
@@ -142,6 +143,9 @@ class PeerClass
         
         bool  TogglePairMode() { _PairMode = !_PairMode; return _PairMode; }
     
+        int   GetBrightness() { return _Brightness; }
+        void  SetBrightness(int Brightness) {_Brightness = Brightness; }
+        
         void  PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId);
         
         char *GetPeriphName(int P) { return Periph[P].GetName(); }
@@ -188,6 +192,7 @@ class PeerClass
         uint8_t *GetPeriphUId(int Pos) { return Periph[Pos].GetUId(); }
         void     SetPeriphUId(int Pos, uint8_t*UId) { Periph[Pos].SetUId(UId); 
         }
+        
         PeriphClass *GetPeriphPtr(int P) { return &Periph[P]; }
         PeriphClass *GetPeriphPtr(char *Name);
         

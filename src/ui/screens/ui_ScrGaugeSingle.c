@@ -15,24 +15,26 @@ void ui_ScrGaugeSingle_screen_init(void)
     lv_img_set_src(ui_ImgGaugeSingleGauge, &ui_img_gauge_leer_240_png);
     lv_obj_set_width(ui_ImgGaugeSingleGauge, LV_SIZE_CONTENT);   /// 240
     lv_obj_set_height(ui_ImgGaugeSingleGauge, LV_SIZE_CONTENT);    /// 240
-    lv_obj_set_x(ui_ImgGaugeSingleGauge, 35);
-    lv_obj_set_y(ui_ImgGaugeSingleGauge, 35);
+    lv_obj_set_x(ui_ImgGaugeSingleGauge, -87);
+    lv_obj_set_y(ui_ImgGaugeSingleGauge, -11);
+    lv_obj_set_align(ui_ImgGaugeSingleGauge, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_ImgGaugeSingleGauge, LV_OBJ_FLAG_ADV_HITTEST);     /// Flags
     lv_obj_clear_flag(ui_ImgGaugeSingleGauge, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
 
     ui_LblGaugeSingleValueDescription = lv_label_create(ui_ScrGaugeSingle);
-    lv_obj_set_width(ui_LblGaugeSingleValueDescription, LV_SIZE_CONTENT);   /// 100
+    lv_obj_set_width(ui_LblGaugeSingleValueDescription, 219);
     lv_obj_set_height(ui_LblGaugeSingleValueDescription, LV_SIZE_CONTENT);    /// 1
-    lv_obj_set_x(ui_LblGaugeSingleValueDescription, 140);
-    lv_obj_set_y(ui_LblGaugeSingleValueDescription, -69);
+    lv_obj_set_x(ui_LblGaugeSingleValueDescription, 125);
+    lv_obj_set_y(ui_LblGaugeSingleValueDescription, -118);
     lv_obj_set_align(ui_LblGaugeSingleValueDescription, LV_ALIGN_CENTER);
     lv_label_set_text(ui_LblGaugeSingleValueDescription, "LED-Bar");
     lv_obj_set_style_text_color(ui_LblGaugeSingleValueDescription, lv_color_hex(0x825E02), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_text_opa(ui_LblGaugeSingleValueDescription, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_font(ui_LblGaugeSingleValueDescription, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(ui_LblGaugeSingleValueDescription, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui_LblGaugeSingleValueDescription, &lv_font_montserrat_44, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_LblGaugeSingleValue = lv_label_create(ui_ScrGaugeSingle);
-    lv_obj_set_width(ui_LblGaugeSingleValue, 162);
+    lv_obj_set_width(ui_LblGaugeSingleValue, 145);
     lv_obj_set_height(ui_LblGaugeSingleValue, LV_SIZE_CONTENT);    /// 1
     lv_obj_set_x(ui_LblGaugeSingleValue, 140);
     lv_obj_set_y(ui_LblGaugeSingleValue, -22);

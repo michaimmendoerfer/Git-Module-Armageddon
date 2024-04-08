@@ -51,6 +51,10 @@ lv_obj_t * ui_LblSettingType;
 void ui_event_Button4(lv_event_t * e);
 lv_obj_t * ui_Button4;
 lv_obj_t * ui_Label9;
+void ui_event_SlSettingsBrightness(lv_event_t * e);
+lv_obj_t * ui_SlSettingsBrightness;
+lv_obj_t * ui_Label8;
+lv_obj_t * ui_SlSettingsBrightnessValue;
 
 
 // SCREEN: ui_ScrGaugeSingle
@@ -233,9 +237,6 @@ void ui_event_ScrSettings(lv_event_t * e)
     if(event_code == LV_EVENT_SCREEN_LOADED) {
         Ui_Settings_Loaded(e);
     }
-    if(event_code == LV_EVENT_SCREEN_UNLOAD_START) {
-        Ui_Settings_Leave(e);
-    }
 }
 void ui_event_SwSettingsDemo(lv_event_t * e)
 {
@@ -277,6 +278,15 @@ void ui_event_Button4(lv_event_t * e)
         Ui_Settings_Reset(e);
     }
 }
+void ui_event_SlSettingsBrightness(lv_event_t * e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t * target = lv_event_get_target(e);
+    if(event_code == LV_EVENT_VALUE_CHANGED) {
+        _ui_slider_set_text_value(ui_SlSettingsBrightnessValue, target, "", "");
+        Ui_Settings_Brightness_Changed(e);
+    }
+}
 void ui_event_ScrGaugeSingle(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -290,11 +300,11 @@ void ui_event_ScrGaugeSingle(lv_event_t * e)
     }
     if(event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_RIGHT) {
         lv_indev_wait_release(lv_indev_get_act());
-        Ui_GaugeSingle_Prev(e);
+        Ui_GaugeSingle_Next(e);
     }
     if(event_code == LV_EVENT_GESTURE &&  lv_indev_get_gesture_dir(lv_indev_get_act()) == LV_DIR_LEFT) {
         lv_indev_wait_release(lv_indev_get_act());
-        Ui_GaugeSingle_Next(e);
+        Ui_GaugeSingle_Prev(e);
     }
     if(event_code == LV_EVENT_SCREEN_UNLOAD_START) {
         Ui_GaugeSingle_Leave(e);

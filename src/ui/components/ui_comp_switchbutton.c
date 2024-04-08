@@ -10,7 +10,7 @@ void ui_event_comp_SwitchButton_ImgButton(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
     lv_obj_t * target = lv_event_get_target(e);
-    lv_obj_t ** comp_SwitchButton = lv_event_get_user_data(e);
+    //lv_obj_t ** comp_SwitchButton = lv_event_get_user_data(e);
     if(event_code == LV_EVENT_CLICKED) {
         Ui_SwitchButton_Clicked(e);
     }
@@ -18,8 +18,8 @@ void ui_event_comp_SwitchButton_ImgButton(lv_event_t * e)
 void ui_event_comp_SwitchButton_LblSwitchPeriph(lv_event_t * e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
-    lv_obj_t * target = lv_event_get_target(e);
-    lv_obj_t ** comp_SwitchButton = lv_event_get_user_data(e);
+    //lv_obj_t * target = lv_event_get_target(e);
+    //lv_obj_t ** comp_SwitchButton = lv_event_get_user_data(e);
     if(event_code == LV_EVENT_LONG_PRESSED) {
         Ui_Switch_SwitchButton_Long(e);
     }
