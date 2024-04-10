@@ -1,14 +1,12 @@
 //#define KILL_NVS 1
+#define ADC_USED 1
+#define PORT_USED 1
 
-//#define MODULE_1S
-//#define MODULE_2S
-//#define MODULE_4A_1V_ADC
-//#define MODULE_4A_1V_NOADC
-//#define MODULE_4S_1V_ADC
-//#define MODULE_4S_1V_NOADC
-#define MODULE_2A_2S_1V_NOADC
+#define ESP32_MODULE_4S_1V_NOADC_PORT 
+//#define ESP32_MODULE_4A_1V_ADC
+//#define ESP32_MODULE_2A_2S_1V_NOADC
+//#define ESP32_MODULE_2A_2S_1V_ADC_PORT
 
-//#define DISPLAY_NO
 //#define DISPLAY_C3_ROUND
 #define DISPLAY_480
 
@@ -31,12 +29,22 @@
 #include "pref_manager.h"
 #include <Preferences.h>
 #include <ArduinoJson.h>
-#include <Wire.h>
-#include <Spi.h>
+#ifdef ADC_USED
+  #include <Adafruit_ADS1X15.h>
+  #include <Wire.h>
+  #include <Spi.h>
+  Adafruit_ADS1115 ads;
+#endif
+#ifdef PORT_USED
+  #include <Wire.h>
+  #include <Spi.h>
+  #include "PCF8575.h"
+  PCF8575 IOBoard(0x20);
+#endif
 
 #pragma endregion Includes
 
-const char _Version[]           = "3.01";
+const char _Version[]           = "3.11";
 const char _Protokoll_Version[] = "1.01";
 const char _ModuleName[]        = "C3-Arma";
 const bool _LED_SIGNAL          = false;
@@ -101,77 +109,35 @@ void InitModule()
 
     */
     
-    #ifdef MODULE_4S_1V_NOADC   // 4-Way Switch with Voltage-Monitor #################################################################
+    #ifdef ESP32_MODULE_4S_1V_NOADC_PORT   // 4-Way Switch with Voltage-Monitor #################################################################
+      // PCF8575 with SCL:21, SDA:22, Voltage-Monitor:35 
       #define SWITCHES_PER_SCREEN 4
 
       //                Name        Type       Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
-      Module.Setup(_ModuleName, SWITCH_4_WAY, _Version, NULL,     false, true,  true, false, -1, RELAY_NORMAL, -1,  -1,     1);
+      Module.Setup(_ModuleName, SWITCH_4_WAY, _Version, NULL,     false, true,  true, false, -1, RELAY_NORMAL, 21,  22,     1);
 
-      //                      Name     Type             ADS  IO  NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Extern", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0);
-      Module.PeriphSetup(1, "In-Car", SENS_TYPE_SWITCH,  0,  26,   0,    0,    0,    0);
-      Module.PeriphSetup(2, "Solar",  SENS_TYPE_SWITCH,  0,  32,   0,    0,    0,    0);
-      Module.PeriphSetup(3, "Load",   SENS_TYPE_SWITCH,  0,  33,   0,    0,    0,    0);
-      Module.PeriphSetup(4, "Lipo",   SENS_TYPE_VOLT,    0,  39,   0,    0,   200,   0); 
+      //                      Name     Type           ADS  IO  NULL   VpA   Vin  PeerID
+      Module.PeriphSetup(0, "SP-1", SENS_TYPE_SWITCH,  1,  0,   0,    0,    0,    0);
+      Module.PeriphSetup(1, "SP-2", SENS_TYPE_SWITCH,  1,  1,   0,    0,    0,    0);
+      Module.PeriphSetup(2, "SP-3", SENS_TYPE_SWITCH,  1,  2,   0,    0,    0,    0);
+      Module.PeriphSetup(3, "SP-4", SENS_TYPE_SWITCH,  1,  3,   0,    0,    0,    0);
+      Module.PeriphSetup(4, "Volt", SENS_TYPE_VOLT,    0,  35,  0,    0,   200,   0); 
     #endif
-    #ifdef MODULE_4S_1V_ADC     // 4-Way Switch no Voltage-Monitor ###################################################################
-      #define SWITCHES_PER_SCREEN 4
-
-      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
-      Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, -1,  -1,     1);
-
-      //                      Name     Type             ADS  IO  NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Extern", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0);
-      Module.PeriphSetup(1, "In-Car", SENS_TYPE_SWITCH,  0,  26,   0,    0,    0,    0);
-      Module.PeriphSetup(2, "Solar",  SENS_TYPE_SWITCH,  0,  32,   0,    0,    0,    0);
-      Module.PeriphSetup(3, "Load",   SENS_TYPE_SWITCH,  0,  33,   0,    0,    0,    0);
-      Module.PeriphSetup(4, "Lipo",   SENS_TYPE_VOLT,    0,  39,   0,    0,   200,   0); 
-    #endif
-    #ifdef MODULE_1S            // 1-Way Switch ######################################################################################
-      #define SWITCHES_PER_SCREEN 1
-      //                Name        Type       Version  Address   sleep  debug  demo   pair  vMon RelayType      adc1 adc2 voltagedevier 
-      Module.Setup(_ModuleName, SWITCH_1_WAY, _Version, NULL,     false, true,  false, false, -1, RELAY_REVERSED, -1,  -1,     1);
-
-      //                      Name     Type             ADS    IO  NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Switch_1", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0);
-    #endif
-    #ifdef MODULE_2S            // 2-Way Switch ######################################################################################
-      #define SWITCHES_PER_SCREEN 2
-
-      //                Name        Type       Version  Address   sleep  debug  demo   pair  vMon RelayType      adc1 adc2 voltagedevier 
-      Module.Setup(_ModuleName, SWITCH_2_WAY, _Version, NULL,     false, true,  false, false, -1, RELAY_REVERSED, -1,  -1,     1);
-      
-      //                      Name     Type             ADS    IO  NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Switch_1", SENS_TYPE_SWITCH,  0,  25,   0,    0,    0,    0);
-      Module.PeriphSetup(0, "Switch_2", SENS_TYPE_SWITCH,  0,  26,   0,    0,    0,    0);
-    #endif
-    #ifdef MODULE_4A_1V_ADC     // 4-way Battery-Sensor with ADC and VMon ############################################################
+    #ifdef ESP32_MODULE_4A_1V_ADC        // 4-way Battery-Sensor with ADC and VMon ############################################################
+      // 4x acs712(30A) over ADC1115 on SCL:21, SDA:22, Voltage-Monitor:35
       #define SWITCHES_PER_SCREEN 4
       
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, 14,  15,     1);
 
-      //                      Name     Type             ADS  IO  NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Sensor_1", SENS_TYPE_AMP,  1,    1,   0,  0.066,  0,    0);
-      Module.PeriphSetup(1, "Sensor_2", SENS_TYPE_AMP,  1,    2,   0,  0.066,  0,    0);
-      Module.PeriphSetup(2, "Sensor_3", SENS_TYPE_AMP,  1,    3,   0,  0.066,  0,    0);
-      Module.PeriphSetup(3, "Sensor_4", SENS_TYPE_AMP,  1,    4,   0,  0.066,  0,    0);
-      Module.PeriphSetup(4, "VMon",     SENS_TYPE_VOLT, 0,   39,   0,    0,   200,   0); 
+      //                      Name     Type             ADS  IO   NULL   VpA   Vin  PeerID
+      Module.PeriphSetup(0, "Sensor_1", SENS_TYPE_AMP,  1,    1,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(1, "Sensor_2", SENS_TYPE_AMP,  1,    2,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(2, "Sensor_3", SENS_TYPE_AMP,  1,    3,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(3, "Sensor_4", SENS_TYPE_AMP,  1,    4,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(4, "VMon",     SENS_TYPE_VOLT, 0,   39,   0,     0,   200,   0); 
     #endif
-    #ifdef MODULE_4A_1V_NOADC   // 4-way Battery-Sensor no ADC and VMon ##############################################################
-      #define SWITCHES_PER_SCREEN 4
-
-      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
-      Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, -1,  -1,     1.5);
-
-      //                      Name     Type             ADS  IO  NULL   VpA   Vin   PeerID
-      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     0,  32,   0,    0,    0,    0);
-      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     0,  33,   0,    0,    0,    0);
-      Module.PeriphSetup(2, "Amp 3",  SENS_TYPE_AMP,     0,  34,   0,    0,    0,    0);
-      Module.PeriphSetup(3, "Amp 4",  SENS_TYPE_AMP,     0,  35,   0,    0,    0,    0);
-      Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  39,   0,    0,   200,   0); 
-    #endif
-    #ifdef MODULE_2A_2S_1V_NOADC   // 4-way Battery-Sensor no ADC and VMon ##############################################################
+    #ifdef ESP32_MODULE_2A_2S_1V_NOADC   // Mixed-Module no ADC and VMon ##############################################################
       #define SWITCHES_PER_SCREEN 2
 
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
@@ -183,6 +149,19 @@ void InitModule()
       Module.PeriphSetup(2, "Sw 1",   SENS_TYPE_SWITCH,  0,  32,   0,       0,        0,    0);
       Module.PeriphSetup(3, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  33,   0,       0,        0,    0);
       Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  39,   0,       0,      200,    0); 
+    #endif
+    #ifdef ESP32_MODULE_2A_2S_1V_ADC_PORT   // Mixed-Module with ADC and Port and VMon ##############################################################
+      #define SWITCHES_PER_SCREEN 2
+
+      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
+      Module.Setup(_ModuleName, PDC_SENSOR_MIX, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, 21,  22,     1.5);
+
+      //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     0,  0,   2.5,     0.166,    0,    0);
+      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     0,  1,   2.5,     0.166,    0,    0);
+      Module.PeriphSetup(2, "Sw 1",   SENS_TYPE_SWITCH,  0,  0,   0,       0,        0,    0);
+      Module.PeriphSetup(3, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  1,   0,       0,        0,    0);
+      Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  35,   0,       0,      200,    0); 
     #endif
 
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
@@ -381,7 +360,6 @@ void SetPairMode(bool Mode)
     if (_LED_SIGNAL) smartdisplay_led_set_rgb(1, 0, 0);
     Module.SetPairMode(Mode);
 }
-
 void AddStatus(String Msg) 
 {
   /*for (int Si=MAX_STATUS-1; Si>0; Si--) {
@@ -419,22 +397,27 @@ void UpdateSwitches()
               else Value = 0;
           }
           
-          if (Value == 1) digitalWrite(Module.GetPeriphIOPort(SNr), HIGH);
-          else digitalWrite(Module.GetPeriphIOPort(SNr), LOW);
-          
+          #ifdef PORT_USED
+              if (Value == 1) IOBoard.digitalWrite(Module.GetPeriphIOPort(SNr), HIGH);
+              else IOBoard.digitalWrite(Module.GetPeriphIOPort(SNr), LOW);
+          #else
+              if (Value == 1) digitalWrite(Module.GetPeriphIOPort(SNr), HIGH);
+              else digitalWrite(Module.GetPeriphIOPort(SNr), LOW);
+          #endif
+
           Serial.printf("Setze %s (Port:%d) auf %d", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr), Serial.print(Value));
       }
   }
   SendMessage();
 }
-void  PrintMAC(const uint8_t * mac_addr)
+void PrintMAC(const uint8_t * mac_addr)
 {
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   Serial.print(macStr);
 }
-void  GoToSleep() {
+void GoToSleep() {
   JsonDocument doc;;
   String jsondata;
   
@@ -508,7 +491,7 @@ void CurrentCalibration()
         float TempVolt = 0;
         
         #ifdef ADC_USED
-        TempVal  = ads.readADC_SingleEnded(S[SNr].IOPort);
+        TempVal  = ads.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
         TempVolt = ads.computeVolts(TempVal);
         #else
         //Filter implementieren !!!
@@ -543,7 +526,7 @@ float ReadAmp (int SNr)
       #ifdef ADC_USED
         TempVal  = ads.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
         TempVolt = ads.computeVolts(TempVal); 
-        TempAmp  = (TempVolt - Module.GetPeriphNullwertSNr()) / Module.GetPeriphVperAmp(SNr);
+        TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
         delay(10);
       #endif
   }
@@ -958,25 +941,35 @@ void setup()
     #endif
 
     #ifdef ADC_USED
-    if (Module.ADCPort != -1)
-    {
-        Wire.begin(D5, D6);
+        //Wire.begin(D5, D6);
         ads.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
-        ads.begin();
-    }
+        if (!ads.begin()) {
+          Serial.println("Failed to initialize ADS.");
+          while (1);
+        }
     #endif
 
     InitModule();
 
-    /*for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)  
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)  
     { 
         switch (Module.GetPeriphType(SNr)) {
-            case SENS_TYPE_SWITCH: pinMode(Module.GetPeriphIOPort(SNr), OUTPUT); break;
+            case SENS_TYPE_SWITCH: 
+                #ifdef PORT_USED
+                    IOBoard.pinMode(Module.GetPeriphIOPort(SNr), OUTPUT);
+                #else
+                    pinMode(Module.GetPeriphIOPort(SNr), OUTPUT); 
+                #endif
+                break;
             case SENS_TYPE_VOLT:   pinMode(Module.GetPeriphIOPort(SNr), INPUT ); break;
             case SENS_TYPE_AMP:    pinMode(Module.GetPeriphIOPort(SNr), INPUT ); break;
         }
     }
-  */
+
+    #ifdef PORT_USED
+	      IOBoard.begin();
+    #endif
+
     if (preferences.begin("JeepifyInit", true))
     {
         String SavedModule   = preferences.getString("Module", "");

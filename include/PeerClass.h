@@ -185,10 +185,6 @@ class PeerClass
         float GetPeriphNullwert(char *Name);
         void  SetPeriphNullwert(int P, float Nullwert) { Periph[P].SetNullwert(Nullwert); }
         void  SetPeriphNullwert(char *Name, float Nullwert);
-
-        uint8_t *GetPeriphUId(int Pos) { return Periph[Pos].GetUId(); }
-        void     SetPeriphUId(int Pos, uint8_t*UId) { Periph[Pos].SetUId(UId); 
-        }
         
         PeriphClass *GetPeriphPtr(int P) { return &Periph[P]; }
         PeriphClass *GetPeriphPtr(char *Name);
