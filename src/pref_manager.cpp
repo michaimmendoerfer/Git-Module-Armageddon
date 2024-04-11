@@ -270,7 +270,7 @@ void ReportAll()
           {
               if (Screen[s].GetPeriphId(Si))
               {
-                Serial.printf("    %d: %s(%d) at position %d\n\r", Screen[s].GetPeriphId(Si), Screen[s].GetPeriphName(Si), Screen[s].GetPeriphType(Si), Si);
+                Serial.printf("    %d: %s(%d) at position %d\n\r", Screen[s].GetPeriphId(Si), Screen[s].GetPeriph(Si)->GetName(), Screen[s].GetPeriph(Si)->GetType(), Si);
               }
           }
       }

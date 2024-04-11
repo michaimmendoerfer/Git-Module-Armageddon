@@ -6,7 +6,7 @@
 //#define ESP32_MODULE_2A_2S_1V_ADC_PORT
 
 //#define DISPLAY_C3_ROUND
-#define DISPLAY_480
+//#define DISPLAY_480
 
 #pragma region Includes
 #include <Arduino.h>
@@ -325,11 +325,13 @@ void SendNameChange(int Pos)
 #pragma region System-Things
 void ChangeBrightness(int B)
 {
+  #ifdef DISPLAY_480
   preferences.begin("JeepifyInit", false);
     Module.SetBrightness(B);
     smartdisplay_lcd_set_backlight((float) B/100);
     SaveModule();
   preferences.end();
+  #endif
 }
 void SetDemoMode(bool Mode) 
 {
@@ -453,34 +455,39 @@ void SaveModule()
 void SetMessageLED(int Color)
 {
   // 0-off, 1-Red, 2-Green, 3-Blue, 4=violett
-  if (_LED_SIGNAL) switch (Color)
+  if (_LED_SIGNAL) 
+  switch (Color)
   {
       case 0: 
           #ifdef DISPLAY_480
               smartdisplay_led_set_rgb(0, 0, 0);
           #else
           #endif
+          break;
       case 1:
           #ifdef DISPLAY_480
               smartdisplay_led_set_rgb(1, 0, 0);
           #else
           #endif
+          break;
       case 2:
           #ifdef DISPLAY_480
               smartdisplay_led_set_rgb(0, 1, 0);
           #else
           #endif
+          break;
       case 3:
           #ifdef DISPLAY_480
               smartdisplay_led_set_rgb(0, 0, 1);
           #else
           #endif
+          break;
       case 4:
           #ifdef DISPLAY_480
               smartdisplay_led_set_rgb(1, 0, 1);
           #else
           #endif
-      
+          break;  
   }
 }
 #pragma endregion System-Things
@@ -1047,7 +1054,7 @@ void setup()
   */
     //UpdateSwitches();
 
-    #ifndef DISPLAY_NO
+    #ifdef DISPLAY_480
       ui_init();
     #endif
 }
@@ -1077,6 +1084,8 @@ void loop()
             SetMessageLED(0);
     }
 
-    lv_timer_handler();
-    delay(5);
+    #ifdef DISPLAY_480
+        lv_timer_handler();
+        delay(5);
+    #endif
 }
