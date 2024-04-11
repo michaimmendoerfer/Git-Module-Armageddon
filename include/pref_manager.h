@@ -8,7 +8,7 @@ Version 1.01
 #define PREF_MANAGER_H
 
 #include <Preferences.h>
-#include "lvgl.h"
+//#include "lvgl.h"
 #include "PeerClass.h"
 
 class MultiMonitorClass {
@@ -24,7 +24,8 @@ class MultiMonitorClass {
         PeriphClass *_Periph   [PERIPH_PER_SCREEN];
         int          _PeriphId [PERIPH_PER_SCREEN];
         bool         _Used;
-        lv_obj_t    *_Component[PERIPH_PER_SCREEN];
+        void        *_Component[PERIPH_PER_SCREEN];
+        //lv_obj_t    *_Component[PERIPH_PER_SCREEN];
     
     public:
         MultiMonitorClass();
@@ -34,7 +35,6 @@ class MultiMonitorClass {
         bool  SetName(char* Name) { strcpy(_Name, Name); return true; }
         char *GetName(){ return (_Name); }
         int   GetId() { return _Id; }
-        //void  SetId(int Id) { _Id = Id; }
         bool  hasChanged() { return _Changed; }
         bool  GetChanged() { return _Changed; }
         void  SetChanged(bool Changed) { _Changed = Changed; }

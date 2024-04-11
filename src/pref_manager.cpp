@@ -255,12 +255,12 @@ void ReportAll()
       Serial.printf("[%d] %s, Type:%d, MAC:", P->GetId(), P->GetName(), P->GetType());
       PrintMAC(P->GetBroadcastAddress());
       Serial.println();
+      
       for (int Si=0; Si<MAX_PERIPHERALS; Si++)
       {
           if (P->GetPeriphType(Si) > 0)
           {
-              Serial.printf("    %d: %s(%d) at position %d", P->GetPeriphId(Si), P->GetPeriphName(Si), P->GetPeriphType(Si), P->GetPeriphPos(Si));
-              Serial.println();
+              Serial.printf("    %d: %s(%d) at position %d\n\r", P->GetPeriphId(Si), P->GetPeriphName(Si), P->GetPeriphType(Si), P->GetPeriphPos(Si));
           }
       }
 
@@ -270,8 +270,7 @@ void ReportAll()
           {
               if (Screen[s].GetPeriphId(Si))
               {
-                Serial.printf("    %d: %s(%d) at position %d", Screen[s].GetPeriph(Si)->GetId(), Screen[s].GetPeriph(Si)->GetName(), Screen[s].GetPeriph(Si)->GetType(), Si);
-                Serial.println();
+                Serial.printf("    %d: %s(%d) at position %d\n\r", Screen[s].GetPeriphId(Si), Screen[s].GetPeriphName(Si), Screen[s].GetPeriphType(Si), Si);
               }
           }
       }
