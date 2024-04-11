@@ -1,6 +1,4 @@
 //#define KILL_NVS 1
-#define ADC_USED 1
-#define PORT_USED 1
 
 #define ESP32_MODULE_4S_1V_NOADC_PORT 
 //#define ESP32_MODULE_4A_1V_ADC
@@ -14,10 +12,10 @@
 #include <Arduino.h>
 
 #ifdef DISPLAY_480
-  #include <esp32_smartdisplay.h>
-#endif
-#ifndef DISPLAY_NO
-  #include <ui/ui.h>
+    #include <esp32_smartdisplay.h>
+    #define ADC_USED  1
+    #define PORT_USED 1
+    #include <ui/ui.h>
 #endif
 
 #include <LinkedList.h>
@@ -29,6 +27,7 @@
 #include "pref_manager.h"
 #include <Preferences.h>
 #include <ArduinoJson.h>
+
 #ifdef ADC_USED
   #include <Adafruit_ADS1X15.h>
   #include <Wire.h>
