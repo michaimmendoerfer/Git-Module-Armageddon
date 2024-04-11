@@ -109,7 +109,7 @@ void InitModule()
 
     */
     
-    #ifdef ESP32_MODULE_4S_1V_NOADC_PORT   // 4-Way Switch with Voltage-Monitor #################################################################
+    #ifdef ESP32_MODULE_4S_1V_NOADC_PORT   // 4-Way Switch via IOBoard with Voltage-Monitor #################################################################
       // PCF8575 with SCL:21, SDA:22, Voltage-Monitor:35 
       #define SWITCHES_PER_SCREEN 4
 
@@ -123,7 +123,7 @@ void InitModule()
       Module.PeriphSetup(3, "SP-4", SENS_TYPE_SWITCH,  1,  3,   0,    0,    0,    0);
       Module.PeriphSetup(4, "Volt", SENS_TYPE_VOLT,    0,  35,  0,    0,   200,   0); 
     #endif
-    #ifdef ESP32_MODULE_4A_1V_ADC        // 4-way Battery-Sensor with ADC and VMon ############################################################
+    #ifdef ESP32_MODULE_4A_1V_ADC           // 4-way Battery-Sensor with ADC and VMon ############################################################
       // 4x acs712(30A) over ADC1115 on SCL:21, SDA:22, Voltage-Monitor:35
       #define SWITCHES_PER_SCREEN 4
       
@@ -137,7 +137,7 @@ void InitModule()
       Module.PeriphSetup(3, "Sensor_4", SENS_TYPE_AMP,  1,    4,  2.5,  0.066,  0,    0);
       Module.PeriphSetup(4, "VMon",     SENS_TYPE_VOLT, 0,   39,   0,     0,   200,   0); 
     #endif
-    #ifdef ESP32_MODULE_2A_2S_1V_NOADC   // Mixed-Module no ADC and VMon ##############################################################
+    #ifdef ESP32_MODULE_2A_2S_1V_NOADC      // Mixed-Module no ADC and VMon ######################################################################
       #define SWITCHES_PER_SCREEN 2
 
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
@@ -150,7 +150,7 @@ void InitModule()
       Module.PeriphSetup(3, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  33,   0,       0,        0,    0);
       Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  39,   0,       0,      200,    0); 
     #endif
-    #ifdef ESP32_MODULE_2A_2S_1V_ADC_PORT   // Mixed-Module with ADC and Port and VMon ##############################################################
+    #ifdef ESP32_MODULE_2A_2S_1V_ADC_PORT   // Mixed-Module with ADC and Port and VMon ###########################################################
       #define SWITCHES_PER_SCREEN 2
 
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
