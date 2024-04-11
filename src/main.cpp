@@ -88,12 +88,10 @@ void   SetDebugMode(bool Mode);
 void   SetPairMode(bool Mode);
 
 void   SaveModule();
-
 void   AddStatus(String Msg);
-
 void   PrintMAC(const uint8_t * mac_addr);
-
 void   GoToSleep();
+void   SetMessageLED(int Color);
 #pragma endregion Functions
 
 void InitModule()
@@ -184,7 +182,7 @@ void SendMessage ()
 {
     //sendet NAME0:Value0, NAME1:Value1... Status:(bitwise)int
     TSLed = millis();
-    if (_LED_SIGNAL) smartdisplay_led_set_rgb(0, 1, 0);
+    SetMessageLED(2);
 
     JsonDocument doc;; String jsondata; 
     char buf[100]; 
@@ -275,7 +273,7 @@ void SendPairingRequest()
 {
   // sendet auf Broadcast: "addme", T0:Type, N0:Name, T1:Type, N1:Name...
   TSLed = millis();
-  if (_LED_SIGNAL) smartdisplay_led_set_rgb(0, 0, 1);
+  SetMessageLED(3);
   
   JsonDocument doc;; String jsondata; 
   char Buf[100] = {};
@@ -305,6 +303,7 @@ void SendNameChange(int Pos)
     // sendet auf Broadcast: "Order"="UpdateName"; "Pos"="32; "NewName"="Horst"; Pos==99 is ModuleName
   
   TSLed = millis();
+  SetMessageLED(4);
   
   JsonDocument doc;; String jsondata; 
   
@@ -357,7 +356,7 @@ void SetDebugMode(bool Mode)
 void SetPairMode(bool Mode) 
 {
     TSPair = millis();
-    if (_LED_SIGNAL) smartdisplay_led_set_rgb(1, 0, 0);
+    SetMessageLED(1);
     Module.SetPairMode(Mode);
 }
 void AddStatus(String Msg) 
@@ -451,6 +450,39 @@ void SaveModule()
           Serial.printf("schreibe: Module: %s",ExportStringPeer.c_str());
           Serial.println();
       preferences.end();
+}
+void SetMessageLED(int Color)
+{
+  // 0-off, 1-Red, 2-Green, 3-Blue, 4=violett
+  if (_LED_SIGNAL) switch (Color)
+  {
+      case 0: 
+          #ifdef DISPLAY_480
+              smartdisplay_led_set_rgb(0, 0, 0);
+          #else
+          #endif
+      case 1:
+          #ifdef DISPLAY_480
+              smartdisplay_led_set_rgb(1, 0, 0);
+          #else
+          #endif
+      case 2:
+          #ifdef DISPLAY_480
+              smartdisplay_led_set_rgb(0, 1, 0);
+          #else
+          #endif
+      case 3:
+          #ifdef DISPLAY_480
+              smartdisplay_led_set_rgb(0, 0, 1);
+          #else
+          #endif
+      case 4:
+          #ifdef DISPLAY_480
+              smartdisplay_led_set_rgb(1, 0, 1);
+          #else
+          #endif
+      
+  }
 }
 #pragma endregion System-Things
 #pragma region Data-Things
@@ -1020,6 +1052,7 @@ void setup()
       ui_init();
     #endif
 }
+
 void loop()
 {
     if  ((millis() - TSSend ) > MSG_INTERVAL  ) {
@@ -1032,17 +1065,17 @@ void loop()
         TSPair = 0;
         Module.SetPairMode(false);
         AddStatus("Pairing beendet...");
-        smartdisplay_led_set_rgb(0, 0, 0);
+        SetMessageLED(0);
     }
 
     if ((millis() - TSLed > MSGLIGHT_INTERVAL) and (TSLed > 0))
     {
         TSLed = 0;
         
-        if ((Module.GetPairMode()) and (_LED_SIGNAL))
-            smartdisplay_led_set_rgb(1, 0, 0);
+        if (Module.GetPairMode())
+            SetMessageLED(1);
         else
-            smartdisplay_led_set_rgb(0, 0, 0);
+            SetMessageLED(0);
     }
 
     lv_timer_handler();
