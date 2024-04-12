@@ -6,7 +6,7 @@
 //#define ESP32_MODULE_2A_2S_1V_ADC_PORT
 
 //#define DISPLAY_C3_ROUND
-//#define DISPLAY_480
+#define DISPLAY_480
 
 #pragma region Includes
 #include <Arduino.h>
