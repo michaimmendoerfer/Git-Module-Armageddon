@@ -123,7 +123,7 @@ int GetPeers()
     PeerList.clear();
 
     int PeerCount = preferences.getInt("PeerCount");
-    Serial.printf("Peercount = %d", PeerCount);
+    Serial.printf("Peercount = %d\n\r", PeerCount);
     
     for (int Pi=0 ; Pi<PeerCount; Pi++)
     {

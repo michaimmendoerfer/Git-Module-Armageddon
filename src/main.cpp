@@ -1,9 +1,12 @@
 //#define KILL_NVS 1
 
-#define ESP32_MODULE_4S_1V_NOADC_PORT 
+//#define ESP32_MODULE_4S_1V_NOADC_PORT 
 //#define ESP32_MODULE_4A_1V_ADC
 //#define ESP32_MODULE_2A_2S_1V_NOADC
 //#define ESP32_MODULE_2A_2S_1V_ADC_PORT
+#define ESP32_MODULE_2A_PORT
+#define PORT_USED 1
+#define BOOT_BUTTON 9
 
 //#define DISPLAY_C3_ROUND
 #define DISPLAY_480
@@ -27,27 +30,36 @@
 #include "pref_manager.h"
 #include <Preferences.h>
 #include <ArduinoJson.h>
+#include <Wire.h>
+#include <Spi.h>
+
+#pragma region I2C_BUS
+#define I2C_FREQ 400000
+#define SDA_1 5
+#define SCL_1 6
+#define ADS_ADDRESS  0x20
+#define PORT_ADDRESS 0x27
+
+TwoWire I2C_BUS = TwoWire(0);
 
 #ifdef ADC_USED
-  #include <Adafruit_ADS1X15.h>
-  #include <Wire.h>
-  #include <Spi.h>
-  Adafruit_ADS1115 ads;
-#endif
-#ifdef PORT_USED
-  #include <Wire.h>
-  #include <Spi.h>
-  #include "PCF8575.h"
-  PCF8575 IOBoard(0x20);
+    #include <Adafruit_ADS1X15.h>
+    Adafruit_ADS1115 ADSBoard;
 #endif
 
+#ifdef PORT_USED
+    #include "PCF8575.h"
+    PCF8575 IOBoard(&I2C_BUS, 0x20);
+#endif
+#pragma endregion I2C_BUS
 #pragma endregion Includes
 
 const char _Version[]           = "3.11";
 const char _Protokoll_Version[] = "1.01";
-const char _ModuleName[]        = "C3-Arma";
-const bool _LED_SIGNAL          = false;
+const char _ModuleName[]        = "C3-PORT";
+const bool _LED_SIGNAL          = true;
 
+#pragma region Globals
 struct struct_Status {
   String    Msg;
   uint32_t  TSMsg;
@@ -67,6 +79,7 @@ volatile uint32_t TSPair  = 0;
 volatile uint32_t TSLed   = 0;
 
 Preferences preferences;
+#pragma endregion Globals
 
 #pragma region Functions
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len);
@@ -147,6 +160,17 @@ void InitModule()
       Module.PeriphSetup(3, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  33,   0,       0,        0,    0);
       Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  39,   0,       0,      200,    0); 
     #endif
+    #ifdef ESP32_MODULE_2A_PORT
+        #define SWITCHES_PER_SCREEN 2
+
+      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType     sda scl voltagedevier 
+      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL, 8,  9,     1.5);
+
+      //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,  0,  10,   0,       0,        0,    0);
+      Module.PeriphSetup(1, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  11,   0,       0,        0,    0);
+    #endif
+
     #ifdef ESP32_MODULE_2A_2S_1V_ADC_PORT   // Mixed-Module with ADC and Port and VMon ###########################################################
       #define SWITCHES_PER_SCREEN 2
 
@@ -529,8 +553,8 @@ void CurrentCalibration()
         float TempVolt = 0;
         
         #ifdef ADC_USED
-        TempVal  = ads.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
-        TempVolt = ads.computeVolts(TempVal);
+        TempVal  = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
+        TempVolt = ADSBoard.computeVolts(TempVal);
         #else
         //Filter implementieren !!!
         TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
@@ -562,8 +586,8 @@ float ReadAmp (int SNr)
   if (Module.GetADCPort1() != -1)
   {
       #ifdef ADC_USED
-        TempVal  = ads.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
-        TempVolt = ads.computeVolts(TempVal); 
+        TempVal  = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
+        TempVolt = ADSBoard.computeVolts(TempVal); 
         TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
         delay(10);
       #endif
@@ -971,20 +995,34 @@ void setup()
 
     Serial.begin(115200);
 
+    #ifdef PORT_USED
+	      if (!IOBoard.begin())
+          {
+                Serial.println("IOBoard not found!");
+                while (1);
+          }
+          else 
+          {
+                Serial.println("IOBoard initialised.");
+          }
+    #endif
+    #ifdef ADC_USED
+        ADSBoard.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
+        if (!ADSBoard.begin(ADS_ADDRESS, &I2C_BUS)) {
+          Serial.println("ADS not found!");
+          while (1);
+        }
+        else
+        {
+            Serial.println("ADS initialised.");
+        }
+    #endif
+
     #ifdef DISPLAY_480
         smartdisplay_init();
 
         __attribute__((unused)) auto disp = lv_disp_get_default();
         lv_disp_set_rotation(disp, LV_DISP_ROT_90);
-    #endif
-
-    #ifdef ADC_USED
-        //Wire.begin(D5, D6);
-        ads.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
-        if (!ads.begin()) {
-          Serial.println("Failed to initialize ADS.");
-          while (1);
-        }
     #endif
 
     InitModule();
@@ -1003,10 +1041,6 @@ void setup()
             case SENS_TYPE_AMP:    pinMode(Module.GetPeriphIOPort(SNr), INPUT ); break;
         }
     }
-
-    #ifdef PORT_USED
-	      IOBoard.begin();
-    #endif
 
     if (preferences.begin("JeepifyInit", true))
     {
@@ -1058,7 +1092,6 @@ void setup()
       ui_init();
     #endif
 }
-
 void loop()
 {
     if  ((millis() - TSSend ) > MSG_INTERVAL  ) {
@@ -1083,6 +1116,26 @@ void loop()
         else
             SetMessageLED(0);
     }
+
+    #ifdef ESP32
+        int BB = !digitalRead(BOOT_BUTTON);
+        if (BB == 1) {
+            TSPair = millis();
+            Module.SetPairMode(true);
+            
+            if (!TSBootButton) TSBootButton = millis();
+            else 
+            {
+                if ((millis() - TSBootButton) > 3000) {
+                    Serial.println("Button pressed... Clearing Peers and Reset");
+                    AddStatus("Clearing Peers and Reset");
+                    nvs_flash_erase(); nvs_flash_init();
+                    ESP.restart();
+                }
+            }
+        }
+        else TSBootButton = 0;
+        #endif
 
     #ifdef DISPLAY_480
         lv_timer_handler();
