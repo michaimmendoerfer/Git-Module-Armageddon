@@ -9,7 +9,7 @@
 #define BOOT_BUTTON 9
 
 //#define DISPLAY_C3_ROUND
-#define DISPLAY_480
+//#define DISPLAY_480
 
 #pragma region Includes
 #include <Arduino.h>
@@ -35,12 +35,10 @@
 
 #pragma region I2C_BUS
 #define I2C_FREQ 400000
-#define SDA_1 5
-#define SCL_1 6
-#define ADS_ADDRESS  0x20
-#define PORT_ADDRESS 0x27
-
-TwoWire I2C_BUS = TwoWire(0);
+#define SDA 5
+#define SCL 6
+#define ADS_ADDRESS  0x48
+#define PORT_ADDRESS 0x20
 
 #ifdef ADC_USED
     #include <Adafruit_ADS1X15.h>
@@ -49,12 +47,12 @@ TwoWire I2C_BUS = TwoWire(0);
 
 #ifdef PORT_USED
     #include "PCF8575.h"
-    PCF8575 IOBoard(&I2C_BUS, 0x20);
+    PCF8575 IOBoard(0x20, SDA, SCL);
 #endif
 #pragma endregion I2C_BUS
 #pragma endregion Includes
 
-const char _Version[]           = "3.11";
+const char _Version[]           = "3.21";
 const char _Protokoll_Version[] = "1.01";
 const char _ModuleName[]        = "C3-PORT";
 const bool _LED_SIGNAL          = true;
@@ -992,31 +990,8 @@ void setup()
     #ifdef ARDUINO_USB_CDC_ON_BOOT
         delay(5000);
     #endif
-
+    Wire.begin(6,7,400000);
     Serial.begin(115200);
-
-    #ifdef PORT_USED
-	      if (!IOBoard.begin())
-          {
-                Serial.println("IOBoard not found!");
-                while (1);
-          }
-          else 
-          {
-                Serial.println("IOBoard initialised.");
-          }
-    #endif
-    #ifdef ADC_USED
-        ADSBoard.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
-        if (!ADSBoard.begin(ADS_ADDRESS, &I2C_BUS)) {
-          Serial.println("ADS not found!");
-          while (1);
-        }
-        else
-        {
-            Serial.println("ADS initialised.");
-        }
-    #endif
 
     #ifdef DISPLAY_480
         smartdisplay_init();
@@ -1042,6 +1017,29 @@ void setup()
         }
     }
 
+    #ifdef PORT_USED
+	      if (!IOBoard.begin())
+          {
+                Serial.println("IOBoard not found!");
+                while (1);
+          }
+          else 
+          {
+                Serial.println("IOBoard initialised.");
+          }
+    #endif
+    #ifdef ADC_USED
+        ADSBoard.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
+        if (!ADSBoard.begin(ADS_ADDRESS, &I2C_BUS)) {
+          Serial.println("ADS not found!");
+          while (1);
+        }
+        else
+        {
+            Serial.println("ADS initialised.");
+        }
+    #endif
+    
     if (preferences.begin("JeepifyInit", true))
     {
         String SavedModule   = preferences.getString("Module", "");
