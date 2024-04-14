@@ -162,11 +162,11 @@ void InitModule()
         #define SWITCHES_PER_SCREEN 2
 
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType     sda scl voltagedevier 
-      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL, 8,  9,     1.5);
+      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL, 5,  6,     1.5);
 
       //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
-      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,  0,  10,   0,       0,        0,    0);
-      Module.PeriphSetup(1, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  11,   0,       0,        0,    0);
+      Module.PeriphSetup(0, "Sw 1",  SENS_TYPE_SWITCH,   1,  0,     0,       0,        0,    0);
+      Module.PeriphSetup(1, "Sw 2",  SENS_TYPE_SWITCH,   1,  1,     0,       0,        0,    0);
     #endif
 
     #ifdef ESP32_MODULE_2A_2S_1V_ADC_PORT   // Mixed-Module with ADC and Port and VMon ###########################################################
@@ -988,9 +988,8 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 void setup()
 {
     #ifdef ARDUINO_USB_CDC_ON_BOOT
-        delay(5000);
+        delay(3000);
     #endif
-    Wire.begin(6,7,400000);
     Serial.begin(115200);
 
     #ifdef DISPLAY_480
@@ -1001,6 +1000,8 @@ void setup()
     #endif
 
     InitModule();
+
+    Wire.begin(6,7,400000);
 
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)  
     { 
