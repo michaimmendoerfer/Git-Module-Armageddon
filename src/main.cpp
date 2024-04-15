@@ -5,11 +5,19 @@
 //#define ESP32_MODULE_2A_2S_1V_NOADC
 //#define ESP32_MODULE_2A_2S_1V_ADC_PORT
 #define ESP32_MODULE_2A_PORT
+//#define ESP32_MODULE_2A_NOPORT
+
+
 #define PORT_USED 1
 #define BOOT_BUTTON 9
 
+#define LED_PIN     8
+#define LED_OFF     HIGH
+#define LED_ON      LOW
+
 //#define DISPLAY_C3_ROUND
 //#define DISPLAY_480
+
 
 #pragma region Includes
 #include <Arduino.h>
@@ -168,6 +176,16 @@ void InitModule()
       Module.PeriphSetup(0, "Sw 1",  SENS_TYPE_SWITCH,   1,  0,     0,       0,        0,    0);
       Module.PeriphSetup(1, "Sw 2",  SENS_TYPE_SWITCH,   1,  1,     0,       0,        0,    0);
     #endif
+    #ifdef ESP32_MODULE_2A_NOPORT
+        #define SWITCHES_PER_SCREEN 2
+
+      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType     sda scl voltagedevier 
+      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL, -1,  -1,     1.5);
+
+      //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+      Module.PeriphSetup(0, "Sw 1",  SENS_TYPE_SWITCH,   0,  6,     0,       0,        0,    0);
+      Module.PeriphSetup(1, "Sw 2",  SENS_TYPE_SWITCH,   0,  7,     0,       0,        0,    0);
+    #endif
 
     #ifdef ESP32_MODULE_2A_2S_1V_ADC_PORT   // Mixed-Module with ADC and Port and VMon ###########################################################
       #define SWITCHES_PER_SCREEN 2
@@ -205,7 +223,7 @@ void SendMessage ()
     TSLed = millis();
     SetMessageLED(2);
 
-    JsonDocument doc;; String jsondata; 
+    JsonDocument doc; String jsondata; 
     char buf[100]; 
 
     doc["Node"] = Module.GetName();   
@@ -296,7 +314,7 @@ void SendPairingRequest()
   TSLed = millis();
   SetMessageLED(3);
   
-  JsonDocument doc;; String jsondata; 
+  JsonDocument doc; String jsondata; 
   char Buf[100] = {};
 
   doc["Node"]    = Module.GetName();   
@@ -326,7 +344,7 @@ void SendNameChange(int Pos)
   TSLed = millis();
   SetMessageLED(4);
   
-  JsonDocument doc;; String jsondata; 
+  JsonDocument doc; String jsondata; 
   
   doc["Node"]    = Module.GetName();   
   doc["Order"]   = SEND_CMD_UPDATE_NAME;
@@ -440,7 +458,7 @@ void PrintMAC(const uint8_t * mac_addr)
   Serial.print(macStr);
 }
 void GoToSleep() {
-  JsonDocument doc;;
+  JsonDocument doc;
   String jsondata;
   
   doc["Node"] = Module.GetName();   
@@ -476,40 +494,45 @@ void SaveModule()
 }
 void SetMessageLED(int Color)
 {
-  // 0-off, 1-Red, 2-Green, 3-Blue, 4=violett
-  if (_LED_SIGNAL) 
-  switch (Color)
-  {
-      case 0: 
-          #ifdef DISPLAY_480
-              smartdisplay_led_set_rgb(0, 0, 0);
-          #else
-          #endif
-          break;
-      case 1:
-          #ifdef DISPLAY_480
-              smartdisplay_led_set_rgb(1, 0, 0);
-          #else
-          #endif
-          break;
-      case 2:
-          #ifdef DISPLAY_480
-              smartdisplay_led_set_rgb(0, 1, 0);
-          #else
-          #endif
-          break;
-      case 3:
-          #ifdef DISPLAY_480
-              smartdisplay_led_set_rgb(0, 0, 1);
-          #else
-          #endif
-          break;
-      case 4:
-          #ifdef DISPLAY_480
-              smartdisplay_led_set_rgb(1, 0, 1);
-          #else
-          #endif
-          break;  
+    // 0-off, 1-Red, 2-Green, 3-Blue, 4=violett
+    if (_LED_SIGNAL) 
+    switch (Color)
+    {
+        case 0: 
+            #ifdef DISPLAY_480
+                smartdisplay_led_set_rgb(0, 0, 0);
+            #else
+                digitalWrite(LED_PIN, LED_OFF);
+            #endif
+            break;
+        case 1:
+            #ifdef DISPLAY_480
+                smartdisplay_led_set_rgb(1, 0, 0);
+            #else
+                digitalWrite(LED_PIN, LED_ON);
+            #endif
+            break;
+        case 2:
+            #ifdef DISPLAY_480
+                smartdisplay_led_set_rgb(0, 1, 0);
+            #else
+            #endif
+                digitalWrite(LED_PIN, LED_ON);
+            break;
+        case 3:
+            #ifdef DISPLAY_480
+                smartdisplay_led_set_rgb(0, 0, 1);
+            #else
+                digitalWrite(LED_PIN, LED_ON);
+            #endif
+            break;
+        case 4:
+            #ifdef DISPLAY_480
+                smartdisplay_led_set_rgb(1, 0, 1);
+            #else
+                digitalWrite(LED_PIN, LED_ON);
+            #endif
+            break;  
   }
 }
 #pragma endregion System-Things
@@ -629,7 +652,7 @@ float ReadVolt(int SNr)
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) 
 {  
   char* buff = (char*) incomingData;        //char buffer
-  JsonDocument doc;;
+  JsonDocument doc;
   String jsondata;
   int Pos = -1;
   float NewVoltage = 0;
@@ -990,8 +1013,17 @@ void setup()
     #ifdef ARDUINO_USB_CDC_ON_BOOT
         delay(3000);
     #endif
-    Serial.begin(115200);
-
+    Serial.begin(460800);
+    pinMode(LED_PIN, OUTPUT);
+    
+    for (int i=0; i<3; i++)
+    {
+        digitalWrite(LED_PIN, LED_ON);
+        delay(100);
+        digitalWrite(LED_PIN, LED_OFF);
+        delay(100);
+    }
+    
     #ifdef DISPLAY_480
         smartdisplay_init();
 
