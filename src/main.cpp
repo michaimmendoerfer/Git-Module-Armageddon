@@ -574,7 +574,7 @@ void VoltageCalibration(int SNr, float V)
             Serial.println(TempRead/Module.GetPeriphVin(SNr), 4);
         }
         
-        snprintf(Buf, sizeof(Buf), "[%d] %s (Type: %d): Spannung ist jetzt: %.2fV", SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), (float)TempRead/Module.GetPeriphVin(SNr));
+        if (DEBUG_LEVEL > 1)  snprintf(Buf, sizeof(Buf), "[%d] %s (Type: %d): Spannung ist jetzt: %.2fV", SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), (float)TempRead/Module.GetPeriphVin(SNr));
         
         AddStatus(Buf);
 
@@ -601,14 +601,14 @@ void CurrentCalibration()
 
         delay(10);  
 
-        if (Module.GetDebugMode()) { 
+        if (DEBUG_LEVEL > 2) { 
           Serial.print("TempVal:");     Serial.println(TempVal);
           Serial.print(", TempVolt: "); Serial.println(TempVolt);
         }
         Module.SetPeriphNullwert(SNr, TempVolt);
 
-        snprintf(Buf, sizeof(Buf), "Eichen fertig: [%d] %s (Type: %d): Gemessene Spannung bei Null: %.2fV", 
-                                    SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), TempVolt);
+        if (DEBUG_LEVEL > 1)  snprintf(Buf, sizeof(Buf), "Eichen fertig: [%d] %s (Type: %d): Gemessene Spannung bei Null: %.2fV", 
+                                       SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), TempVolt);
 
         AddStatus(Buf);
       }
@@ -638,7 +638,7 @@ float ReadAmp (int SNr)
       delay(10);
   }
   
-  if (Module.GetDebugMode()) {
+  if (DEBUG_LEVEL > 2) {
     Serial.print("TempVal:  "); Serial.println(TempVal,4);
     Serial.print("TempVolt: "); Serial.println(TempVolt,4);
     Serial.print("Nullwert: "); Serial.println(Module.GetPeriphNullwert(SNr),4);
@@ -656,7 +656,7 @@ float ReadVolt(int SNr)
   float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
   float TempVolt = TempVal / Module.GetPeriphVin(SNr);
   
-  if (Module.GetDebugMode()) {
+  if (DEBUG_LEVEL > 2) {
     Serial.print("TempVal:  "); Serial.println(TempVal,4);
     Serial.print("Vin:      "); Serial.println(Module.GetPeriphVin(SNr));
     Serial.print("Volt (TempVal / S[V].Vin)): ");     Serial.println(TempVolt,4);
@@ -676,14 +676,16 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
 
   jsondata = String(buff);                  //converting into STRING
   
-  Serial.print("Recieved from: "); PrintMAC(mac); 
+  if (DEBUG_LEVEL > 2) { Serial.print("Recieved from: "); PrintMAC(mac); }
   
   DeserializationError error = deserializeJson(doc, jsondata);
   
   if (!error) {
       String TempName = doc["Node"];
-      Serial.print("("); Serial.print(TempName); Serial.print(") - ");
-      Serial.println(jsondata);    
+      if (DEBUG_LEVEL > 2) {
+          Serial.print("("); Serial.print(TempName); Serial.print(") - ");
+          Serial.println(jsondata);    
+      }
       
       if (((int)doc["Order"] == SEND_CMD_YOU_ARE_PAIRED) and (doc["Peer"] == Module.GetName())) 
       { 
@@ -704,7 +706,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
                 SavePeers();
                 RegisterPeers();
                 
-                if (Module.GetDebugMode()) {
+                if (DEBUG_LEVEL > 1) { {
                   Serial.printf("New Peer added: %s (Type:%d), MAC:", Peer->GetName(), Peer->GetType());
                   PrintMAC(Peer->GetBroadcastAddress());
                   Serial.println("\n\rSaving Peers after received new one...");
@@ -717,7 +719,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
       {
         case SEND_CMD_STAY_ALIVE: 
             Module.SetLastContact(millis());
-            if (Module.GetDebugMode()) { Serial.print("LastContact: "); Serial.println(Module.GetLastContact()); }
+            if (DEBUG_LEVEL > 2) { Serial.print("LastContact: "); Serial.println(Module.GetLastContact()); }
             break;
         case SEND_CMD_SLEEPMODE_ON:
             AddStatus("Sleep: on");  
@@ -1012,8 +1014,11 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
     } // end (!error)
     else // error
     { 
-          Serial.print(F("deserializeJson() failed: "));  //Just in case of an ERROR of ArduinoJSon
-          Serial.println(error.f_str());
+          if (DEBUG_LEVEL > 0) 
+          {
+              Serial.print(F("deserializeJson() failed: "));  //Just in case of an ERROR of ArduinoJSon
+              Serial.println(error.f_str());
+          }
     }
 }
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
