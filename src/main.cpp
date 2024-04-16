@@ -1,16 +1,17 @@
 //#define KILL_NVS 1
 
 //DEBUG_LEVEL: 0 = nothing, 1 = only Errors, 2 = relevant changes, 3 = all
-const int DEBUG_LEVEL = 2; 
+const int DEBUG_LEVEL = 3; 
 
 //#define ESP32_MODULE_4S_1V_NOADC_PORT 
 //#define ESP32_MODULE_4A_1V_ADC
 //#define ESP32_MODULE_2A_2S_1V_NOADC
 //#define ESP32_MODULE_2A_2S_1V_ADC_PORT
-#define ESP32_MODULE_2A_PORT
+#define ESP32_MODULE_4A_PORT
+//#define ESP32_MODULE_2A_PORT
 //#define ESP32_MODULE_2A_NOPORT
 
-
+// IC-Things
 #define PORT_USED 1
 #define BOOT_BUTTON 9
 
@@ -169,11 +170,23 @@ void InitModule()
       Module.PeriphSetup(3, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  33,   0,       0,        0,    0);
       Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  39,   0,       0,      200,    0); 
     #endif
-    #ifdef ESP32_MODULE_2A_PORT
+    #ifdef ESP32_MODULE_4A_PORT
         #define SWITCHES_PER_SCREEN 2
 
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType     sda scl voltagedevier 
       Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL, 5,  6,     1.5);
+
+      //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+      Module.PeriphSetup(0, "Sw 1",  SENS_TYPE_SWITCH,   1,  0,     0,       0,        0,    0);
+      Module.PeriphSetup(1, "Sw 2",  SENS_TYPE_SWITCH,   1,  1,     0,       0,        0,    0);
+      Module.PeriphSetup(2, "Sw 3",  SENS_TYPE_SWITCH,   1,  2,     0,       0,        0,    0);
+      Module.PeriphSetup(3, "Sw 4",  SENS_TYPE_SWITCH,   1,  3,     0,       0,        0,    0);
+    #endif
+    #ifdef ESP32_MODULE_4A_PORT
+        #define SWITCHES_PER_SCREEN 2
+
+      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType     sda scl voltagedevier 
+      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_REVERSED, 5,  6,     1.5);
 
       //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
       Module.PeriphSetup(0, "Sw 1",  SENS_TYPE_SWITCH,   1,  0,     0,       0,        0,    0);
@@ -183,7 +196,7 @@ void InitModule()
         #define SWITCHES_PER_SCREEN 2
 
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType     sda scl voltagedevier 
-      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL, -1,  -1,     1.5);
+      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_REVERSED, -1,  -1,     1.5);
 
       //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
       Module.PeriphSetup(0, "Sw 1",  SENS_TYPE_SWITCH,   0,  6,     0,       0,        0,    0);
@@ -281,40 +294,41 @@ void SendMessage ()
             if (DEBUG_LEVEL > 2) Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
         }
         if (DEBUG_LEVEL > 2) Serial.println();
-  }
-  
-  // Status bit1 DebugMode, bit2 Sleep, bit3 Demo, bit4 RTP
-  int Status = 0;
-  if (Module.GetDebugMode())   bitSet(Status, 0);
-  if (Module.GetSleepMode())   bitSet(Status, 1);
-  if (Module.GetDemoMode())    bitSet(Status, 2);
-  if (Module.GetPairMode())    bitSet(Status, 3);
-  
-  doc["Status"]  = Status;
-
-  serializeJson(doc, jsondata);  
-
-  if (DEBUG_LEVEL > 2) Serial.println(jsondata);
-
-  for (int PNr=0; PNr<PeerList.size(); PNr++) 
-  {
-      PeerClass *Peer = PeerList.get(PNr);
-
-      if (Peer->GetType() >= MONITOR_ROUND) {
-      
-      if (DEBUG_LEVEL > 2) Serial.printf("Sending to: %s\n\r", Peer->GetName()); 
-      
-      if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 200) == 0) 
-      {
-            if (DEBUG_LEVEL > 2) Serial.println("ESP_OK");  //Sending "jsondata"  
-      else 
-      {
-            if (DEBUG_LEVEL > 0) Serial.println("ESP_ERROR"); 
-      }     
-      
-      if (DEBUG_LEVEL > 2) Serial.println(jsondata);
     }
-  }
+  
+    // Status bit1 DebugMode, bit2 Sleep, bit3 Demo, bit4 RTP
+    int Status = 0;
+    if (Module.GetDebugMode())   bitSet(Status, 0);
+    if (Module.GetSleepMode())   bitSet(Status, 1);
+    if (Module.GetDemoMode())    bitSet(Status, 2);
+    if (Module.GetPairMode())    bitSet(Status, 3);
+    
+    doc["Status"]  = Status;
+
+    serializeJson(doc, jsondata);  
+
+    if (DEBUG_LEVEL > 2) Serial.println(jsondata);
+
+    for (int PNr=0; PNr<PeerList.size(); PNr++) 
+    {
+        PeerClass *Peer = PeerList.get(PNr);
+
+        if (Peer->GetType() >= MONITOR_ROUND)
+        {
+            if (DEBUG_LEVEL > 2) Serial.printf("Sending to: %s\n\r", Peer->GetName()); 
+            
+            if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 200) == 0) 
+            {
+                    if (DEBUG_LEVEL > 2) Serial.println("ESP_OK");  //Sending "jsondata" 
+            } 
+            else 
+            {
+                    if (DEBUG_LEVEL > 0) Serial.println("ESP_ERROR"); 
+            }     
+            
+            if (DEBUG_LEVEL > 2) Serial.println(jsondata);
+        }
+    }
 
   //AddStatus("SendStatus");
 }
@@ -344,7 +358,7 @@ void SendPairingRequest()
 
   esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  
   
-  if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata); 
+  if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata.c_str()); 
   
   AddStatus("Send Pairing request...");                                     
 }
@@ -449,8 +463,31 @@ void UpdateSwitches()
           }
           
           #ifdef PORT_USED
-              if (Value == 1) IOBoard.digitalWrite(Module.GetPeriphIOPort(SNr), HIGH);
-              else IOBoard.digitalWrite(Module.GetPeriphIOPort(SNr), LOW);
+              if (Value == 1)   
+                switch (Module.GetPeriphIOPort(SNr))
+                {
+                    case 0: IOBoard.digitalWrite(P0,  HIGH); break;
+                    case 1: IOBoard.digitalWrite(P1,  HIGH); break;
+                    case 2: IOBoard.digitalWrite(P2,  HIGH); break;
+                    case 3: IOBoard.digitalWrite(P3,  HIGH); break;
+                    case 4: IOBoard.digitalWrite(P4,  HIGH); break;
+                    case 5: IOBoard.digitalWrite(P5,  HIGH); break;
+                    case 6: IOBoard.digitalWrite(P6,  HIGH); break;
+                    case 7: IOBoard.digitalWrite(P7,  HIGH); break;
+                }
+              else
+                switch (Module.GetPeriphIOPort(SNr))
+                {
+                    case 0: IOBoard.digitalWrite(P0,  LOW); break;
+                    case 1: IOBoard.digitalWrite(P1,  LOW); break;
+                    case 2: IOBoard.digitalWrite(P2,  LOW); break;
+                    case 3: IOBoard.digitalWrite(P3,  LOW); break;
+                    case 4: IOBoard.digitalWrite(P4,  LOW); break;
+                    case 5: IOBoard.digitalWrite(P5,  LOW); break;
+                    case 6: IOBoard.digitalWrite(P6,  LOW); break;
+                    case 7: IOBoard.digitalWrite(P7,  LOW); break;
+                }
+              
           #else
               if (Value == 1) digitalWrite(Module.GetPeriphIOPort(SNr), HIGH);
               else digitalWrite(Module.GetPeriphIOPort(SNr), LOW);
@@ -706,7 +743,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
                 SavePeers();
                 RegisterPeers();
                 
-                if (DEBUG_LEVEL > 1) { {
+                if (DEBUG_LEVEL > 1) {
                   Serial.printf("New Peer added: %s (Type:%d), MAC:", Peer->GetName(), Peer->GetType());
                   PrintMAC(Peer->GetBroadcastAddress());
                   Serial.println("\n\rSaving Peers after received new one...");
@@ -841,176 +878,6 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
             SendNameChange(Pos);
             break;
       }
-      /*
-      if ((doc["Pairing"] == "you are paired") and (doc["Peer"] == Module.GetName())) 
-      { 
-          //Serial.println("in you are paired und node");
-        
-          bool exists = esp_now_is_peer_exist(mac);
-          if (exists) 
-          { 
-            PrintMAC(mac); Serial.println(" already exists...");
-          }
-          else 
-          {
-            PeerClass *Peer = new PeerClass;
-                Peer->Setup(doc["Node"], (int) doc["Type"], "xxx", mac, false, false, false, false);
-                Peer->SetTSLastSeen(millis());
-                PeerList.add(Peer);
-
-                SavePeers();
-                RegisterPeers();
-                
-                if (Module.GetDebugMode()) {
-                  Serial.printf("New Peer added: %s (Type:%d), MAC:", Peer->GetName(), Peer->GetType());
-                  PrintMAC(Peer->GetBroadcastAddress());
-                  Serial.println("\n\rSaving Peers after received new one...");
-                  ReportAll();
-                }
-                Module.SetPairMode(false);
-            }
-      }
-      if      (doc["Order"] == "stay alive")       
-      {   Module.SetLastContact(millis());
-          if (Module.GetDebugMode()) { Serial.print("LastContact: "); Serial.println(Module.GetLastContact()); }
-      }
-      else if (doc["Order"] == "SleepMode On")     
-      { 
-          AddStatus("Sleep: on");  
-          SetSleepMode(true);  
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "SleepMode Off")    
-      { 
-          AddStatus("Sleep: off"); 
-          SetSleepMode(false); 
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "SleepMode Toggle") 
-      { 
-          if (Module.GetSleepMode()) 
-          { 
-              AddStatus("Sleep: off");   
-              SetSleepMode(false); 
-              SendMessage(); 
-          }
-          else 
-          { 
-              AddStatus("Sleep: on");    
-              SetSleepMode(true);  
-              SendMessage(); 
-          }
-      } 
-      else if (doc["Order"] == "DebugMode on")     
-      { 
-          AddStatus("DebugMode: on");  
-          SetDebugMode(true);  
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "DebugMode off")    
-      { 
-          AddStatus("DebugMode: off"); 
-          SetDebugMode(false); 
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "DebugMode Toggle") 
-      { 
-          if (Module.GetDebugMode()) 
-          {   
-              AddStatus("DebugMode: off");   
-              SetDebugMode(false); 
-              SendMessage(); 
-          }
-          else 
-          { 
-              AddStatus("DebugMode: on");    
-              SetDebugMode(true);  
-              SendMessage(); 
-          }
-      }
-      else if (doc["Order"] == "DemoMode on")      
-      { 
-          AddStatus("Demo: on");   
-          SetDemoMode(true);   
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "DemoMode off")     
-      { 
-          AddStatus("Demo: off");  
-          SetDemoMode(false);  
-          SendMessage(); 
-      }
-      else if (doc["Order"] == "DemoMode Toggle")  
-      { 
-          if (Module.GetDemoMode()) 
-          { 
-              AddStatus("DemoMode: off"); 
-              SetDemoMode(false); 
-              SendMessage(); 
-          }
-          else 
-          { 
-              AddStatus("DemoMode: on");  
-              SetDemoMode(true);  
-              SendMessage(); 
-          }
-      }
-      else if (doc["Order"] == "Reset")         
-      { 
-          AddStatus("Clear all"); 
-          nvs_flash_erase(); 
-          nvs_flash_init();
-          ESP.restart();
-      }
-      else if (doc["Order"] == "Restart")       
-      { 
-          ESP.restart(); 
-      }
-      else if (doc["Order"] == "Pair")          
-      {   
-          SetPairMode(true);
-
-          AddStatus("Pairing beginnt"); 
-          SendMessage(); 
-          #ifdef DISPLAY_480
-            smartdisplay_led_set_rgb(1,0,0);
-          #endif
-      }
-      else if (doc["Order"] == "Eichen")        
-      {   
-          AddStatus("Eichen beginnt"); 
-          CurrentCalibration();
-      }
-      else if (doc["Order"] == "VoltCalib")     
-      { 
-          AddStatus("VoltCalib beginnt");
-          float NewVoltage = doc["NewVoltage"];
-
-          if (Module.GetVoltageMon() != -1)
-          {
-              VoltageCalibration(Module.GetVoltageMon(), NewVoltage) ;
-          }
-      }
-      else if (doc["Order"] == "ToggleSwitch")  
-      { 
-          int Pos = doc["Pos"];
-          if (Module.isPeriphEmpty(Pos) == false) ToggleSwitch(Pos);
-      }  
-      else if (doc["Order"] == "UpdateName")
-      {
-          int Pos = (int) doc["Pos"];
-                String NewName = doc["NewName"];
-
-                if (NewName != "") 
-                {
-                    if (Pos == 99) Module.SetName(NewName.c_str());
-                    else           Module.SetPeriphName(Pos, NewName.c_str());
-                }
-                
-                SaveModule();
-		            SendNameChange(Pos);
-      }
-      */
     } // end (!error)
     else // error
     { 
@@ -1021,6 +888,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
           }
     }
 }
+
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
 { 
     if (DEBUG_LEVEL > 2) 
@@ -1028,7 +896,6 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
         
     if (DEBUG_LEVEL > 0)  
         if (status != ESP_NOW_SEND_SUCCESS) Serial.println("\r\nLast Packet Send Status: Delivery Fail");
-    }
 }
 #pragma endregion ESP-Things
 
@@ -1039,6 +906,9 @@ void setup()
     #endif
     Serial.begin(460800);
     pinMode(LED_PIN, OUTPUT);
+    IOBoard.pinMode(P0,OUTPUT);IOBoard.pinMode(P1,OUTPUT);
+    IOBoard.pinMode(P2,OUTPUT);IOBoard.pinMode(P3,OUTPUT);
+    IOBoard.digitalWrite(P10,LOW);
     
     for (int i=0; i<3; i++)
     {
@@ -1178,6 +1048,8 @@ void loop()
         if (BB == 1) {
             TSPair = millis();
             Module.SetPairMode(true);
+            SetMessageLED(1);
+            AddStatus("Pairing beginnt...");
             
             if (!TSBootButton) TSBootButton = millis();
             else 
