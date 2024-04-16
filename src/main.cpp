@@ -1023,9 +1023,11 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
 }
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
 { 
-    if (Module.GetDebugMode()) {
-        //Serial.print("\r\nLast Packet Send Status:\t");
-        //Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    if (DEBUG_LEVEL > 2) 
+        if (status == ESP_NOW_SEND_SUCCESS) Serial.println("\r\nLast Packet Send Status: Delivery Success");
+        
+    if (DEBUG_LEVEL > 0)  
+        if (status != ESP_NOW_SEND_SUCCESS) Serial.println("\r\nLast Packet Send Status: Delivery Fail");
     }
 }
 #pragma endregion ESP-Things
@@ -1075,30 +1077,30 @@ void setup()
     #ifdef PORT_USED
 	      if (!IOBoard.begin())
           {
-                Serial.println("IOBoard not found!");
+                if (DEBUG_LEVEL > 0) Serial.println("IOBoard not found!");
                 while (1);
           }
           else 
           {
-                Serial.println("IOBoard initialised.");
+                if (DEBUG_LEVEL > 1) Serial.println("IOBoard initialised.");
           }
     #endif
     #ifdef ADC_USED
         ADSBoard.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
         if (!ADSBoard.begin(ADS_ADDRESS, &I2C_BUS)) {
-          Serial.println("ADS not found!");
+          if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
           while (1);
         }
         else
         {
-            Serial.println("ADS initialised.");
+            if (DEBUG_LEVEL > 1) Serial.println("ADS initialised.");
         }
     #endif
     
     if (preferences.begin("JeepifyInit", true))
     {
         String SavedModule   = preferences.getString("Module", "");
-            Serial.printf("Importiere Modul: %s", SavedModule.c_str());
+            if (DEBUG_LEVEL > 2) Serial.printf("Importiere Modul: %s", SavedModule.c_str());
             char ToImport[250];
             strcpy(ToImport,SavedModule.c_str());
             if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
@@ -1110,7 +1112,8 @@ void setup()
     WiFi.macAddress(MacTemp);
     Module.SetBroadcastAddress(MacTemp);
 
-    if (esp_now_init() != ESP_OK) { Serial.println("Error initializing ESP-NOW"); }
+    if (esp_now_init() != ESP_OK) 
+        if (DEBUG_LEVEL > 0) Serial.println("Error initializing ESP-NOW");
   
     esp_now_register_send_cb(OnDataSent);
     esp_now_register_recv_cb(OnDataRecv);    
@@ -1180,7 +1183,7 @@ void loop()
             else 
             {
                 if ((millis() - TSBootButton) > 3000) {
-                    Serial.println("Button pressed... Clearing Peers and Reset");
+                    if (DEBUG_LEVEL > 1) Serial.println("Button pressed... Clearing Peers and Reset");
                     AddStatus("Clearing Peers and Reset");
                     nvs_flash_erase(); nvs_flash_init();
                     ESP.restart();
