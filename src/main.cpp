@@ -1,5 +1,8 @@
 //#define KILL_NVS 1
 
+//DEBUG_LEVEL: 0 = nothing, 1 = only Errors, 2 = relevant changes, 3 = all
+const int DEBUG_LEVEL = 2; 
+
 //#define ESP32_MODULE_4S_1V_NOADC_PORT 
 //#define ESP32_MODULE_4A_1V_ADC
 //#define ESP32_MODULE_2A_2S_1V_NOADC
@@ -275,9 +278,9 @@ void SendMessage ()
               }
             }
             doc[Module.GetPeriphName(SNr)] = buf;
-            Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
+            if (DEBUG_LEVEL > 2) Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
         }
-        Serial.println();
+        if (DEBUG_LEVEL > 2) Serial.println();
   }
   
   // Status bit1 DebugMode, bit2 Sleep, bit3 Demo, bit4 RTP
@@ -291,18 +294,25 @@ void SendMessage ()
 
   serializeJson(doc, jsondata);  
 
-  Serial.println(jsondata);
+  if (DEBUG_LEVEL > 2) Serial.println(jsondata);
 
   for (int PNr=0; PNr<PeerList.size(); PNr++) 
   {
       PeerClass *Peer = PeerList.get(PNr);
 
       if (Peer->GetType() >= MONITOR_ROUND) {
-      Serial.print("Sending to: "); Serial.print(Peer->GetName()); 
-      Serial.println();
-      if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 200) == 0) Serial.println("ESP_OK");  //Sending "jsondata"  
-      else Serial.println("ESP_ERROR"); 
-      Serial.println(jsondata);
+      
+      if (DEBUG_LEVEL > 2) Serial.printf("Sending to: %s\n\r", Peer->GetName()); 
+      
+      if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 200) == 0) 
+      {
+            if (DEBUG_LEVEL > 2) Serial.println("ESP_OK");  //Sending "jsondata"  
+      else 
+      {
+            if (DEBUG_LEVEL > 0) Serial.println("ESP_ERROR"); 
+      }     
+      
+      if (DEBUG_LEVEL > 2) Serial.println(jsondata);
     }
   }
 
@@ -334,7 +344,8 @@ void SendPairingRequest()
 
   esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  
   
-  if (Module.GetDebugMode()) { Serial.print("\nSending: "); Serial.println(jsondata); }
+  if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata); 
+  
   AddStatus("Send Pairing request...");                                     
 }
 void SendNameChange(int Pos)
@@ -358,7 +369,8 @@ void SendNameChange(int Pos)
 
   esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
   
-  if (Module.GetDebugMode()) { Serial.print("\nSending: "); Serial.println(jsondata); }
+  if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata); 
+  
   AddStatus("Send NameChange announce...");        
 }
 #pragma endregion Send-Things
@@ -417,7 +429,6 @@ void ToggleSwitch(int SNr)
     if (Value == 0) Value = 1;
     else Value = 0;
 
-    Serial.printf("Value is now %d", Value);
     Module.SetPeriphValue(SNr, Value);
     
     UpdateSwitches();
@@ -429,8 +440,8 @@ void UpdateSwitches()
       if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
       {
           uint8_t Value = (uint8_t)Module.GetPeriphValue(SNr);
-          Serial.printf("Value %d = ",SNr);
-          Serial.println(Value);
+          if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f",SNr, Value);
+          //Serial.println(Value);
           if (Module.GetRelayType() == RELAY_REVERSED) 
           {
               if (Value == 0) Value = 1;
@@ -445,7 +456,7 @@ void UpdateSwitches()
               else digitalWrite(Module.GetPeriphIOPort(SNr), LOW);
           #endif
 
-          Serial.printf("Setze %s (Port:%d) auf %d", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr), Serial.print(Value));
+          if (DEBUG_LEVEL > 2) Serial.printf("Setze %s (Port:%d) auf %d", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr), Serial.print(Value));
       }
   }
   SendMessage();
@@ -458,39 +469,44 @@ void PrintMAC(const uint8_t * mac_addr)
   Serial.print(macStr);
 }
 void GoToSleep() {
-  JsonDocument doc;
-  String jsondata;
-  
-  doc["Node"] = Module.GetName();   
-  doc["Type"] = Module.GetType();
-  doc["Msg"]  = "GoodBye - going to sleep";
-  
-  serializeJson(doc, jsondata);  
+    JsonDocument doc;
+    String jsondata;
+    
+    doc["Node"] = Module.GetName();   
+    doc["Type"] = Module.GetType();
+    doc["Msg"]  = "GoodBye - going to sleep";
+    
+    serializeJson(doc, jsondata);  
 
-  esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
-  
-  if (Module.GetDebugMode()) { Serial.print("\nSending: "); Serial.println(jsondata); }
-  AddStatus("Send Going to sleep..."); 
-  
-  Serial.print("Going to sleep at: "); Serial.println(millis());
-  Serial.print("LastContact    at: "); Serial.println(Module.GetLastContact());
-  
-  gpio_deep_sleep_hold_en();
-  for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) gpio_hold_en((gpio_num_t)Module.GetPeriphIOPort(SNr));  
-  
-  esp_sleep_enable_timer_wakeup(SLEEP_INTERVAL * 1000);
-  esp_deep_sleep_start();
+    esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
+    
+    if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s", jsondata);
+    AddStatus("Send Going to sleep..."); 
+    
+    if (DEBUG_LEVEL > 1) 
+    {
+        Serial.printf("Going to sleep at: %d", millis());
+        Serial.printf("LastContact    at: &d", Module.GetLastContact());
+    }
+    
+    gpio_deep_sleep_hold_en();
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) gpio_hold_en((gpio_num_t)Module.GetPeriphIOPort(SNr));  
+    
+    esp_sleep_enable_timer_wakeup(SLEEP_INTERVAL * 1000);
+    esp_deep_sleep_start();
 
 }
 void SaveModule()
 {
-      preferences.begin("JeepifyInit", false);
-          String ExportStringPeer = Module.Export();
+    preferences.begin("JeepifyInit", false);
+        String ExportStringPeer = Module.Export();
 
-          Serial.printf("putSring = %d", preferences.putString("Module", ExportStringPeer));
-          Serial.printf("schreibe: Module: %s",ExportStringPeer.c_str());
-          Serial.println();
-      preferences.end();
+        if (DEBUG_LEVEL > 2) 
+        {
+            Serial.printf("putSring = %d", preferences.putString("Module", ExportStringPeer));
+            Serial.printf("schreibe: Module: %s\n\r",ExportStringPeer.c_str());
+        }
+    preferences.end();
 }
 void SetMessageLED(int Color)
 {
