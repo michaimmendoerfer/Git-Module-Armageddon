@@ -1,8 +1,15 @@
 //#define KILL_NVS 1
 
-//DEBUG_LEVEL: 0 = nothing, 1 = only Errors, 2 = relevant changes, 3 = all
+// DEBUG_LEVEL: 0 = nothing, 1 = only Errors, 2 = relevant changes, 3 = all
 const int DEBUG_LEVEL = 3; 
 
+// Module Definition
+#define C3_MINI_PORT
+//#define ESP8266_PORT
+//#define ESP32_DISPLAY_480
+//#define DISPLAY_C3_ROUND
+
+// PeriphType
 //#define ESP32_MODULE_4S_1V_NOADC_PORT 
 //#define ESP32_MODULE_4A_1V_ADC
 //#define ESP32_MODULE_2A_2S_1V_NOADC
@@ -12,26 +19,51 @@ const int DEBUG_LEVEL = 3;
 //#define ESP32_MODULE_2A_NOPORT
 
 // IC-Things
-#define PORT_USED 1
-#define BOOT_BUTTON 9
 
-#define LED_PIN     8
-#define LED_OFF     HIGH
-#define LED_ON      LOW
+#ifdef C3_MINI_PORT
+    #define PORT_USED   1
+    #define BOOT_BUTTON 9
+    #define LED_PIN     8
+    #define LED_OFF     HIGH
+    #define LED_ON      LOW
+    #define SDA_PIN     6
+    #define SCL_PIN     7
+#endif
 
-//#define DISPLAY_C3_ROUND
-//#define DISPLAY_480
-
+#ifdef ESP8266_PORT
+    #define PORT_USED   1
+    #define LED_PIN     8
+    #define LED_OFF     LOW
+    #define LED_ON      HIGH
+    #define SDA_PIN     12
+    #define SCL_PIN     14
+#endif
 
 #pragma region Includes
 #include <Arduino.h>
 
-#ifdef DISPLAY_480
+#ifdef ESP32_DISPLAY_480
     #include <esp32_smartdisplay.h>
-    #define ADC_USED  1
+    #define ADS_USED  1
     #define PORT_USED 1
     #include <ui/ui.h>
 #endif
+
+#pragma region I2C_BUS
+#define I2C_FREQ 400000
+#define ADS_ADDRESS  0x48
+#define PORT_ADDRESS 0x20
+
+#ifdef ADS_USED
+    #include <Adafruit_ADS1X15.h>
+    Adafruit_ADS1115 ADSBoard;
+#endif
+
+#ifdef PORT_USED
+    #include "PCF8575.h"
+    PCF8575 IOBoard(PORT_ADDRESS, SDA_PIN, SCL_PIN);
+#endif
+#pragma endregion I2C_BUS
 
 #include <LinkedList.h>
 #include <esp_now.h>
@@ -45,23 +77,6 @@ const int DEBUG_LEVEL = 3;
 #include <Wire.h>
 #include <Spi.h>
 
-#pragma region I2C_BUS
-#define I2C_FREQ 400000
-#define SDA 5
-#define SCL 6
-#define ADS_ADDRESS  0x48
-#define PORT_ADDRESS 0x20
-
-#ifdef ADC_USED
-    #include <Adafruit_ADS1X15.h>
-    Adafruit_ADS1115 ADSBoard;
-#endif
-
-#ifdef PORT_USED
-    #include "PCF8575.h"
-    PCF8575 IOBoard(0x20, SDA, SCL);
-#endif
-#pragma endregion I2C_BUS
 #pragma endregion Includes
 
 const char _Version[]           = "3.21";
@@ -391,7 +406,7 @@ void SendNameChange(int Pos)
 #pragma region System-Things
 void ChangeBrightness(int B)
 {
-  #ifdef DISPLAY_480
+  #ifdef ESP32_DISPLAY_480
   preferences.begin("JeepifyInit", false);
     Module.SetBrightness(B);
     smartdisplay_lcd_set_backlight((float) B/100);
@@ -552,35 +567,35 @@ void SetMessageLED(int Color)
     switch (Color)
     {
         case 0: 
-            #ifdef DISPLAY_480
+            #ifdef ESP32_DISPLAY_480
                 smartdisplay_led_set_rgb(0, 0, 0);
             #else
                 digitalWrite(LED_PIN, LED_OFF);
             #endif
             break;
         case 1:
-            #ifdef DISPLAY_480
+            #ifdef ESP32_DISPLAY_480
                 smartdisplay_led_set_rgb(1, 0, 0);
             #else
                 digitalWrite(LED_PIN, LED_ON);
             #endif
             break;
         case 2:
-            #ifdef DISPLAY_480
+            #ifdef ESP32_DISPLAY_480
                 smartdisplay_led_set_rgb(0, 1, 0);
             #else
             #endif
                 digitalWrite(LED_PIN, LED_ON);
             break;
         case 3:
-            #ifdef DISPLAY_480
+            #ifdef ESP32_DISPLAY_480
                 smartdisplay_led_set_rgb(0, 0, 1);
             #else
                 digitalWrite(LED_PIN, LED_ON);
             #endif
             break;
         case 4:
-            #ifdef DISPLAY_480
+            #ifdef ESP32_DISPLAY_480
                 smartdisplay_led_set_rgb(1, 0, 1);
             #else
                 digitalWrite(LED_PIN, LED_ON);
@@ -627,7 +642,7 @@ void CurrentCalibration()
         float TempVal  = 0;
         float TempVolt = 0;
         
-        #ifdef ADC_USED
+        #ifdef ADS_USED
         TempVal  = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
         TempVolt = ADSBoard.computeVolts(TempVal);
         #else
@@ -660,7 +675,7 @@ float ReadAmp (int SNr)
   
   if (Module.GetADCPort1() != -1)
   {
-      #ifdef ADC_USED
+      #ifdef ADS_USED
         TempVal  = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
         TempVolt = ADSBoard.computeVolts(TempVal); 
         TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
@@ -843,7 +858,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
             Module.SetPairMode(true);
             AddStatus("Pairing beginnt"); 
             SendMessage(); 
-            #ifdef DISPLAY_480
+            #ifdef ESP32_DISPLAY_480
               smartdisplay_led_set_rgb(1,0,0);
             #endif
             break;
@@ -905,7 +920,9 @@ void setup()
         delay(3000);
     #endif
     Serial.begin(460800);
+    
     pinMode(LED_PIN, OUTPUT);
+    
     IOBoard.pinMode(P0,OUTPUT);IOBoard.pinMode(P1,OUTPUT);
     IOBoard.pinMode(P2,OUTPUT);IOBoard.pinMode(P3,OUTPUT);
     IOBoard.digitalWrite(P10,LOW);
@@ -918,7 +935,7 @@ void setup()
         delay(100);
     }
     
-    #ifdef DISPLAY_480
+    #ifdef ESP32_DISPLAY_480
         smartdisplay_init();
 
         __attribute__((unused)) auto disp = lv_disp_get_default();
@@ -927,7 +944,7 @@ void setup()
 
     InitModule();
 
-    Wire.begin(6,7,400000);
+    Wire.begin(SDA_PIN, SCL_PIN, I2C_FREQ);
 
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)  
     { 
@@ -955,9 +972,9 @@ void setup()
                 if (DEBUG_LEVEL > 1) Serial.println("IOBoard initialised.");
           }
     #endif
-    #ifdef ADC_USED
+    #ifdef ADS_USED
         ADSBoard.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
-        if (!ADSBoard.begin(ADS_ADDRESS, &I2C_BUS)) {
+        if (!ADSBoard.begin(ADS_ADDRESS, &I2C_BUS)) { //I2C weglassen?
           if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
           while (1);
         }
@@ -1014,7 +1031,7 @@ void setup()
   */
     //UpdateSwitches();
 
-    #ifdef DISPLAY_480
+    #ifdef ESP32_DISPLAY_480
       ui_init();
     #endif
 }
@@ -1065,7 +1082,7 @@ void loop()
         else TSBootButton = 0;
         #endif
 
-    #ifdef DISPLAY_480
+    #ifdef ESP32_DISPLAY_480
         lv_timer_handler();
         delay(5);
     #endif
