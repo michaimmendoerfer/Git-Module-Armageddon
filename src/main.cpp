@@ -557,7 +557,7 @@ void VoltageCalibration(int SNr, float V)
 {
     char Buf[100] = {}; 
   
-    if (Module.GetDebugMode()) Serial.println("Volt-Messung kalibrieren...");
+    if (DEBUG_LEVEL > 1) Serial.println("Volt-Messung kalibrieren...");
     
     preferences.begin("JeepifyInit", false);
   
@@ -566,11 +566,12 @@ void VoltageCalibration(int SNr, float V)
         
         Module.SetPeriphVin(SNr, TempRead / V);
         
-        if (Module.GetDebugMode()) {
-          Serial.print("S["); Serial.print(SNr); Serial.print("].Vin = ");
-          Serial.println(Module.GetPeriphVin(SNr), 4);
-          Serial.print("Volt(nachher) = ");
-          Serial.println(TempRead/Module.GetPeriphVin(SNr), 4);
+        if (DEBUG_LEVEL > 2)  
+        {
+            Serial.print("S["); Serial.print(SNr); Serial.print("].Vin = ");
+            Serial.println(Module.GetPeriphVin(SNr), 4);
+            Serial.print("Volt(nachher) = ");
+            Serial.println(TempRead/Module.GetPeriphVin(SNr), 4);
         }
         
         snprintf(Buf, sizeof(Buf), "[%d] %s (Type: %d): Spannung ist jetzt: %.2fV", SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), (float)TempRead/Module.GetPeriphVin(SNr));
