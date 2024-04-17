@@ -4,23 +4,30 @@
 const int DEBUG_LEVEL = 3; 
 
 // Module Definition
-#define C3_MINI_PORT
+//#define C3_MINI
+//#define C3_MINI_PORT
+//#define C3_MINI_PORT_ADS
 //#define ESP8266_PORT
+//#define ESP8266_ADS
+#define ESP8266_4WAY_INTEGRATED
 //#define ESP32_DISPLAY_480
 //#define DISPLAY_C3_ROUND
 
-// PeriphType
-//#define ESP32_MODULE_4S_1V_NOADC_PORT 
-//#define ESP32_MODULE_4A_1V_ADC
-//#define ESP32_MODULE_2A_2S_1V_NOADC
-//#define ESP32_MODULE_2A_2S_1V_ADC_PORT
-#define ESP32_MODULE_4A_PORT
-//#define ESP32_MODULE_2A_PORT
-//#define ESP32_MODULE_2A_NOPORT
-
 // IC-Things
+#ifdef C3_MINI
+    //#define ESP32_MODULE_1S_1V
+    //#define ESP32_MODULE_2S_1V
+    
+    #define BOOT_BUTTON 9
+    #define LED_PIN     8
+    #define LED_OFF     HIGH
+    #define LED_ON      LOW
+#endif
 
 #ifdef C3_MINI_PORT
+    #define ESP32_MODULE_4S_1V_PORT
+    //#define ESP32_MODULE_4A_1V_ADS
+
     #define PORT_USED   1
     #define BOOT_BUTTON 9
     #define LED_PIN     8
@@ -30,13 +37,77 @@ const int DEBUG_LEVEL = 3;
     #define SCL_PIN     7
 #endif
 
-#ifdef ESP8266_PORT
-    #define PORT_USED   1
+#ifdef C3_MINI_ADS
+    //#define ESP32_MODULE_4A_1V_ADS
+
+    #define ADS_USED    1
+    #define BOOT_BUTTON 9
     #define LED_PIN     8
+    #define LED_OFF     HIGH
+    #define LED_ON      LOW
+    #define SDA_PIN     6
+    #define SCL_PIN     7
+#endif
+
+#ifdef C3_MINI_PORT_ADS
+    #define ESP32_MODULE_4S_4A_1V_PORT
+    
+    #define PORT_USED   1
+    #define ADS_USED    1
+    #define BOOT_BUTTON 9
+    #define LED_PIN     8
+    #define LED_OFF     HIGH
+    #define LED_ON      LOW
+    #define SDA_PIN     6
+    #define SCL_PIN     7
+#endif
+
+#ifdef ESP8266_PORT
+    #define MRD_USED    1
+    #define PORT_USED   1
+    #define LED_PIN     LED_BUILTIN
     #define LED_OFF     LOW
     #define LED_ON      HIGH
-    #define SDA_PIN     12
-    #define SCL_PIN     14
+    #define SDA_PIN     14
+    #define SCL_PIN     12
+#endif
+
+#ifdef ESP8266_ADS
+    #define ESP8266_MODULE_4A_1V_ADS
+    #define MRD_USED    1
+    #define ADS_USED   1
+    #define LED_PIN     LED_BUILTIN
+    #define LED_OFF     LOW
+    #define LED_ON      HIGH
+    #define SDA_PIN     4
+    #define SCL_PIN     5
+#endif
+
+#ifdef ESP8266_4WAY_INTEGRATED
+    #define ESP8266_MODULE_4S_INTEGRATED
+    #define MRD_USED    1
+    #define LED_PIN     LED_BUILTIN
+    #define LED_OFF     LOW
+    #define LED_ON      HIGH
+    #define SDA_PIN     14
+    #define SCL_PIN     12
+
+    #define BOOT_BUTTON 4 
+#endif
+
+#ifdef MRD_USED
+#ifdef ESP8266 // ESP8266_MRD_USE_RTC false
+      #define ESP8266_MRD_USE_RTC   false  
+    #endif
+    #define ESP_MRD_USE_LITTLEFS           true
+    #define MULTIRESETDETECTOR_DEBUG       true  //false
+    #define MRD_TIMES               3
+    #define MRD_TIMEOUT             10
+    #define MRD_ADDRESS             0
+
+    #include <ESP_MultiResetDetector.h>
+
+    MultiResetDetector* mrd;
 #endif
 
 #pragma region Includes
@@ -65,10 +136,16 @@ const int DEBUG_LEVEL = 3;
 #endif
 #pragma endregion I2C_BUS
 
+#ifdef ESP32
+    #include <esp_now.h>
+    #include <WiFi.h>
+    #include <nvs_flash.h>
+#elif defined(ESP8266)
+    #include <ESP8266WiFi.h>
+    #include <espnow.h>
+#endif 
+
 #include <LinkedList.h>
-#include <esp_now.h>
-#include <WiFi.h>
-#include <nvs_flash.h>
 #include "Jeepify.h"
 #include "PeerClass.h"
 #include "pref_manager.h"
@@ -79,9 +156,9 @@ const int DEBUG_LEVEL = 3;
 
 #pragma endregion Includes
 
-const char _Version[]           = "3.21";
+const char _Version[]           = "3.41";
 const char _Protokoll_Version[] = "1.01";
-const char _ModuleName[]        = "C3-PORT";
+const char _ModuleName[]        = "8266-Bat";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -107,8 +184,18 @@ Preferences preferences;
 #pragma endregion Globals
 
 #pragma region Functions
+#ifdef ESP32 
+    void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len);
+#elif defined(ESP8266)
+    void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len);
+#endif
 void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len);
-void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status);
+#ifdef ESP32 
+    void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status); 
+#elif defined(ESP8266)
+    void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus);
+#endif
+void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len);
 
 void   InitModule();
 
@@ -172,6 +259,20 @@ void InitModule()
       Module.PeriphSetup(3, "Sensor_4", SENS_TYPE_AMP,  1,    4,  2.5,  0.066,  0,    0);
       Module.PeriphSetup(4, "VMon",     SENS_TYPE_VOLT, 0,   39,   0,     0,   200,   0); 
     #endif
+    #ifdef ESP8266_MODULE_4A_1V_ADS           // 4-way Battery-Sensor with ADC and VMon ############################################################
+      // 4x acs712(30A) over ADC1115 on SCL:12, SDA:14, Voltage-Monitor:35
+      #define SWITCHES_PER_SCREEN 4
+      
+      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
+      Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true, false, false, 1,  RELAY_NORMAL, 14,  12,     1.5);
+
+      //                      Name     Type             ADS  IO   NULL   VpA   Vin  PeerID
+      Module.PeriphSetup(0, "Sensor_1", SENS_TYPE_AMP,  1,    0,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(1, "Sensor_2", SENS_TYPE_AMP,  1,    1,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(2, "Sensor_3", SENS_TYPE_AMP,  1,    2,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(3, "Sensor_4", SENS_TYPE_AMP,  1,    3,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(4, "VMon",     SENS_TYPE_VOLT, 0,   A0,   0,     0,   200,   0); 
+    #endif
     #ifdef ESP32_MODULE_2A_2S_1V_NOADC      // Mixed-Module no ADC and VMon ######################################################################
       #define SWITCHES_PER_SCREEN 2
 
@@ -185,19 +286,34 @@ void InitModule()
       Module.PeriphSetup(3, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  33,   0,       0,        0,    0);
       Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  39,   0,       0,      200,    0); 
     #endif
-    #ifdef ESP32_MODULE_4A_PORT
+    
+    #ifdef ESP32_MODULE_4S_1V_PORT
         #define SWITCHES_PER_SCREEN 2
 
-      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType     sda scl voltagedevier 
-      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL, 5,  6,     1.5);
+      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon   RelayType      sda       scl    voltagedevier 
+      Module.Setup(_ModuleName, SWITCH_4_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL, SDA_PIN,  SCL_PIN,     1.5);
 
       //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
-      Module.PeriphSetup(0, "Sw 1",  SENS_TYPE_SWITCH,   1,  0,     0,       0,        0,    0);
-      Module.PeriphSetup(1, "Sw 2",  SENS_TYPE_SWITCH,   1,  1,     0,       0,        0,    0);
-      Module.PeriphSetup(2, "Sw 3",  SENS_TYPE_SWITCH,   1,  2,     0,       0,        0,    0);
-      Module.PeriphSetup(3, "Sw 4",  SENS_TYPE_SWITCH,   1,  3,     0,       0,        0,    0);
+      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,   1,  P0,    0,       0,        0,    0);
+      Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,   1,  P1,    0,       0,        0,    0);
+      Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,   1,  P2,    0,       0,        0,    0);
+      Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   1,  P3,    0,       0,        0,    0);
+      Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,     0,  1,     0,       0,      200,    0); 
     #endif
-    #ifdef ESP32_MODULE_4A_PORT
+
+    #ifdef ESP8266_MODULE_4S_INTEGRATED
+        #define SWITCHES_PER_SCREEN 4
+
+      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl    voltagedevier 
+      Module.Setup(_ModuleName, SWITCH_4_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL,   -1,   -1,     1.5);
+
+      //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,   0,  5,    0,       0,        0,    0);
+      Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,   0,  13,    0,       0,        0,    0);
+      Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,   0,  14,    0,       0,        0,    0);
+      Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   0,  15,    0,       0,        0,    0);
+    #endif
+    #ifdef ESP32_MODULE_2S_PORT
         #define SWITCHES_PER_SCREEN 2
 
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType     sda scl voltagedevier 
@@ -398,7 +514,7 @@ void SendNameChange(int Pos)
 
   esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
   
-  if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata); 
+  if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata.c_str()); 
   
   AddStatus("Send NameChange announce...");        
 }
@@ -469,7 +585,7 @@ void UpdateSwitches()
       if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
       {
           uint8_t Value = (uint8_t)Module.GetPeriphValue(SNr);
-          if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f",SNr, Value);
+          if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f",SNr, (float)Value);
           //Serial.println(Value);
           if (Module.GetRelayType() == RELAY_REVERSED) 
           {
@@ -520,7 +636,8 @@ void PrintMAC(const uint8_t * mac_addr)
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   Serial.print(macStr);
 }
-void GoToSleep() {
+void GoToSleep() 
+{
     JsonDocument doc;
     String jsondata;
     
@@ -532,20 +649,22 @@ void GoToSleep() {
 
     esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
     
-    if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s", jsondata);
+    if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s", jsondata.c_str());
     AddStatus("Send Going to sleep..."); 
     
     if (DEBUG_LEVEL > 1) 
     {
-        Serial.printf("Going to sleep at: %d", millis());
-        Serial.printf("LastContact    at: &d", Module.GetLastContact());
+        Serial.printf("Going to sleep at: %u", millis());
+        Serial.printf("LastContact    at: %u", Module.GetLastContact());
     }
     
+    #ifdef ESP32
     gpio_deep_sleep_hold_en();
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) gpio_hold_en((gpio_num_t)Module.GetPeriphIOPort(SNr));  
     
     esp_sleep_enable_timer_wakeup(SLEEP_INTERVAL * 1000);
     esp_deep_sleep_start();
+    #endif
 
 }
 void SaveModule()
@@ -669,37 +788,32 @@ void CurrentCalibration()
 }
 float ReadAmp (int SNr) 
 {
-  float TempVal      = 0;
-  float TempVolt     = 0;
-  float TempAmp      = 0;
+    float TempVal      = 0;
+    float TempVolt     = 0;
+    float TempAmp      = 0;
   
-  if (Module.GetADCPort1() != -1)
-  {
-      #ifdef ADS_USED
+    #ifdef ADS_USED
         TempVal  = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
         TempVolt = ADSBoard.computeVolts(TempVal); 
         TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
         delay(10);
-      #endif
-  }
-  else
-  {
-      TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
-      TempVolt = 3.3/4095*TempVal;
-      TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * Module.GetVoltageDevider();// 1.5 wegen Voltage-Devider
-      delay(10);
-  }
+    #else
+        TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
+        TempVolt = 3.3/4095*TempVal;
+        TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * Module.GetVoltageDevider();// 1.5 wegen Voltage-Devider
+        delay(10);
+    #endif
   
-  if (DEBUG_LEVEL > 2) {
-    Serial.print("TempVal:  "); Serial.println(TempVal,4);
-    Serial.print("TempVolt: "); Serial.println(TempVolt,4);
-    Serial.print("Nullwert: "); Serial.println(Module.GetPeriphNullwert(SNr),4);
-    Serial.print("VperAmp:  "); Serial.println(Module.GetPeriphVperAmp(SNr),4);
-    Serial.print("Amp (TempVolt - S[Si].NullWert) / S[Si].VperAmp * 1.5:  "); Serial.println(TempAmp,4);
-  } 
-  if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
-  
-  return (TempAmp); 
+    if (DEBUG_LEVEL > 2) {
+        Serial.print("TempVal:  "); Serial.println(TempVal,4);
+        Serial.print("TempVolt: "); Serial.println(TempVolt,4);
+        Serial.print("Nullwert: "); Serial.println(Module.GetPeriphNullwert(SNr),4);
+        Serial.print("VperAmp:  "); Serial.println(Module.GetPeriphVperAmp(SNr),4);
+        Serial.print("Amp (TempVolt - S[Si].NullWert) / S[Si].VperAmp * 1.5:  "); Serial.println(TempAmp,4);
+    } 
+    if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
+    
+    return (TempAmp); 
 }
 float ReadVolt(int SNr) 
 {
@@ -718,7 +832,7 @@ float ReadVolt(int SNr)
 }
 #pragma endregion Data-Things
 #pragma region ESP-Things
-void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) 
+void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)  
 {  
   char* buff = (char*) incomingData;        //char buffer
   JsonDocument doc;
@@ -743,7 +857,7 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
       { 
           //Serial.println("in you are paired und node");
         
-          bool exists = esp_now_is_peer_exist(mac);
+          bool exists = esp_now_is_peer_exist((u8 *) mac);
           if (exists) 
           { 
             PrintMAC(mac); Serial.println(" already exists...");
@@ -800,11 +914,13 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
         case SEND_CMD_DEBUGMODE_ON:
             AddStatus("DebugMode: on");  
             SetDebugMode(true);  
+            SaveModule();
             SendMessage(); 
             break;
         case SEND_CMD_DEBUGMODE_OFF:
             AddStatus("DebugMode: off"); 
             SetDebugMode(false); 
+            SaveModule();
             SendMessage(); 
             break;
         case SEND_CMD_DEBUGMODE_TOGGLE:
@@ -847,8 +963,13 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
             break;
         case SEND_CMD_RESET:
             AddStatus("Clear all"); 
-            nvs_flash_erase(); 
-            nvs_flash_init();
+            #ifdef ESP32
+                nvs_flash_erase(); nvs_flash_init();
+            #elif defined(ESP8266)
+                preferences.begin("JeepifyInit", false);
+                preferences.clear();
+                preferences.end();
+            #endif
             ESP.restart();
             break;
         case SEND_CMD_RESTART:
@@ -903,7 +1024,18 @@ void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
           }
     }
 }
-
+#ifdef ESP32 
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
+{
+    OnDataRecvCommon(mac, incomingData, len);
+}
+#elif defined(ESP8266)
+void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) 
+{
+    OnDataRecvCommon(mac, incomingData, len);
+}
+#endif
+#ifdef ESP32 //void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) 
 { 
     if (DEBUG_LEVEL > 2) 
@@ -912,20 +1044,33 @@ void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
     if (DEBUG_LEVEL > 0)  
         if (status != ESP_NOW_SEND_SUCCESS) Serial.println("\r\nLast Packet Send Status: Delivery Fail");
 }
+#elif defined(ESP8266)
+void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
+  if (DEBUG_LEVEL > 2) 
+        if (sendStatus == 0) Serial.println("\r\nLast Packet Send Status: Delivery Success");
+        
+    if (DEBUG_LEVEL > 0)  
+        if (sendStatus != 0) Serial.println("\r\nLast Packet Send Status: Delivery Fail");
+}
+#endif
 #pragma endregion ESP-Things
 
 void setup()
 {
+    //Wire.begin(SDA_PIN, SCL_PIN, I2C_FREQ);
+    Wire.begin(SDA_PIN, SCL_PIN);
+
     #ifdef ARDUINO_USB_CDC_ON_BOOT
         delay(3000);
     #endif
-    Serial.begin(460800);
+    
+    #ifdef ESP32
+        Serial.begin(460800);
+    #elif defined(ESP8266)
+        Serial.begin(115200);
+    #endif
     
     pinMode(LED_PIN, OUTPUT);
-    
-    IOBoard.pinMode(P0,OUTPUT);IOBoard.pinMode(P1,OUTPUT);
-    IOBoard.pinMode(P2,OUTPUT);IOBoard.pinMode(P3,OUTPUT);
-    IOBoard.digitalWrite(P10,LOW);
     
     for (int i=0; i<3; i++)
     {
@@ -934,7 +1079,8 @@ void setup()
         digitalWrite(LED_PIN, LED_OFF);
         delay(100);
     }
-    
+    Serial.println("Es geht los");
+
     #ifdef ESP32_DISPLAY_480
         smartdisplay_init();
 
@@ -943,8 +1089,7 @@ void setup()
     #endif
 
     InitModule();
-
-    Wire.begin(SDA_PIN, SCL_PIN, I2C_FREQ);
+    digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
 
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)  
     { 
@@ -957,9 +1102,30 @@ void setup()
                 #endif
                 break;
             case SENS_TYPE_VOLT:   pinMode(Module.GetPeriphIOPort(SNr), INPUT ); break;
-            case SENS_TYPE_AMP:    pinMode(Module.GetPeriphIOPort(SNr), INPUT ); break;
+            case SENS_TYPE_AMP:    
+                #ifndef ADS_USED
+                    pinMode(Module.GetPeriphIOPort(SNr), INPUT );
+                #endif
+                break;
         }
     }
+
+    //Wire.begin(SDA_PIN, SCL_PIN);
+
+    #ifdef MRD_USED //MRD
+        mrd = new MultiResetDetector(MRD_TIMEOUT, MRD_ADDRESS);
+
+        if (mrd->detectMultiReset()) {
+          Serial.println("Multi Reset Detected");
+          digitalWrite(LED_BUILTIN, LED_ON);
+          ClearPeers();
+          Module.SetPairMode(true); TSPair = millis();
+        }
+        else {
+          Serial.println("No Multi Reset Detected");
+          digitalWrite(LED_BUILTIN, LED_OFF);
+        }
+    #endif
 
     #ifdef PORT_USED
 	      if (!IOBoard.begin())
@@ -974,7 +1140,7 @@ void setup()
     #endif
     #ifdef ADS_USED
         ADSBoard.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
-        if (!ADSBoard.begin(ADS_ADDRESS, &I2C_BUS)) { //I2C weglassen?
+        if (!ADSBoard.begin(ADS_ADDRESS)) { 
           if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
           while (1);
         }
@@ -999,9 +1165,12 @@ void setup()
     WiFi.macAddress(MacTemp);
     Module.SetBroadcastAddress(MacTemp);
 
-    if (esp_now_init() != ESP_OK) 
+    if (esp_now_init() != 0) 
         if (DEBUG_LEVEL > 0) Serial.println("Error initializing ESP-NOW");
-  
+    #ifdef ESP8266
+        esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
+    #endif 
+    
     esp_now_register_send_cb(OnDataSent);
     esp_now_register_recv_cb(OnDataRecv);    
 
@@ -1020,16 +1189,6 @@ void setup()
     AddStatus("Init fertig");
   
     Module.SetLastContact(millis());
-    
-    /*
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
-    {
-        gpio_hold_dis((gpio_num_t)Module.GetPeriphIOPort(SNr));  
-    }
-
-    gpio_deep_sleep_hold_dis(); 
-  */
-    //UpdateSwitches();
 
     #ifdef ESP32_DISPLAY_480
       ui_init();
@@ -1074,7 +1233,11 @@ void loop()
                 if ((millis() - TSBootButton) > 3000) {
                     if (DEBUG_LEVEL > 1) Serial.println("Button pressed... Clearing Peers and Reset");
                     AddStatus("Clearing Peers and Reset");
-                    nvs_flash_erase(); nvs_flash_init();
+                    #ifdef ESP32
+                      nvs_flash_erase(); nvs_flash_init();
+                    #elif defined(ESP8266)
+                      ClearPeers();
+                    #endif 
                     ESP.restart();
                 }
             }
