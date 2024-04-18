@@ -6,8 +6,8 @@
 //#define C3_MINI_PORT
 //#define C3_MINI_PORT_ADS
 //#define ESP8266_PORT
-//#define ESP8266_ADS
-#define ESP8266_4WAY_INTEGRATED
+#define ESP8266_ADS
+//#define ESP8266_4WAY_INTEGRATED
 //#define ESP32_DISPLAY_480
 //#define DISPLAY_C3_ROUND
 
@@ -78,8 +78,8 @@
     #define LED_PIN     LED_BUILTIN
     #define LED_OFF     LOW
     #define LED_ON      HIGH
-    #define SDA_PIN     4
-    #define SCL_PIN     5
+    #define SDA_PIN     14
+    #define SCL_PIN     12
 #endif
 
 // fertiges 4-Kanal ESP8266
