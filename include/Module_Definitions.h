@@ -74,7 +74,7 @@
 #ifdef ESP8266_ADS
     #define ESP8266_MODULE_4A_1V_ADS
     #define MRD_USED    1
-    #define ADS_USED   1
+    #define ADS_USED    1
     #define LED_PIN     LED_BUILTIN
     #define LED_OFF     LOW
     #define LED_ON      HIGH
