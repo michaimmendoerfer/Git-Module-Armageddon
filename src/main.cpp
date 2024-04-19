@@ -144,10 +144,8 @@ void InitModule()
 
     #ifdef ESP32_MODULE_4S_1V_NOADC_PORT    // 4-Way Switch via IOBoard with Voltage-Monitor #####################################################
       #define SWITCHES_PER_SCREEN 4
-
       //                Name        Type       Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, SWITCH_4_WAY, _Version, NULL,     false, true,  true, false, -1, RELAY_NORMAL, 21,  22,     1);
-
       //                      Name     Type           ADS  IO  NULL   VpA   Vin  PeerID
       Module.PeriphSetup(0, "SP-1", SENS_TYPE_SWITCH,  1,  P0,   0,    0,    0,    0);
       Module.PeriphSetup(1, "SP-2", SENS_TYPE_SWITCH,  1,  P1,   0,    0,    0,    0);
@@ -158,10 +156,8 @@ void InitModule()
     #ifdef ESP32_MODULE_4A_1V_ADC           // 4-way Battery-Sensor with ADC and VMon ############################################################
       // 4x acs712(30A) over ADC1115 on SCL:21, SDA:22, Voltage-Monitor:35
       #define SWITCHES_PER_SCREEN 4
-      
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, 14,  15,     1);
-
       //                      Name     Type             ADS  IO   NULL   VpA   Vin  PeerID
       Module.PeriphSetup(0, "Sensor_1", SENS_TYPE_AMP,  1,    1,  2.5,  0.066,  0,    0);
       Module.PeriphSetup(1, "Sensor_2", SENS_TYPE_AMP,  1,    2,  2.5,  0.066,  0,    0);
@@ -171,13 +167,11 @@ void InitModule()
     #endif
     #ifdef ESP32_MODULE_2A_2S_1V_NOADS      // Mixed-Module no ADC and VMon ######################################################################
       #define SWITCHES_PER_SCREEN 2
-
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, PDC_SENSOR_MIX, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, -1,  -1,     1.5);
-
       //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
-      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     0,  34,   2.5,     0.166,    0,    0);
-      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     0,  35,   2.5,     0.166,    0,    0);
+      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     0,  34,   2.5,     0.066,    0,    0);
+      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     0,  35,   2.5,     0.066,    0,    0);
       Module.PeriphSetup(2, "Sw 1",   SENS_TYPE_SWITCH,  0,  32,   0,       0,        0,    0);
       Module.PeriphSetup(3, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  33,   0,       0,        0,    0);
       Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  39,   0,       0,      200,    0); 
@@ -185,20 +179,24 @@ void InitModule()
     #ifdef ESP32_MODULE_2S_PORT             // 2-Way Switch via IOBoard ##########################################################################
         #define SWITCHES_PER_SCREEN 2       
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon    RelayType     sda scl voltagedevier 
-      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_REVERSED, 5,  6,     1.5);
+      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_REVERSED, 6,  7,     1.5);
       //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
       Module.PeriphSetup(0, "Sw 1",  SENS_TYPE_SWITCH,   1,  0,     0,       0,        0,    0);
       Module.PeriphSetup(1, "Sw 2",  SENS_TYPE_SWITCH,   1,  1,     0,       0,        0,    0);
     #endif
-    #ifdef ESP32_MODULE_2A_2S_1V_ADS_PORT   // Mixed-Module with ADC and Port and VMon ###########################################################
+    #ifdef ESP32_MODULE_4S_4A_1V_ADS_PORT   // Mixed-Module with ADC and Port and VMon ###########################################################
       #define SWITCHES_PER_SCREEN 
-      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
-      Module.Setup(_ModuleName, PDC_SENSOR_MIX, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, 14,  15,     1.5);
+      //                Name        Type         Version  Address   sleep  debug  demo   pair  vMon RelayType    adc1 adc2 voltagedevier 
+      Module.Setup(_ModuleName, PDC_SENSOR_MIX, _Version, NULL,     false, true,  false, false, 1,  RELAY_NORMAL, 6,  7,     1.5);
       //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
-      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     1,  0,   2.5,     0.166,    0,    0);
-      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     1,  1,   2.5,     0.166,    0,    0);
-      Module.PeriphSetup(2, "Sw 1",   SENS_TYPE_SWITCH,  1,  0,   0,       0,        0,    0);
-      Module.PeriphSetup(3, "Sw 2 ",  SENS_TYPE_SWITCH,  1,  1,   0,       0,        0,    0);
+      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     1,  0,   2.5,     0.066,    0,    0);
+      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     1,  1,   2.5,     0.066,    0,    0);
+      Module.PeriphSetup(2, "Amp 3",  SENS_TYPE_AMP,     1,  2,   2.5,     0.066,    0,    0);
+      Module.PeriphSetup(3, "Amp 4",  SENS_TYPE_AMP,     1,  3,   2.5,     0.066,    0,    0);
+      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,  1,  0,   0,       0,        0,    0);
+      Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,  1,  1,   0,       0    ,    0,    0);
+      Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,  1,  2,   0,       0,        0,    0);
+      Module.PeriphSetup(3, "Sw 4 ",  SENS_TYPE_SWITCH,  1,  3,   0,       0,        0,    0);
       Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  35,  0,       0,      200,    0); 
     #endif
 
