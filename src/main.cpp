@@ -227,10 +227,10 @@ void InitModule()
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl    voltagedevier 
       Module.Setup(_ModuleName, SWITCH_4_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL,   -1,   -1,     1.5);
       //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
-      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,   0,  5,    0,       0,       0,    0);
-      Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,   0,  13,    0,      0,       0,    0);
-      Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,   0,  14,    0,      0,       0,    0);
-      Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   0,  15,    0,      0,       0,    0);
+      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,   0,  16,    0,       0,       0,    0);
+      Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,   0,  14,    0,      0,       0,    0);
+      Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,   0,  12,    0,      0,       0,    0);
+      Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   0,  13,    0,      0,       0,    0);
     #endif
 
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
@@ -1003,7 +1003,7 @@ void setup()
         if (mrd->detectMultiReset()) {
           Serial.println("Multi Reset Detected");
           digitalWrite(LED_BUILTIN, LED_ON);
-          ClearPeers();
+          ClearPeers(); ClearInit(); SaveModule();
           Module.SetPairMode(true); TSPair = millis();
         }
         else {
@@ -1062,7 +1062,7 @@ void setup()
     AddStatus("Init Module");
     
     #ifdef KILL_NVS
-      nvs_flash_erase(); nvs_flash_init(); ESP.restart();
+        nvs_flash_erase(); nvs_flash_init(); ESP.restart();
     #endif
 
     GetPeers();       

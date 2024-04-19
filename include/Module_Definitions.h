@@ -3,7 +3,7 @@
 
 #define MODULE_JL_BATTERY_SENSOR
 //#define MODULE_TERMINATOR_PRO
-//define MODULE_4WAY_INTEGRATED_8266
+//#define MODULE_4WAY_INTEGRATED_8266 // (tut)
 
 // Module Definition
 //#define C3_MINI
@@ -22,7 +22,7 @@
     #define ESP8266_MODULE_4A_1V_ADS
     #define MRD_USED    1
     #define ADS_USED    1
-    #define BOOT_BUTTON 4
+    //#define BOOT_BUTTON 4
     #define LED_PIN     LED_BUILTIN
     #define LED_OFF     LOW
     #define LED_ON      HIGH
@@ -30,12 +30,12 @@
     #define SCL_PIN     12
 #endif
 
-// fertiges 4-Kanal mit ESP8266
+// fertiges 4-Kanal mit ESP8266 (tut)
 // 4 Switches
 #ifdef MODULE_4WAY_INTEGRATED_8266
     #define ESP8266_MODULE_4S_INTEGRATED
     #define MRD_USED    1
-    #define BOOT_BUTTON 4 
+    //#define BOOT_BUTTON 4 
     #define LED_PIN     LED_BUILTIN
     #define LED_OFF     LOW
     #define LED_ON      HIGH

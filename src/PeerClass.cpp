@@ -118,8 +118,8 @@ char* PeerClass::Export()
                         
     for (int Si=0; Si<MAX_PERIPHERALS; Si++)
     { 
-        snprintf(ReturnBufferPeriph, sizeof(ReturnBufferPeriph), ";%s;%d",
-                 Periph[Si].GetName(), Periph[Si].GetType());
+        snprintf(ReturnBufferPeriph, sizeof(ReturnBufferPeriph), ";%s;%d;%.3f",
+                 Periph[Si].GetName(), Periph[Si].GetType()), Periph[Si].GetNullwert();
 
         strcat(ExportImportBuffer, ReturnBufferPeriph);
     }
@@ -147,6 +147,7 @@ void PeerClass::Import(char *Buf)
     {
         Periph[Si].SetName(strtok(NULL, ";"));
         Periph[Si].SetType(atoi(strtok(NULL, ";")));
+        Periph[Si].SetNullwert(atof(strtok(NULL, ";")));
         Periph[Si].SetPos(Si);
         Periph[Si].SetPeerId(_Id);
     }

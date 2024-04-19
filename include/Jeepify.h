@@ -27,7 +27,7 @@
 #define SEND_CMD_YOU_ARE_PAIRED   61
 
 
-#define MAX_PERIPHERALS 9
+#define MAX_PERIPHERALS 5
 #define MAX_PEERS       10
 #define MAX_STATUS      10
 #define SCHWELLE        0.0005
