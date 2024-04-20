@@ -131,7 +131,7 @@ int GetPeers()
     int PeerCount = preferences.getInt("PeerCount");
     Serial.printf("Peercount = %d\n\r", PeerCount);
     
-    for (int Pi=0 ; Pi<PeerCount; Pi++)
+    for (int Pi=0 ; Pi<PeerCount-1; Pi++)
     {
         sprintf(Buf, "Peer-%d", Pi);
         ImportStringPeer = preferences.getString(Buf, "");

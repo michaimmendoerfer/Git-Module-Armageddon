@@ -44,6 +44,7 @@ void  PeriphClass::Setup(const char* Name, int Type, bool isADS, int IOPort,
     _IOPort = IOPort;
     _Nullwert = Nullwert;
     _VperAmp = VperAmp;
+    _Vin = Vin;
     _PeerId = PeerId;
 }
 bool PeriphClass::IsType(int Type)
@@ -118,9 +119,7 @@ char* PeerClass::Export()
                         
     for (int Si=0; Si<MAX_PERIPHERALS; Si++)
     { 
-        snprintf(ReturnBufferPeriph, sizeof(ReturnBufferPeriph), ";%s;%d;%.3f",
-                 Periph[Si].GetName(), Periph[Si].GetType()), Periph[Si].GetNullwert();
-
+        snprintf(ReturnBufferPeriph, sizeof(ReturnBufferPeriph), ";%s;%d;%.3f;%d", Periph[Si].GetName(), Periph[Si].GetType(), Periph[Si].GetNullwert(), Periph[Si].GetVin());
         strcat(ExportImportBuffer, ReturnBufferPeriph);
     }
 
@@ -148,16 +147,18 @@ void PeerClass::Import(char *Buf)
         Periph[Si].SetName(strtok(NULL, ";"));
         Periph[Si].SetType(atoi(strtok(NULL, ";")));
         Periph[Si].SetNullwert(atof(strtok(NULL, ";")));
+        Periph[Si].SetVin(atoi(strtok(NULL, ";")));
         Periph[Si].SetPos(Si);
         Periph[Si].SetPeerId(_Id);
     }
-    //Serial.println("ende import");
+    Serial.println("ende import");
 }
         
 void  PeerClass::PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, 
                              float Nullwert, float VperAmp, int Vin, int PeerId)
 {
     Periph[Pos].Setup(Name, Type, isADS, IOPort, Nullwert, VperAmp, Vin, PeerId);
+    //Serial.printf("Nullwert von P%d ist jetzt %.3f\n\r", Pos, Periph[Pos].GetNullwert());
 }
 int   PeerClass::GetPeriphId(char *Name)
 {

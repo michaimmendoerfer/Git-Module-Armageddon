@@ -307,9 +307,9 @@ void SendMessage ()
               }
             }
             doc[Module.GetPeriphName(SNr)] = buf;
-            if (DEBUG_LEVEL > 2) Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
+            //if (DEBUG_LEVEL > 2) Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
         }
-        if (DEBUG_LEVEL > 2) Serial.println();
+        //if (DEBUG_LEVEL > 2) Serial.println();
     }
   
     // Status bit1 DebugMode, bit2 Sleep, bit3 Demo, bit4 RTP
@@ -323,7 +323,7 @@ void SendMessage ()
 
     serializeJson(doc, jsondata);  
 
-    if (DEBUG_LEVEL > 2) Serial.println(jsondata);
+    //if (DEBUG_LEVEL > 2) Serial.println(jsondata);
 
     for (int PNr=0; PNr<PeerList.size(); PNr++) 
     {
@@ -690,11 +690,7 @@ float ReadAmp (int SNr)
     #endif
   
     if (DEBUG_LEVEL > 2) {
-        Serial.print("TempVal:  "); Serial.println(TempVal,4);
-        Serial.print("TempVolt: "); Serial.println(TempVolt,4);
-        Serial.print("Nullwert: "); Serial.println(Module.GetPeriphNullwert(SNr),4);
-        Serial.print("VperAmp:  "); Serial.println(Module.GetPeriphVperAmp(SNr),4);
-        Serial.print("Amp (TempVolt - S[Si].NullWert) / S[Si].VperAmp * 1.5:  "); Serial.println(TempAmp,4);
+        Serial.printf("(A): Raw:%.3f Null:%.3f --> %.2fV --> %.2fA\n\r", TempVal, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
     } 
     if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
     
@@ -708,10 +704,7 @@ float ReadVolt(int SNr)
   float TempVolt = TempVal / Module.GetPeriphVin(SNr);
   
   if (DEBUG_LEVEL > 2) {
-    Serial.print("TempVal:  "); Serial.println(TempVal,4);
-    Serial.print("Vin:      "); Serial.println(Module.GetPeriphVin(SNr));
-    Serial.print("Volt (TempVal / S[V].Vin)): ");     Serial.println(TempVolt,4);
-    
+    Serial.printf("(V) Raw: %d - Vin:%.1f --> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), TempVolt);
   } 
   return TempVolt;
 }
@@ -1003,7 +996,7 @@ void setup()
         if (mrd->detectMultiReset()) {
           Serial.println("Multi Reset Detected");
           digitalWrite(LED_BUILTIN, LED_ON);
-          ClearPeers(); ClearInit(); SaveModule();
+          ClearPeers(); ClearInit(); InitModule(); SaveModule();
           Module.SetPairMode(true); TSPair = millis();
         }
         else {
@@ -1034,7 +1027,7 @@ void setup()
             if (DEBUG_LEVEL > 1) Serial.println("ADS initialised.");
         }
     #endif
-    
+    delay(3000);
     if (preferences.begin("JeepifyInit", true))
     {
         String SavedModule   = preferences.getString("Module", "");
