@@ -24,8 +24,8 @@
     #define ADS_USED    1
     //#define BOOT_BUTTON 4
     #define LED_PIN     LED_BUILTIN
-    #define LED_OFF     LOW
-    #define LED_ON      HIGH
+    #define LED_OFF     HIGH
+    #define LED_ON      LOW
     #define SDA_PIN     14
     #define SCL_PIN     12
 #endif

@@ -82,25 +82,26 @@ void SavePeers()
 {
     PeerClass *P;
     
-    char Buf[10];
-    char ExportBuffer[50];
+    char Buf[20];
+    //char ExportBuffer[50];
     String ExportStringMulti;
     String ExportStringPeer;
 
     preferences.begin("JeepifyPeers", false);
     
     preferences.putInt("PeerCount", PeerList.size());
-    Serial.printf("PeerList.size() = %d, gelesenes PeerCount = %d\n\r", PeerList.size(), preferences.getInt("PeerCount"));
+    Serial.printf("SavePeers(): PeerList.size() = %d, gelesenes PeerCount = %d\n\r", PeerList.size(), preferences.getInt("PeerCount"));
 
     for(int i = 0; i < PeerList.size(); i++){
       P = PeerList.get(i);
       sprintf(Buf, "Peer-%d", i);
 
-      ExportStringPeer = P->Export();
+      ExportStringPeer = String(P->Export());
 
       Serial.printf("putSring = %d", preferences.putString(Buf, ExportStringPeer));
       Serial.printf("schreibe: [%s]: %s", Buf, ExportStringPeer.c_str());
       Serial.println();
+      Serial.printf("Lesekontrolle %s: %s\n\r", Buf, preferences.getString(Buf).c_str());
     }
   
     Serial.println("jetzt kommt Multi");
@@ -108,7 +109,7 @@ void SavePeers()
     for (int s=0; s<MULTI_SCREENS; s++) {
       snprintf(Buf, sizeof(Buf), "Screen-%d", s);
       
-      ExportStringMulti = Screen[s].Export();
+      ExportStringMulti = String(Screen[s].Export());
 
       preferences.putString(Buf, ExportStringMulti);
       Serial.printf("schreibe: [%s]: %s", Buf, ExportStringMulti.c_str());
@@ -120,29 +121,33 @@ int GetPeers()
 {
     PeerClass *P;
     
-    char Buf[10];
-    String ImportStringMulti;
-    String ImportStringPeer;
+    char Buf[20];
+    String ImportStringMulti = "";
+    String ImportStringPeer = "";
 
     preferences.begin("JeepifyPeers", true);
 
     PeerList.clear();
 
-    int PeerCount = preferences.getInt("PeerCount");
-    Serial.printf("Peercount = %d\n\r", PeerCount);
+    int PeerCount = preferences.getInt("PeerCount", 0);
+    Serial.printf("GetPeers(): Peercount = %d\n\r", PeerCount);
     
-    for (int Pi=0 ; Pi<PeerCount-1; Pi++)
+    for (int Pi=0 ; Pi<PeerCount; Pi++)
     {
         sprintf(Buf, "Peer-%d", Pi);
         ImportStringPeer = preferences.getString(Buf, "");
+        Serial.printf("GetPeers(): %s : ImportStringPeer = %s",Buf, ImportStringPeer.c_str());
         strcpy(ScreenExportImportBuffer, ImportStringPeer.c_str());
         Serial.printf("gelesen: [%s]: %s\n", Buf, ScreenExportImportBuffer);
-
-        P = new PeerClass();
-        P->Import(ScreenExportImportBuffer);
         
-        PeerList.add(P);
-        for (int Si=0; Si<MAX_PERIPHERALS; Si++) PeriphList.add(P->GetPeriphPtr(Si));
+        if (strcmp(ScreenExportImportBuffer, "") != 0)
+        {
+            P = new PeerClass();
+            P->Import(ScreenExportImportBuffer);
+            Serial.printf("GetPeers(): Peer angelegt mit Name: %s\n\r", P->GetName());
+            PeerList.add(P);
+            for (int Si=0; Si<MAX_PERIPHERALS; Si++) PeriphList.add(P->GetPeriphPtr(Si));
+        }
     }
   
     Serial.println("jetzt kommt Multi");
@@ -151,8 +156,9 @@ int GetPeers()
     {
         snprintf(Buf, sizeof(Buf), "Screen-%d", s);
         
-        ImportStringMulti = preferences.getString(Buf, "nix");
-        if (ImportStringMulti != "nix") 
+
+        ImportStringMulti = preferences.getString(Buf, "");
+        if (ImportStringMulti != "") 
         {   
             Serial.printf("%s - %d Bytes gelesen: %s\n\r", Buf, sizeof(ImportStringMulti), ImportStringMulti.c_str());
             strcpy(ScreenExportImportBuffer, ImportStringMulti.c_str());
@@ -170,16 +176,32 @@ int GetPeers()
 }
 void ClearPeers() 
 {
-  preferences.begin("JeepifyPeers", false);
+    char Buf[20];
+
+    preferences.begin("JeepifyPeers", false);
+    for (int Pi=0; Pi<MAX_PEERS; Pi++)
+    {
+        sprintf(Buf, "Peer-%d", Pi);
+        preferences.remove(Buf);
+    }
+    for (int s=0; s<MULTI_SCREENS; s++) 
+    {
+        snprintf(Buf, sizeof(Buf), "Screen-%d", s);
+        preferences.remove(Buf);
+    }
+
     preferences.clear();
     Serial.println("JeepifyPeers cleared...");
+    Serial.printf("free entries in JeepifyPeers now: %d\n\r", preferences.freeEntries());
   preferences.end();
 }
 void ClearInit() 
 {
   preferences.begin("JeepifyInit", false);
+    preferences.remove("Module");
     preferences.clear();
     Serial.println("JeepifyInit cleared...");
+    Serial.printf("free entries in JeepifyInit now: %d\n\r", preferences.freeEntries());
   preferences.end();
 }
 void DeletePeer(PeerClass *P) 

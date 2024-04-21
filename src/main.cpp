@@ -247,7 +247,155 @@ void InitModule()
         }
     }
 }
+void setup()
+{
+    delay(10000);
+    //Wire.begin(SDA_PIN, SCL_PIN, I2C_FREQ);
+    Wire.begin(SDA_PIN, SCL_PIN);
 
+    #ifdef ARDUINO_USB_CDC_ON_BOOT
+        delay(3000);
+    #endif
+    
+    #ifdef ESP32
+        Serial.begin(460800);
+    #elif defined(ESP8266)
+        Serial.begin(115200);
+    #endif
+    
+    pinMode(LED_PIN, OUTPUT);
+    
+    for (int i=0; i<3; i++)
+    {
+        digitalWrite(LED_PIN, LED_ON);
+        delay(100);
+        digitalWrite(LED_PIN, LED_OFF);
+        delay(100);
+    }
+    Serial.println("Es geht los");
+    preferences.begin("JeepifyInit", true);
+        Serial.printf("free entries in JeepifyInit now: %d\n\r", preferences.freeEntries());
+    preferences.end();
+    preferences.begin("JeepifyPeers", true);
+        Serial.printf("free entries in JeepifyPeers now: %d\n\r", preferences.freeEntries());
+    preferences.end();
+    #ifdef ESP32_DISPLAY_480
+        smartdisplay_init();
+
+        __attribute__((unused)) auto disp = lv_disp_get_default();
+        lv_disp_set_rotation(disp, LV_DISP_ROT_90);
+    #endif
+
+    InitModule();
+    digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
+
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)  
+    { 
+        switch (Module.GetPeriphType(SNr)) {
+            case SENS_TYPE_SWITCH: 
+                #ifdef PORT_USED
+                    IOBoard.pinMode(Module.GetPeriphIOPort(SNr), OUTPUT);
+                #else
+                    pinMode(Module.GetPeriphIOPort(SNr), OUTPUT); 
+                #endif
+                break;
+            case SENS_TYPE_VOLT:   pinMode(Module.GetPeriphIOPort(SNr), INPUT ); break;
+            case SENS_TYPE_AMP:    
+                #ifndef ADS_USED
+                    pinMode(Module.GetPeriphIOPort(SNr), INPUT );
+                #endif
+                break;
+        }
+    }
+
+    #ifdef MRD_USED //MRD
+        mrd = new MultiResetDetector(MRD_TIMEOUT, MRD_ADDRESS);
+
+        if (mrd->detectMultiReset()) {
+          Serial.println("Multi Reset Detected");
+          digitalWrite(LED_BUILTIN, LED_ON);
+          ClearPeers(); ClearInit(); InitModule(); SaveModule();
+          Module.SetPairMode(true); TSPair = millis();
+        }
+        else {
+          Serial.println("No Multi Reset Detected");
+          digitalWrite(LED_BUILTIN, LED_OFF);
+        }
+    #endif
+
+    #ifdef PORT_USED
+	      if (!IOBoard.begin())
+          {
+                if (DEBUG_LEVEL > 0) Serial.println("IOBoard not found!");
+                while (1);
+          }
+          else 
+          {
+                if (DEBUG_LEVEL > 1) Serial.println("IOBoard initialised.");
+          }
+    #endif
+    #ifdef ADS_USED
+        ADSBoard.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
+        if (!ADSBoard.begin(ADS_ADDRESS)) { 
+          if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
+          while (1);
+        }
+        else
+        {
+            if (DEBUG_LEVEL > 1) Serial.println("ADS initialised.");
+        }
+    #endif
+    delay(3000);
+    if (preferences.begin("JeepifyInit", true))
+    {
+        String SavedModule   = preferences.getString("Module", "");
+            if (DEBUG_LEVEL > 2) Serial.printf("Importiere Modul: %s", SavedModule.c_str());
+            char ToImport[250];
+            strcpy(ToImport,SavedModule.c_str());
+            if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
+        preferences.end();
+    }
+
+    WiFi.mode(WIFI_STA);
+    uint8_t MacTemp[6];
+    WiFi.macAddress(MacTemp);
+    Module.SetBroadcastAddress(MacTemp);
+
+    if (esp_now_init() != 0) 
+        if (DEBUG_LEVEL > 0) Serial.println("Error initializing ESP-NOW");
+    #ifdef ESP8266
+        esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
+    #endif 
+    
+    esp_now_register_send_cb(OnDataSent);
+    esp_now_register_recv_cb(OnDataRecv);    
+
+    AddStatus("Init Module");
+    
+    #ifdef KILL_NVS
+        nvs_flash_erase(); nvs_flash_init(); ESP.restart();
+    #endif
+
+    if (GetPeers() == 0) 
+    {
+        Module.SetPairMode(true); 
+        TSPair = millis();    
+        AddStatus("PairMode on");
+    }   
+
+    AddStatus("Get Peers");
+    
+    ReportAll();    
+    
+    RegisterPeers();  
+    AddStatus("Init fertig");
+  
+    Module.SetLastContact(millis());
+
+    #ifdef ESP32_DISPLAY_480
+      ui_init();
+    #endif
+}
 #pragma region Send-Things
 void SendMessage () 
 {
@@ -331,7 +479,7 @@ void SendMessage ()
 
         if (Peer->GetType() >= MONITOR_ROUND)
         {
-            if (DEBUG_LEVEL > 2) Serial.printf("Sending to: %s\n\r", Peer->GetName()); 
+            if (DEBUG_LEVEL > 2) Serial.printf("Sending to: %s ", Peer->GetName()); 
             
             if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 200) == 0) 
             {
@@ -351,6 +499,8 @@ void SendMessage ()
 void SendPairingRequest() 
 {
   // sendet auf Broadcast: "addme", T0:Type, N0:Name, T1:Type, N1:Name...
+  digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
+
   TSLed = millis();
   SetMessageLED(3);
   
@@ -405,36 +555,33 @@ void SendNameChange(int Pos)
 }
 #pragma endregion Send-Things
 #pragma region System-Things
+void ESP8266ClearAll()
+{
+    preferences.begin("JeepifyInit", false);
+
+}
 void ChangeBrightness(int B)
 {
-  #ifdef ESP32_DISPLAY_480
-  preferences.begin("JeepifyInit", false);
-    Module.SetBrightness(B);
-    smartdisplay_lcd_set_backlight((float) B/100);
-    SaveModule();
-  preferences.end();
-  #endif
+    #ifdef ESP32_DISPLAY_480
+        Module.SetBrightness(B);
+        smartdisplay_lcd_set_backlight((float) B/100);
+        SaveModule();
+    #endif
 }
 void SetDemoMode(bool Mode) 
 {
-  preferences.begin("JeepifyInit", false);
     Module.SetDemoMode(Mode);
     SaveModule();
-  preferences.end();
 }
 void SetSleepMode(bool Mode) 
 {
-  preferences.begin("JeepifyInit", false);
     Module.SetSleepMode(Mode);
     SaveModule();
-  preferences.end();
 }
 void SetDebugMode(bool Mode) 
 {
-  preferences.begin("JeepifyInit", false);
     Module.SetDebugMode(Mode);
     SaveModule();
-  preferences.end();
 }
 void SetPairMode(bool Mode) 
 {
@@ -561,6 +708,8 @@ void SaveModule()
         {
             Serial.printf("putSring = %d", preferences.putString("Module", ExportStringPeer));
             Serial.printf("schreibe: Module: %s\n\r",ExportStringPeer.c_str());
+             String SavedModule   = preferences.getString("Module", "");
+            if (DEBUG_LEVEL > 2) Serial.printf("SaveModule(): Testlesen Modul: %s", SavedModule.c_str());
         }
     preferences.end();
 }
@@ -615,8 +764,6 @@ void VoltageCalibration(int SNr, float V)
   
     if (DEBUG_LEVEL > 1) Serial.println("Volt-Messung kalibrieren...");
     
-    preferences.begin("JeepifyInit", false);
-  
     if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) {
         int TempRead = analogRead(Module.GetPeriphIOPort(SNr));
         
@@ -698,13 +845,15 @@ float ReadAmp (int SNr)
 }
 float ReadVolt(int SNr) 
 {
-  if (!Module.GetPeriphPtr(SNr)->GetVin()) { Serial.println("Vin must not be zero !!!"); return 0; }
+  if (!Module.GetPeriphVin(SNr)) { Serial.println("Vin must not be zero !!!"); return 0; }
   
+  Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
+
   float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
   float TempVolt = TempVal / Module.GetPeriphVin(SNr);
   
   if (DEBUG_LEVEL > 2) {
-    Serial.printf("(V) Raw: %d - Vin:%.1f --> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), TempVolt);
+    Serial.printf("(V) Raw: %.0f - Vin:%d --> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), TempVolt);
   } 
   return TempVolt;
 }
@@ -844,9 +993,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             #ifdef ESP32
                 nvs_flash_erase(); nvs_flash_init();
             #elif defined(ESP8266)
-                preferences.begin("JeepifyInit", false);
-                preferences.clear();
-                preferences.end();
+                ClearPeers(); ClearInit();
             #endif
             ESP.restart();
             break;
@@ -932,146 +1079,6 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 }
 #endif
 #pragma endregion ESP-Things
-
-void setup()
-{
-    //Wire.begin(SDA_PIN, SCL_PIN, I2C_FREQ);
-    Wire.begin(SDA_PIN, SCL_PIN);
-
-    #ifdef ARDUINO_USB_CDC_ON_BOOT
-        delay(3000);
-    #endif
-    
-    #ifdef ESP32
-        Serial.begin(460800);
-    #elif defined(ESP8266)
-        Serial.begin(115200);
-    #endif
-    
-    pinMode(LED_PIN, OUTPUT);
-    
-    for (int i=0; i<3; i++)
-    {
-        digitalWrite(LED_PIN, LED_ON);
-        delay(100);
-        digitalWrite(LED_PIN, LED_OFF);
-        delay(100);
-    }
-    Serial.println("Es geht los");
-
-    #ifdef ESP32_DISPLAY_480
-        smartdisplay_init();
-
-        __attribute__((unused)) auto disp = lv_disp_get_default();
-        lv_disp_set_rotation(disp, LV_DISP_ROT_90);
-    #endif
-
-    InitModule();
-    digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
-
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)  
-    { 
-        switch (Module.GetPeriphType(SNr)) {
-            case SENS_TYPE_SWITCH: 
-                #ifdef PORT_USED
-                    IOBoard.pinMode(Module.GetPeriphIOPort(SNr), OUTPUT);
-                #else
-                    pinMode(Module.GetPeriphIOPort(SNr), OUTPUT); 
-                #endif
-                break;
-            case SENS_TYPE_VOLT:   pinMode(Module.GetPeriphIOPort(SNr), INPUT ); break;
-            case SENS_TYPE_AMP:    
-                #ifndef ADS_USED
-                    pinMode(Module.GetPeriphIOPort(SNr), INPUT );
-                #endif
-                break;
-        }
-    }
-
-    //Wire.begin(SDA_PIN, SCL_PIN);
-
-    #ifdef MRD_USED //MRD
-        mrd = new MultiResetDetector(MRD_TIMEOUT, MRD_ADDRESS);
-
-        if (mrd->detectMultiReset()) {
-          Serial.println("Multi Reset Detected");
-          digitalWrite(LED_BUILTIN, LED_ON);
-          ClearPeers(); ClearInit(); InitModule(); SaveModule();
-          Module.SetPairMode(true); TSPair = millis();
-        }
-        else {
-          Serial.println("No Multi Reset Detected");
-          digitalWrite(LED_BUILTIN, LED_OFF);
-        }
-    #endif
-
-    #ifdef PORT_USED
-	      if (!IOBoard.begin())
-          {
-                if (DEBUG_LEVEL > 0) Serial.println("IOBoard not found!");
-                while (1);
-          }
-          else 
-          {
-                if (DEBUG_LEVEL > 1) Serial.println("IOBoard initialised.");
-          }
-    #endif
-    #ifdef ADS_USED
-        ADSBoard.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
-        if (!ADSBoard.begin(ADS_ADDRESS)) { 
-          if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
-          while (1);
-        }
-        else
-        {
-            if (DEBUG_LEVEL > 1) Serial.println("ADS initialised.");
-        }
-    #endif
-    delay(3000);
-    if (preferences.begin("JeepifyInit", true))
-    {
-        String SavedModule   = preferences.getString("Module", "");
-            if (DEBUG_LEVEL > 2) Serial.printf("Importiere Modul: %s", SavedModule.c_str());
-            char ToImport[250];
-            strcpy(ToImport,SavedModule.c_str());
-            if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
-        preferences.end();
-    }
-
-    WiFi.mode(WIFI_STA);
-    uint8_t MacTemp[6];
-    WiFi.macAddress(MacTemp);
-    Module.SetBroadcastAddress(MacTemp);
-
-    if (esp_now_init() != 0) 
-        if (DEBUG_LEVEL > 0) Serial.println("Error initializing ESP-NOW");
-    #ifdef ESP8266
-        esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
-    #endif 
-    
-    esp_now_register_send_cb(OnDataSent);
-    esp_now_register_recv_cb(OnDataRecv);    
-
-    AddStatus("Init Module");
-    
-    #ifdef KILL_NVS
-        nvs_flash_erase(); nvs_flash_init(); ESP.restart();
-    #endif
-
-    GetPeers();       
-    AddStatus("Get Peers");
-    
-    ReportAll();    
-    
-    RegisterPeers();  
-    AddStatus("Init fertig");
-  
-    Module.SetLastContact(millis());
-
-    #ifdef ESP32_DISPLAY_480
-      ui_init();
-    #endif
-}
 void loop()
 {
     if  ((millis() - TSSend ) > MSG_INTERVAL  ) {
