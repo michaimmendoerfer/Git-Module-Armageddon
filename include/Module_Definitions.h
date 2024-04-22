@@ -1,9 +1,9 @@
 #ifndef MODULE_DEFINITIONS_H
 #define MODULE_DEFINITIONS_H
 
-#define MODULE_JL_BATTERY_SENSOR
+//#define MODULE_JL_BATTERY_SENSOR
 //#define MODULE_TERMINATOR_PRO
-//#define MODULE_4WAY_INTEGRATED_8266 // (tut)
+#define MODULE_4WAY_INTEGRATED_8266 // (tut)
 
 // Module Definition
 //#define C3_MINI

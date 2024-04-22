@@ -237,6 +237,8 @@ void DeletePeer(PeerClass *P)
             P = NULL;
         }
     }
+    SavePeers();
+    ESP.restart();
 }
 void RegisterPeers() 
 {

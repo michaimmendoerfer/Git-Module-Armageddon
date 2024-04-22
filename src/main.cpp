@@ -66,7 +66,7 @@ const int DEBUG_LEVEL = 3;
 
 const char _Version[]           = "3.41";
 const char _Protokoll_Version[] = "1.01";
-const char _ModuleName[]        = "8266-Bat";
+const char _ModuleName[]        = "PDC-4";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -227,7 +227,7 @@ void InitModule()
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl    voltagedevier 
       Module.Setup(_ModuleName, SWITCH_4_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL,   -1,   -1,     1.5);
       //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
-      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,   0,  16,    0,       0,       0,    0);
+      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,   0,  15,    0,      0,       0,    0);
       Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,   0,  14,    0,      0,       0,    0);
       Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,   0,  12,    0,      0,       0,    0);
       Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   0,  13,    0,      0,       0,    0);
@@ -249,8 +249,6 @@ void InitModule()
 }
 void setup()
 {
-    delay(10000);
-    //Wire.begin(SDA_PIN, SCL_PIN, I2C_FREQ);
     Wire.begin(SDA_PIN, SCL_PIN);
 
     #ifdef ARDUINO_USB_CDC_ON_BOOT
@@ -264,6 +262,9 @@ void setup()
     #endif
     
     pinMode(LED_PIN, OUTPUT);
+    #ifdef BOOT_BUTTON
+        pinMode(BOOT_BUTTON, INPUT);
+    #endif
     
     for (int i=0; i<3; i++)
     {
@@ -1104,7 +1105,7 @@ void loop()
             SetMessageLED(0);
     }
 
-    #ifdef ESP32
+    #ifdef BOOT_BUTTON
         int BB = !digitalRead(BOOT_BUTTON);
         if (BB == 1) {
             TSPair = millis();
