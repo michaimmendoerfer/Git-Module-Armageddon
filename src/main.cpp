@@ -686,8 +686,8 @@ void GoToSleep()
     
     if (DEBUG_LEVEL > 1) 
     {
-        Serial.printf("Going to sleep at: %u", millis());
-        Serial.printf("LastContact    at: %u", Module.GetLastContact());
+        Serial.printf("Going to sleep at: %lu", millis());
+        Serial.printf("LastContact    at: %u", Module.GetLastContact()); 
     }
     
     #ifdef ESP32
