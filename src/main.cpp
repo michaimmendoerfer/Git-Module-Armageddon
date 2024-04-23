@@ -83,10 +83,10 @@ struct_Status Status[MAX_STATUS];
 
 u_int8_t broadcastAddressAll[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}; 
 
-volatile uint32_t TSBootButton    = 0;
-volatile uint32_t TSSend  = 0;
-volatile uint32_t TSPair  = 0;
-volatile uint32_t TSLed   = 0;
+volatile uint32_t TSButton = 0;
+volatile uint32_t TSSend   = 0;
+volatile uint32_t TSPair   = 0;
+volatile uint32_t TSLed    = 0;
 
 Preferences preferences;
 #pragma endregion Globals
@@ -224,9 +224,8 @@ void InitModule()
       Module.PeriphSetup(3, "Amp_4",   SENS_TYPE_AMP,  1,    3,  2.5,  0.066,  0,    0);
       Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT, 0,   A0,   0,     0,   200,   0); 
     #endif
-
     //works
-    #ifdef ESP8266_MODULE_4S_INTEGRATED         // 4-way Switch - 8266 onBoard +++++++ #########################################################
+    #ifdef ESP8266_MODULE_4S_INTEGRATED       // 4-way Switch - 8266 onBoard +++++++ ############################################################
         #define SWITCHES_PER_SCREEN 4
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl    voltagedevier 
       Module.Setup(_ModuleName, SWITCH_4_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL,   -1,   -1,     1.5);
@@ -1091,20 +1090,22 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 #pragma endregion ESP-Things
 void loop()
 {
-    if  ((millis() - TSSend ) > MSG_INTERVAL  ) {
+    if  ((millis() - TSSend ) > MSG_INTERVAL  )                                 // Send-interval (Message or Pairing-request)
+    {
         TSSend = millis();
         if (Module.GetPairMode()) SendPairingRequest();
         else SendMessage();
     }
 
-    if (((millis() - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode())) {
+    if (((millis() - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
+    {
         TSPair = 0;
         Module.SetPairMode(false);
         AddStatus("Pairing beendet...");
         SetMessageLED(0);
     }
 
-    if ((millis() - TSLed > MSGLIGHT_INTERVAL) and (TSLed > 0))
+    if ((millis() - TSLed > MSGLIGHT_INTERVAL) and (TSLed > 0))                 // clear LED after LED interval
     {
         TSLed = 0;
         
@@ -1114,18 +1115,18 @@ void loop()
             SetMessageLED(0);
     }
 
-    #ifdef BOOT_BUTTON
-        int BB = !digitalRead(BOOT_BUTTON);
+    #ifdef PAIRING_BUTTON                                                       // check for Pairing/Reset Button
+        int BB = !digitalRead(PAIRING_BUTTON);
         if (BB == 1) {
             TSPair = millis();
             Module.SetPairMode(true);
             SetMessageLED(1);
             AddStatus("Pairing beginnt...");
             
-            if (!TSBootButton) TSBootButton = millis();
+            if (!TSButton) TSButton = millis();
             else 
             {
-                if ((millis() - TSBootButton) > 3000) {
+                if ((millis() - TSButton) > 3000) {
                     if (DEBUG_LEVEL > 1) Serial.println("Button pressed... Clearing Peers and Reset");
                     AddStatus("Clearing Peers and Reset");
                     #ifdef ESP32
@@ -1137,10 +1138,10 @@ void loop()
                 }
             }
         }
-        else TSBootButton = 0;
-        #endif
+        else TSButton = 0;
+    #endif
 
-    #ifdef ESP32_DISPLAY_480
+    #ifdef ESP32_DISPLAY_480                                                    // start ui if module has display
         lv_timer_handler();
         delay(5);
     #endif
