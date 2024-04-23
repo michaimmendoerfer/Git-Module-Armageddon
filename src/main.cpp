@@ -124,6 +124,8 @@ void   AddStatus(String Msg);
 void   PrintMAC(const uint8_t * mac_addr);
 void   GoToSleep();
 void   SetMessageLED(int Color);
+void   LEDBlink(int Color, int n, uint8_t ms);
+
 #pragma endregion Functions
 
 void InitModule()
@@ -222,6 +224,8 @@ void InitModule()
       Module.PeriphSetup(3, "Amp_4",   SENS_TYPE_AMP,  1,    3,  2.5,  0.066,  0,    0);
       Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT, 0,   A0,   0,     0,   200,   0); 
     #endif
+
+    //works
     #ifdef ESP8266_MODULE_4S_INTEGRATED         // 4-way Switch - 8266 onBoard +++++++ #########################################################
         #define SWITCHES_PER_SCREEN 4
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl    voltagedevier 
@@ -262,24 +266,23 @@ void setup()
     #endif
     
     pinMode(LED_PIN, OUTPUT);
+
     #ifdef BOOT_BUTTON
-        pinMode(BOOT_BUTTON, INPUT);
+        pinMode(BOOT_BUTTON, INPUT_PULLUP); 
     #endif
     
-    for (int i=0; i<3; i++)
+    LEDBlink(3, 3, 100);
+    
+    if (DEBUG_LEVEL > 0)        // Show free entries
     {
-        digitalWrite(LED_PIN, LED_ON);
-        delay(100);
-        digitalWrite(LED_PIN, LED_OFF);
-        delay(100);
+        preferences.begin("JeepifyInit", true);
+            Serial.printf("free entries in JeepifyInit now: %d\n\r", preferences.freeEntries());
+        preferences.end();
+        preferences.begin("JeepifyPeers", true);
+            Serial.printf("free entries in JeepifyPeers now: %d\n\r", preferences.freeEntries());
+        preferences.end();
     }
-    Serial.println("Es geht los");
-    preferences.begin("JeepifyInit", true);
-        Serial.printf("free entries in JeepifyInit now: %d\n\r", preferences.freeEntries());
-    preferences.end();
-    preferences.begin("JeepifyPeers", true);
-        Serial.printf("free entries in JeepifyPeers now: %d\n\r", preferences.freeEntries());
-    preferences.end();
+    
     #ifdef ESP32_DISPLAY_480
         smartdisplay_init();
 
@@ -288,7 +291,7 @@ void setup()
     #endif
 
     InitModule();
-    digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
+    LEDBlink(3, 1, 100);
 
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)  
     { 
@@ -756,6 +759,16 @@ void SetMessageLED(int Color)
             #endif
             break;  
   }
+}
+void LEDBlink(int Color, int n, uint8_t ms)
+{
+    for (int i=0; i<n; i++)
+    {
+        SetMessageLED(Color);
+        delay(ms);
+        SetMessageLED(0);
+        delay(ms);
+    }
 }
 #pragma endregion System-Things
 #pragma region Data-Things
