@@ -273,7 +273,7 @@ void setup()
     
     LEDBlink(3, 3, 100);
     
-    if (DEBUG_LEVEL > 0)        // Show free entries
+    if (DEBUG_LEVEL > 0)                        // Show free entries
     {
         preferences.begin("JeepifyInit", true);
             Serial.printf("free entries in JeepifyInit now: %d\n\r", preferences.freeEntries());
@@ -293,7 +293,7 @@ void setup()
     InitModule();
     LEDBlink(3, 1, 100);
 
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)  
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) // Set pinModes
     { 
         switch (Module.GetPeriphType(SNr)) {
             case SENS_TYPE_SWITCH: 
@@ -312,7 +312,7 @@ void setup()
         }
     }
 
-    #ifdef MRD_USED //MRD
+    #ifdef MRD_USED                             // MultiReset-Check
         mrd = new MultiResetDetector(MRD_TIMEOUT, MRD_ADDRESS);
 
         if (mrd->detectMultiReset()) {
@@ -326,8 +326,7 @@ void setup()
           digitalWrite(LED_BUILTIN, LED_OFF);
         }
     #endif
-
-    #ifdef PORT_USED
+    #ifdef PORT_USED                            // init IOBoard
 	      if (!IOBoard.begin())
           {
                 if (DEBUG_LEVEL > 0) Serial.println("IOBoard not found!");
@@ -338,8 +337,8 @@ void setup()
                 if (DEBUG_LEVEL > 1) Serial.println("IOBoard initialised.");
           }
     #endif
-    #ifdef ADS_USED
-        ADSBoard.setGain(GAIN_TWOTHIRDS);  // 0.1875 mV/Bit .... +- 6,144V
+    #ifdef ADS_USED                             // init ADS
+        ADSBoard.setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
         if (!ADSBoard.begin(ADS_ADDRESS)) { 
           if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
           while (1);
@@ -349,8 +348,7 @@ void setup()
             if (DEBUG_LEVEL > 1) Serial.println("ADS initialised.");
         }
     #endif
-    delay(3000);
-    if (preferences.begin("JeepifyInit", true))
+    if (preferences.begin("JeepifyInit", true)) // import saved Module... if available
     {
         String SavedModule   = preferences.getString("Module", "");
             if (DEBUG_LEVEL > 2) Serial.printf("Importiere Modul: %s", SavedModule.c_str());
@@ -380,7 +378,7 @@ void setup()
         nvs_flash_erase(); nvs_flash_init(); ESP.restart();
     #endif
 
-    if (GetPeers() == 0) 
+    if (GetPeers() == 0)                        // Pairmode if no known peers
     {
         Module.SetPairMode(true); 
         TSPair = millis();    
@@ -388,8 +386,8 @@ void setup()
     }   
 
     AddStatus("Get Peers");
-    
-    ReportAll();    
+
+    if (DEBUG_LEVEL > 1) ReportAll();    
     
     RegisterPeers();  
     AddStatus("Init fertig");
@@ -559,11 +557,6 @@ void SendNameChange(int Pos)
 }
 #pragma endregion Send-Things
 #pragma region System-Things
-void ESP8266ClearAll()
-{
-    preferences.begin("JeepifyInit", false);
-
-}
 void ChangeBrightness(int B)
 {
     #ifdef ESP32_DISPLAY_480
@@ -630,7 +623,8 @@ void UpdateSwitches()
           }
           
           #ifdef PORT_USED
-              if (Value == 1)   
+              IOBoard.digitalWrite(SNr, Value);
+              /*if (Value == 1)   
                 switch (Module.GetPeriphIOPort(SNr))
                 {
                     case 0: IOBoard.digitalWrite(P0,  HIGH); break;
@@ -654,10 +648,13 @@ void UpdateSwitches()
                     case 6: IOBoard.digitalWrite(P6,  LOW); break;
                     case 7: IOBoard.digitalWrite(P7,  LOW); break;
                 }
+            */
               
           #else
-              if (Value == 1) digitalWrite(Module.GetPeriphIOPort(SNr), HIGH);
+              digitalWrite(Module.GetPeriphIOPort(SNr), Value);
+              /*if (Value == 1) digitalWrite(Module.GetPeriphIOPort(SNr), HIGH);
               else digitalWrite(Module.GetPeriphIOPort(SNr), LOW);
+              */
           #endif
 
           if (DEBUG_LEVEL > 2) Serial.printf("Setze %s (Port:%d) auf %d", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr), Serial.print(Value));
@@ -707,13 +704,12 @@ void SaveModule()
 {
     preferences.begin("JeepifyInit", false);
         String ExportStringPeer = Module.Export();
+        int PutStringReturn = preferences.putString("Module", ExportStringPeer);
 
         if (DEBUG_LEVEL > 2) 
         {
-            Serial.printf("putSring = %d", preferences.putString("Module", ExportStringPeer));
-            Serial.printf("schreibe: Module: %s\n\r",ExportStringPeer.c_str());
-             String SavedModule   = preferences.getString("Module", "");
-            if (DEBUG_LEVEL > 2) Serial.printf("SaveModule(): Testlesen Modul: %s", SavedModule.c_str());
+            Serial.printf("SaveModule(): putString = %d, writing: %s\n\r", PutStringReturn, ExportStringPeer.c_str());
+            if (DEBUG_LEVEL > 2) Serial.printf("Testread Module: %s", preferences.getString("Module", "").c_str());
         }
     preferences.end();
 }
