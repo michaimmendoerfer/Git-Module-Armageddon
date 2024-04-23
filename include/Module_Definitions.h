@@ -35,7 +35,7 @@
 #ifdef MODULE_4WAY_INTEGRATED_8266
     #define ESP8266_MODULE_4S_INTEGRATED
     #define MRD_USED        1
-    //#define PAIRING_BUTTON 4 
+    #define PAIRING_BUTTON  4 
     #define LED_PIN         LED_BUILTIN
     #define LED_OFF         LOW
     #define LED_ON          HIGH

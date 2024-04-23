@@ -266,8 +266,8 @@ void setup()
     
     pinMode(LED_PIN, OUTPUT);
 
-    #ifdef BOOT_BUTTON
-        pinMode(BOOT_BUTTON, INPUT_PULLUP); 
+    #ifdef PAIRING_BUTTON
+        pinMode(PAIRING_BUTTON, INPUT_PULLUP); 
     #endif
     
     LEDBlink(3, 3, 100);
@@ -1121,6 +1121,7 @@ void loop()
             TSPair = millis();
             Module.SetPairMode(true);
             SetMessageLED(1);
+    
             AddStatus("Pairing beginnt...");
             
             if (!TSButton) TSButton = millis();
