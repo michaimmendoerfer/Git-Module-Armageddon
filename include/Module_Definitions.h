@@ -3,7 +3,8 @@
 
 //#define MODULE_JL_BATTERY_SENSOR
 //#define MODULE_TERMINATOR_PRO
-#define MODULE_4WAY_INTEGRATED_8266 // (tut)
+#define MODULE_DOUBLEDRAGON
+//#define MODULE_4WAY_INTEGRATED_8266 // (tut)
 
 // Module Definition
 //#define C3_MINI
@@ -52,6 +53,17 @@
     #define PORT_USED       1
     #define ADS_USED        1
     #define PAIRING_BUTTON 9
+    #define LED_PIN         8
+    #define LED_OFF         HIGH
+    #define LED_ON          LOW
+    #define SDA_PIN         6
+    #define SCL_PIN         7
+#endif
+
+#ifdef MODULE_DOUBLEDRAGON
+    #define ESP32_MODULE_2S_PORT
+    #define PORT_USED       1
+    #define PAIRING_BUTTON  9
     #define LED_PIN         8
     #define LED_OFF         HIGH
     #define LED_ON          LOW

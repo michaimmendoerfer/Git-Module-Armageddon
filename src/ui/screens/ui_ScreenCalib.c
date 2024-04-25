@@ -76,10 +76,10 @@ void ui_ScreenCalib_screen_init(void)
     lv_obj_set_style_pad_bottom(ui_LblCalibCurrentNames, 5, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_BtnCalibVoltage = lv_btn_create(ui_ScreenCalib);
-    lv_obj_set_width(ui_BtnCalibVoltage, 170);
+    lv_obj_set_width(ui_BtnCalibVoltage, 193);
     lv_obj_set_height(ui_BtnCalibVoltage, 100);
-    lv_obj_set_x(ui_BtnCalibVoltage, 114);
-    lv_obj_set_y(ui_BtnCalibVoltage, -20);
+    lv_obj_set_x(ui_BtnCalibVoltage, 130);
+    lv_obj_set_y(ui_BtnCalibVoltage, -23);
     lv_obj_set_align(ui_BtnCalibVoltage, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_BtnCalibVoltage, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_BtnCalibVoltage, LV_OBJ_FLAG_SCROLLABLE);      /// Flags

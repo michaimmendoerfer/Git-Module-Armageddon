@@ -48,6 +48,7 @@ const int DEBUG_LEVEL = 3;
     #include <esp_now.h>
     #include <WiFi.h>
     #include <nvs_flash.h>
+    #define u8 unsigned char
 #elif defined(ESP8266)
     #include <ESP8266WiFi.h>
     #include <espnow.h>
@@ -66,7 +67,7 @@ const int DEBUG_LEVEL = 3;
 
 const char _Version[]           = "3.41";
 const char _Protokoll_Version[] = "1.01";
-const char _ModuleName[]        = "PDC-4";
+const char _ModuleName[]        = "PDC-2";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -356,6 +357,7 @@ void setup()
             if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
         preferences.end();
     }
+    UpdateSwitches();
 
     WiFi.mode(WIFI_STA);
     uint8_t MacTemp[6];
@@ -392,7 +394,7 @@ void setup()
     AddStatus("Init fertig");
   
     Module.SetLastContact(millis());
-
+    
     #ifdef ESP32_DISPLAY_480
       ui_init();
     #endif

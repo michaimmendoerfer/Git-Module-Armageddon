@@ -129,8 +129,8 @@ void ui_ScrSettings_screen_init(void)
     ui_Button4 = lv_btn_create(ui_ScrSettings);
     lv_obj_set_width(ui_Button4, 116);
     lv_obj_set_height(ui_Button4, 107);
-    lv_obj_set_x(ui_Button4, 182);
-    lv_obj_set_y(ui_Button4, -108);
+    lv_obj_set_x(ui_Button4, 196);
+    lv_obj_set_y(ui_Button4, 88);
     lv_obj_set_align(ui_Button4, LV_ALIGN_CENTER);
     lv_obj_add_flag(ui_Button4, LV_OBJ_FLAG_SCROLL_ON_FOCUS);     /// Flags
     lv_obj_clear_flag(ui_Button4, LV_OBJ_FLAG_SCROLLABLE);      /// Flags
