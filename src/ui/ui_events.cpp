@@ -25,6 +25,7 @@ extern void CurrentCalibration();
 extern void VoltageCalibration(int SNr, float V);
 extern LinkedList<PeriphClass*> SwitchList;
 extern LinkedList<PeriphClass*> SensorList;
+extern bool NameChanged;
 
 extern uint32_t TSPair;
 
@@ -610,7 +611,8 @@ void Ui_ChangeName_Ready(lv_event_t * e)
 	{
 		Module.SetPeriphName(ActiveChangeNameNr, lv_textarea_get_text(ui_TxtAreaChangeName));
 		SaveModule();
-		SendNameChange(ActiveChangeNameNr);
+		NameChanged = true;
+		//SendNameChange(ActiveChangeNameNr);
 	}
 	_ui_screen_change(&ui_ScrMenu, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_ScrMenu_screen_init);
 }

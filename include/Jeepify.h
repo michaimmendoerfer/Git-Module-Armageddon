@@ -21,6 +21,9 @@
 #define SEND_CMD_CURRENT_CALIB    30
 #define SEND_CMD_VOLTAGE_CALIB    31
 #define SEND_CMD_UPDATE_NAME      40
+#define SEND_CMD_UPDATE_VIN       41
+#define SEND_CMD_UPDATE_VPERAMP   42
+#define SEND_CMD_UPDATE_NULLWERT  43
 #define SEND_CMD_RESET            50
 #define SEND_CMD_RESTART          51
 #define SEND_CMD_PAIR_ME          60
@@ -33,10 +36,11 @@
 #define MAX_STATUS      10
 #define SCHWELLE        0.0005
 
-#define MSG_CHANGED_SWITCH     10 // Payload PeriphId
+/*#define MSG_CHANGED_SWITCH     10 // Payload PeriphId
 #define MSG_CHANGED_SENSOR     20 // Payload PeriphId
 #define MSG_CHANGED_PEERNAME   30 // Payload PeerID
 #define MSG_CHANGED_AVAIL      40 // Payload PeerId
+*/
 
 // Module-Types
 #define SWITCH_1_WAY        1
@@ -65,6 +69,7 @@
 #define MSGLIGHT_INTERVAL 300
 #define PING_INTERVAL     1000
 #define MSG_INTERVAL      1000
+#define STATUS_INTERVAL   5000
 #define LOGO_INTERVAL     3000
 #define OFFLINE_INTERVAL  20000
 #define PAIR_INTERVAL     30000

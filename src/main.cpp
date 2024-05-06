@@ -88,6 +88,9 @@ volatile uint32_t TSButton = 0;
 volatile uint32_t TSSend   = 0;
 volatile uint32_t TSPair   = 0;
 volatile uint32_t TSLed    = 0;
+volatile uint32_t TSStatus = 0;
+
+bool NameChanged = false;
 
 Preferences preferences;
 #pragma endregion Globals
@@ -876,7 +879,11 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
   JsonDocument doc;
   String jsondata;
   int Pos = -1;
+  float NewVperAmp = 0;
+  float NewVin     = 0;
   float NewVoltage = 0;
+  float NewNullwert = 0;
+  String NewName = "";
 
   jsondata = String(buff);                  //converting into STRING
   
@@ -1025,12 +1032,10 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             break;
         case SEND_CMD_VOLTAGE_CALIB:
             AddStatus("VoltCalib beginnt");
-            NewVoltage = doc["NewVoltage"];
+            NewVoltage = (float) doc["NewVoltage"];
 
-            if (Module.GetVoltageMon() != -1)
-            {
-                VoltageCalibration(Module.GetVoltageMon(), NewVoltage) ;
-            }
+            VoltageCalibration(Module.GetVoltageMon(), NewVoltage) ;
+            
             break;
         case SEND_CMD_SWITCH_TOGGLE:
             Pos = doc["Pos"];
@@ -1038,7 +1043,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             break;
         case SEND_CMD_UPDATE_NAME:
             Pos = (int) doc["Pos"];
-            String NewName = doc["NewName"];
+            NewName = doc["NewName"].as<String>();
 
             if (NewName != "") 
             {
@@ -1047,7 +1052,38 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             }
             
             SaveModule();
-            SendNameChange(Pos);
+            NameChanged = true;
+            //SendNameChange(Pos);
+            break;
+        case SEND_CMD_UPDATE_VIN:
+            NewVin = (float) doc["Value"];
+            Pos = (int) doc["Pos"];
+
+            if (NewVin > 0)
+            {
+                Module.SetPeriphVin(Pos, NewVin);
+                SaveModule();
+            }
+            break;
+        case SEND_CMD_UPDATE_VPERAMP:
+            Pos = (int) doc["Pos"];
+            NewVperAmp = (float) doc["Value"];
+
+            if (NewVperAmp > 0)
+            {
+                Module.SetPeriphVperAmp(Pos, NewVperAmp);
+                SaveModule();
+            }
+            break;
+        case SEND_CMD_UPDATE_NULLWERT:
+            Pos = (int) doc["Pos"];
+            NewNullwert = (float) doc["Value"];
+
+            if (NewNullwert > 0)
+            {
+                Module.SetPeriphNullwert(Pos, NewNullwert);
+                SaveModule();
+            }
             break;
       }
     } // end (!error)
@@ -1097,6 +1133,13 @@ void loop()
         TSSend = millis();
         if (Module.GetPairMode()) SendPairingRequest();
         else SendMessage();
+    }
+
+    if  (((millis() - TSStatus ) > STATUS_INTERVAL) or (NameChanged))          // Send status update (inclusive names)
+    {
+        TSStatus = millis();
+        NameChanged = false;
+        SendPairingRequest();
     }
 
     if (((millis() - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
