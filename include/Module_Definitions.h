@@ -1,9 +1,10 @@
 #ifndef MODULE_DEFINITIONS_H
 #define MODULE_DEFINITIONS_H
 
-//#define MODULE_JL_BATTERY_SENSOR
+#define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_TERMINATOR_PRO
-#define MODULE_DOUBLEDRAGON
+//#define MODULE_DOUBLEDRAGON
+//#define MODULE_LONELYDRAGON
 //#define MODULE_4WAY_INTEGRATED_8266 // (tut)
 
 // Module Definition
@@ -15,7 +16,7 @@
 //#define ESP32_DISPLAY_480
 //#define DISPLAY_C3_ROUND
 
-// JL-Battery-Sensor hinten
+// JL-Battery-Sensor hinten (tut)
 // 4 AMP-Sensors
 // 1 VOLT-Sensor
 #ifdef MODULE_JL_BATTERY_SENSOR
@@ -63,6 +64,16 @@
 #ifdef MODULE_DOUBLEDRAGON
     #define ESP32_MODULE_2S_PORT
     #define PORT_USED       1
+    #define PAIRING_BUTTON  9
+    #define LED_PIN         8
+    #define LED_OFF         HIGH
+    #define LED_ON          LOW
+    #define SDA_PIN         6
+    #define SCL_PIN         7
+#endif
+
+#ifdef MODULE_LONELYDRAGON
+    #define ESP32_MODULE_2S_NOPORT
     #define PAIRING_BUTTON  9
     #define LED_PIN         8
     #define LED_OFF         HIGH
