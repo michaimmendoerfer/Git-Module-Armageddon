@@ -228,13 +228,13 @@ void InitModule()
       // 4x acs712(30A) over ADC1115, Voltage-Monitor:A0
       #define SWITCHES_PER_SCREEN 4
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
-      Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true, false, false, 1,  RELAY_NORMAL, 14,  12,     1.5);
+      Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true, false, false, A0,  RELAY_NORMAL, 14,  12,     1);
       //                      Name     Type            ADS  IO   NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Amp_1",   SENS_TYPE_AMP,  1,    0,  2.5,  0.066,  0,    0);
-      Module.PeriphSetup(1, "Amp_2",   SENS_TYPE_AMP,  1,    1,  2.5,  0.066,  0,    0);
-      Module.PeriphSetup(2, "Amp_3",   SENS_TYPE_AMP,  1,    2,  2.5,  0.066,  0,    0);
-      Module.PeriphSetup(3, "Amp_4",   SENS_TYPE_AMP,  1,    3,  2.5,  0.066,  0,    0);
-      Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT, 0,   A0,   0,     0,   200,   0); 
+      Module.PeriphSetup(0, "Amp_1",   SENS_TYPE_AMP,  1,    0,  1.65,  0.066,  0,    0);
+      Module.PeriphSetup(1, "Amp_2",   SENS_TYPE_AMP,  1,    1,  1.65,  0.066,  0,    0);
+      Module.PeriphSetup(2, "Amp_3",   SENS_TYPE_AMP,  1,    2,  1.65,  0.066,  0,    0);
+      Module.PeriphSetup(3, "Amp_4",   SENS_TYPE_AMP,  1,    3,  1.65,  0.066,  0,    0);
+      Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT, 0,   A0,   0,     0,   310,   0);  // 8266: 310 = 1023/3.3v
     #endif
     //works
     #ifdef ESP8266_MODULE_4S_INTEGRATED       // 4-way Switch - 8266 onBoard +++++++ ############################################################
@@ -467,6 +467,7 @@ void SendMessage ()
                   Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
                   Module.SetPeriphChanged(SNr, false);
               }
+              doc["Vin"] = Module.GetPeriphVin(SNr);
             }
             doc[Module.GetPeriphName(SNr)] = buf;
             //if (DEBUG_LEVEL > 2) Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
@@ -789,7 +790,7 @@ void VoltageCalibration(int SNr, float V)
     if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) {
         int TempRead = analogRead(Module.GetPeriphIOPort(SNr));
         
-        Module.SetPeriphVin(SNr, TempRead / V);
+        Module.SetPeriphVin(SNr, (float)TempRead / V);
         
         if (DEBUG_LEVEL > 2)  
         {
@@ -867,17 +868,17 @@ float ReadAmp (int SNr)
 }
 float ReadVolt(int SNr) 
 {
-  if (!Module.GetPeriphVin(SNr)) { Serial.println("Vin must not be zero !!!"); return 0; }
-  
-  Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
+    if (!Module.GetPeriphVin(SNr)) { Serial.println("Vin must not be zero !!!"); return 0; }
+    
+    Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
 
-  float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
-  float TempVolt = TempVal / Module.GetPeriphVin(SNr);
-  
-  if (DEBUG_LEVEL > 2) {
-    Serial.printf("(V) Raw: %.0f - Vin:%d --> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), TempVolt);
-  } 
-  return TempVolt;
+    float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
+    float TempVolt = 5 * TempVal / Module.GetPeriphVin(SNr);
+
+    if (DEBUG_LEVEL > 2) {
+        Serial.printf("(V) Raw: %.0f - Vin:%d --> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), TempVolt);
+    } 
+    return TempVolt;
 }
 #pragma endregion Data-Things
 #pragma region ESP-Things
