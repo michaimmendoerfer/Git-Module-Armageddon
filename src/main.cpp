@@ -228,13 +228,13 @@ void InitModule()
       // 4x acs712(30A) over ADC1115, Voltage-Monitor:A0
       #define SWITCHES_PER_SCREEN 4
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
-      Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true, false, false, A0,  RELAY_NORMAL, 14,  12,     1);
+      Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true, false, false, 4,  RELAY_NORMAL, 14,  12,     1);
       //                      Name     Type            ADS  IO   NULL   VpA   Vin  PeerID
       Module.PeriphSetup(0, "Amp_1",   SENS_TYPE_AMP,  1,    0,  1.65,  0.066,  0,    0);
       Module.PeriphSetup(1, "Amp_2",   SENS_TYPE_AMP,  1,    1,  1.65,  0.066,  0,    0);
       Module.PeriphSetup(2, "Amp_3",   SENS_TYPE_AMP,  1,    2,  1.65,  0.066,  0,    0);
       Module.PeriphSetup(3, "Amp_4",   SENS_TYPE_AMP,  1,    3,  1.65,  0.066,  0,    0);
-      Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT, 0,   A0,   0,     0,   310,   0);  // 8266: 310 = 1023/3.3v
+      Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT, 0,   A0,   0,      0,   310,   0);  // 8266: 310 = 1023/3.3v
     #endif
     //works
     #ifdef ESP8266_MODULE_4S_INTEGRATED       // 4-way Switch - 8266 onBoard +++++++ ############################################################
@@ -329,7 +329,7 @@ void setup()
         if (mrd->detectMultiReset()) {
           Serial.println("Multi Reset Detected");
           digitalWrite(LED_BUILTIN, LED_ON);
-          ClearPeers(); ClearInit(); InitModule(); SaveModule();
+          //ClearPeers(); ClearInit(); InitModule(); SaveModule();
           Module.SetPairMode(true); TSPair = millis();
         }
         else {
@@ -726,6 +726,29 @@ void SaveModule()
         }
     preferences.end();
 }
+
+void GetModule()
+{
+    preferences.begin("JeepifyInit", true);
+        String ImportStringPeer = "";
+        
+        ImportStringPeer = preferences.getString("Module", "");
+
+        if (DEBUG_LEVEL > 2) 
+        {
+            Serial.printf("GetModule(): getString = %s\n\r", ImportStringPeer.c_str());
+        }
+        
+        char ToImport[250];
+        strcpy(ToImport,ImportStringPeer.c_str());
+        Serial.printf("ToImport = %s\r\n", ToImport);
+        
+        if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
+        
+        Serial.printf("Module.Vin[4] = %.2f", Module.GetPeriphVin(4));
+
+    preferences.end();
+}
 void SetMessageLED(int Color)
 {
     // 0-off, 1-Red, 2-Green, 3-Blue, 4=violett
@@ -785,24 +808,32 @@ void VoltageCalibration(int SNr, float V)
 {
     char Buf[100] = {}; 
   
-    if (DEBUG_LEVEL > 1) Serial.println("Volt-Messung kalibrieren...");
+    if (DEBUG_LEVEL > 1) Serial.printf("Volt-Messung kalibrieren... Port: %d, Type:%d", Module.GetPeriphIOPort(SNr), Module.GetPeriphType(SNr));
     
     if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) {
-        int TempRead = analogRead(Module.GetPeriphIOPort(SNr));
-        
-        Module.SetPeriphVin(SNr, (float)TempRead / V);
-        
-        if (DEBUG_LEVEL > 2)  
+        float TempRead = 0;
+        float NewVin = 0;
+
+        for (int i=0; i<20; i++) 
         {
-            Serial.print("S["); Serial.print(SNr); Serial.print("].Vin = ");
-            Serial.println(Module.GetPeriphVin(SNr), 4);
-            Serial.print("Volt(nachher) = ");
-            Serial.println(TempRead/Module.GetPeriphVin(SNr), 4);
+            TempRead += (float)analogRead(Module.GetPeriphIOPort(SNr));
+            delay(10);
         }
+        TempRead = (float) TempRead / 20;
         
-        if (DEBUG_LEVEL > 1)  snprintf(Buf, sizeof(Buf), "[%d] %s (Type: %d): Spannung ist jetzt: %.2fV", SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), (float)TempRead/Module.GetPeriphVin(SNr));
+        Serial.printf("TempRead nach filter = %.2f\n\r", TempRead);
+        Serial.printf("Eich-soll Volt: %.2f\n\r", V);
+       
+        NewVin = TempRead / V;
+        Module.SetPeriphVin(SNr, NewVin);        
+        Serial.printf("NewVin = %.2f\n\r", Module.GetPeriphVin(SNr));
         
-        AddStatus(Buf);
+        if (DEBUG_LEVEL > 2)  Serial.printf("S[%d].Vin = %.2f - volt after calibration: %.2fV", SNr, Module.GetPeriphVin(SNr), TempRead/Module.GetPeriphVin(SNr));
+        if (DEBUG_LEVEL > 1)  
+        {
+            snprintf(Buf, sizeof(Buf), "[%d] %s (Type: %d): Spannung ist jetzt: %.2fV", SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), (float)TempRead/Module.GetPeriphVin(SNr));
+            AddStatus(Buf);
+        }
 
         SaveModule();
     }
@@ -813,23 +844,29 @@ void CurrentCalibration()
     
     for(int SNr=0; SNr<MAX_PERIPHERALS; SNr++) {
       if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) {
-        float TempVal  = 0;
         float TempVolt = 0;
+        int   MaxValue = 1023;
+
+        #ifdef ESP32
+            MaxValue = 4095;
+        #endif    
         
         #ifdef ADS_USED
-        TempVal  = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
-        TempVolt = ADSBoard.computeVolts(TempVal);
+            TempVolt = ADSBoard.computeVolts(ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr)));
         #else
-        //Filter implementieren !!!
-        TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
-        TempVolt = 3.3/4095*TempVal; // 1.5???
-        #endif    
-
-        delay(10);  
+            int TempVal = 0;
+            for (int i=0; i<20; i++) 
+            {
+                TempVal += analogRead(Module.GetPeriphIOPort(SNr));
+                delay(10);
+            }
+            TempVal /= 20;
+            
+            TempVolt = 3.3/MaxValue*TempVal; // 1.5???  
+        #endif
 
         if (DEBUG_LEVEL > 2) { 
-          Serial.print("TempVal:");     Serial.println(TempVal);
-          Serial.print(", TempVolt: "); Serial.println(TempVolt);
+          Serial.print("TempVolt: "); Serial.println(TempVolt);
         }
         Module.SetPeriphNullwert(SNr, TempVolt);
 
@@ -870,13 +907,13 @@ float ReadVolt(int SNr)
 {
     if (!Module.GetPeriphVin(SNr)) { Serial.println("Vin must not be zero !!!"); return 0; }
     
-    Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
+    //Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
 
     float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
-    float TempVolt = 5 * TempVal / Module.GetPeriphVin(SNr);
+    float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr);
 
     if (DEBUG_LEVEL > 2) {
-        Serial.printf("(V) Raw: %.0f - Vin:%d --> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), TempVolt);
+        Serial.printf("(V) Raw: %.1f - Vin:%.2f --> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), TempVolt);
     } 
     return TempVolt;
 }

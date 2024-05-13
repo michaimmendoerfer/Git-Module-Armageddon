@@ -22,7 +22,7 @@ class PeriphClass {
         int         _IOPort;
         float       _Nullwert;
         float       _VperAmp;
-        int         _Vin;
+        float       _Vin;
         volatile float       _Value;
         float       _OldValue;
         bool        _Changed;
@@ -30,7 +30,7 @@ class PeriphClass {
     
     public:
         PeriphClass();
-        void  Setup(const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId);
+        void  Setup(const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, float Vin, int PeerId);
         
         bool  SetName(const char* Name) { strcpy(_Name, Name); return true; }
         char *GetName(){ return (_Name); }
@@ -50,8 +50,8 @@ class PeriphClass {
         void  SetNullwert(float Nullwert) { _Nullwert = Nullwert; }
         float GetVperAmp() { return _VperAmp; }
         void  SetVperAmp(float VperAmp) { _VperAmp = VperAmp; }
-        int   GetVin() { return _Vin; }
-        void  SetVin(int Vin) { _Vin = Vin; }
+        float GetVin() { return _Vin; }
+        void  SetVin(float Vin) { _Vin = Vin; }
         float GetValue() { return _Value; }
         void  SetValue(float Value) { _Value = Value; }
         float GetOldValue() { return _OldValue; }
@@ -143,7 +143,7 @@ class PeerClass
         int   GetBrightness() { return _Brightness; }
         void  SetBrightness(int Brightness) {_Brightness = Brightness; }
         
-        void  PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, int Vin, int PeerId);
+        void  PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, float Vin, int PeerId);
         
         char *GetPeriphName(int P) { return Periph[P].GetName(); }
         bool  SetPeriphName(int P, const char *Name) { Periph[P].SetName(Name); return true; }
@@ -173,7 +173,7 @@ class PeerClass
         
         int   GetPeriphType(int P) { return Periph[P].GetType(); }
         
-        int   GetPeriphVin(int P) { return Periph[P].GetVin(); }
+        float GetPeriphVin(int P) { return Periph[P].GetVin(); }
         void  SetPeriphVin(int P, float Vin) { Periph[P].SetVin(Vin); }
         
         float GetPeriphVperAmp(int P){ return Periph[P].GetVperAmp(); }
