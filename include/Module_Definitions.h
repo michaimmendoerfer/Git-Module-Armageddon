@@ -1,10 +1,10 @@
 #ifndef MODULE_DEFINITIONS_H
 #define MODULE_DEFINITIONS_H
 
-#define MODULE_JL_BATTERY_SENSOR      // (tut)
+//#define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_TERMINATOR_PRO
 //#define MODULE_DOUBLEDRAGON
-//#define MODULE_LONELYDRAGON
+#define MODULE_LONELYDRAGON
 //#define MODULE_4WAY_INTEGRATED_8266 // (tut)
 
 // Module Definition

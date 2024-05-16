@@ -67,7 +67,7 @@ const int DEBUG_LEVEL = 3;
 
 const char _Version[]           = "3.41";
 const char _Protokoll_Version[] = "1.01";
-const char _ModuleName[]        = "JL-BatP";
+const char _ModuleName[]        = "LD-2-1";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -193,10 +193,10 @@ void InitModule()
     #ifdef ESP32_MODULE_2S_NOPORT             // 2-Way Switch via IOBoard ##########################################################################
         #define SWITCHES_PER_SCREEN 2       
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon    RelayType     sda scl voltagedevier 
-      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_REVERSED, -1,  -1,     -1);
+      Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true, false, false, -1,  RELAY_REVERSED, -1,  -1,     -1);
       //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
-      Module.PeriphSetup(0, "Sw 1",  SENS_TYPE_SWITCH,   0,  6,     0,       0,        0,    0);
-      Module.PeriphSetup(1, "Sw 2",  SENS_TYPE_SWITCH,   0,  7,     0,       0,        0,    0);
+      Module.PeriphSetup(0, "Sw 1",  SENS_TYPE_SWITCH,   0,  4,     0,       0,        0,    0);
+      Module.PeriphSetup(1, "Sw 2",  SENS_TYPE_SWITCH,   0,  3,     0,       0,        0,    0);
     #endif
     #ifdef ESP32_MODULE_4S_4A_1V_ADS_PORT   // Mixed-Module with ADC and Port and VMon ###########################################################
       #define SWITCHES_PER_SCREEN 
