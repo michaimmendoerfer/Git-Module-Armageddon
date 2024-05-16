@@ -29,7 +29,7 @@
 #define SEND_CMD_PAIR_ME          60
 #define SEND_CMD_YOU_ARE_PAIRED   61
 #define SEND_CMD_DELETE_ME        70
-
+#define SEND_CMD_CONFIRM          80
 
 #define MAX_PERIPHERALS 5
 #define MAX_PEERS       10
