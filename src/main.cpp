@@ -200,6 +200,7 @@ void InitModule()
         Module.PeriphSetup(1, "Sw 2",  SENS_TYPE_SWITCH,   0,  3,     0,       0,        0,    0);
     #endif
     #ifdef ESP32_MODULE_4S_4A_1V_ADS_PORT   // Mixed-Module with ADC and Port and VMon ###########################################################
+      // TERMINATOR_PRO (untested) - 4 sensed switches with acs712(30A) over ADS and Port, Voltage-Monitor:??
       #define SWITCHES_PER_SCREEN 
       //                Name        Type         Version  Address   sleep  debug  demo   pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, PDC_SENSOR_MIX, _Version, NULL,     false, true,  false, false, 1,  RELAY_NORMAL, 6,  7,     1.5);

@@ -2,10 +2,10 @@
 #define MODULE_DEFINITIONS_H
 
 //#define MODULE_JL_BATTERY_SENSOR      // (tut)
-//#define MODULE_TERMINATOR_PRO
-//#define MODULE_DOUBLEDRAGON         // ESP32-c3 - port, no adc
-#define MODULE_LONELYDRAGON           // (tut) ESP32-c3 - no port, no adc
-//#define MODULE_4WAY_INTEGRATED_8266 // (tut)
+//#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
+//#define MODULE_DOUBLE_DRAGON          // ESP32-c3 - port, no adc
+#define MODULE_LONELY_DRAGON            // (tut) ESP32-c3 - no port, no adc
+//#define MODULE_4WAY_INTEGRATED_8266   // (tut)
 
 // JL-Battery-Sensor hinten (tut)
 // 4 AMP-Sensors
@@ -35,15 +35,16 @@
     #define SCL_PIN         12
 #endif
 
-// Jeepify-Terminator-Pro (ESP32-C3-Mini)
+// Jeepify-Terminator-Pro (ESP32-3248S035C)
 // 4 Switches
 // 4 AMP-Sensors
 // 1 VOLT-Sensor
+// 480x320 Display
 #ifdef MODULE_TERMINATOR_PRO
     #define ESP32_MODULE_4S_4A_1V_ADS_PORT
     #define PORT_USED       1
     #define ADS_USED        1
-    #define PAIRING_BUTTON 9
+    #define PAIRING_BUTTON  9
     #define LED_PIN         8
     #define LED_OFF         HIGH
     #define LED_ON          LOW
@@ -53,7 +54,7 @@
 
 // Jeepify-DoubleDragon (ESP32-C3-Mini)
 // 2 Switches over port
-#ifdef MODULE_DOUBLEDRAGON
+#ifdef MODULE_DOUBLE_DRAGON
     #define ESP32_MODULE_2S_PORT
     #define PORT_USED       1
     #define PAIRING_BUTTON  9
@@ -66,7 +67,7 @@
 
 // Jeepify-LonelyDragon (ESP32-C3-Mini) (tut)
 // 2 Switches 
-#ifdef MODULE_LONELYDRAGON
+#ifdef MODULE_LONELY_DRAGON
     #define ESP32_MODULE_2S_NOPORT
     #define PAIRING_BUTTON  9
     #define LED_PIN         8
