@@ -67,7 +67,7 @@ const int DEBUG_LEVEL = 3;
 
 const char _Version[]           = "3.41";
 const char _Protokoll_Version[] = "1.01";
-const char _ModuleName[]        = "LD-2-1";
+const char _ModuleName[]        = "LD-2-2";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
