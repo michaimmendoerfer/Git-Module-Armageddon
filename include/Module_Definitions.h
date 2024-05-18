@@ -2,25 +2,15 @@
 #define MODULE_DEFINITIONS_H
 
 //#define MODULE_JL_BATTERY_SENSOR      // (tut)
-//#define MODULE_TERMINATOR_PRO
-//#define MODULE_DOUBLEDRAGON
-#define MODULE_LONELYDRAGON
-//#define MODULE_4WAY_INTEGRATED_8266 // (tut)
-
-// Module Definition
-//#define C3_MINI
-//#define C3_MINI_PORT
-//#define C3_MINI_PORT_ADS
-//#define ESP8266_PORT
-//#define ESP8266_ADS
-//#define ESP32_DISPLAY_480
-//#define DISPLAY_C3_ROUND
+//#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
+//#define MODULE_DOUBLE_DRAGON          // ESP32-c3 - port, no adc
+#define MODULE_LONELY_DRAGON            // (tut) ESP32-c3 - no port, no adc
+//#define MODULE_4WAY_INTEGRATED_8266   // (tut)
 
 // JL-Battery-Sensor hinten (tut)
 // 4 AMP-Sensors
 // 1 VOLT-Sensor
 #ifdef MODULE_JL_BATTERY_SENSOR
-    #define ESP8266_ADS
     #define ESP8266_MODULE_4A_1V_ADS
     #define MRD_USED        1
     #define ADS_USED        1
@@ -45,15 +35,16 @@
     #define SCL_PIN         12
 #endif
 
-// Jeepify-Terminator-Pro
+// Jeepify-Terminator-Pro (ESP32-3248S035C)
 // 4 Switches
 // 4 AMP-Sensors
 // 1 VOLT-Sensor
+// 480x320 Display
 #ifdef MODULE_TERMINATOR_PRO
     #define ESP32_MODULE_4S_4A_1V_ADS_PORT
     #define PORT_USED       1
     #define ADS_USED        1
-    #define PAIRING_BUTTON 9
+    #define PAIRING_BUTTON  9
     #define LED_PIN         8
     #define LED_OFF         HIGH
     #define LED_ON          LOW
@@ -61,7 +52,9 @@
     #define SCL_PIN         7
 #endif
 
-#ifdef MODULE_DOUBLEDRAGON
+// Jeepify-DoubleDragon (ESP32-C3-Mini)
+// 2 Switches over port
+#ifdef MODULE_DOUBLE_DRAGON
     #define ESP32_MODULE_2S_PORT
     #define PORT_USED       1
     #define PAIRING_BUTTON  9
@@ -72,7 +65,9 @@
     #define SCL_PIN         7
 #endif
 
-#ifdef MODULE_LONELYDRAGON
+// Jeepify-LonelyDragon (ESP32-C3-Mini) (tut)
+// 2 Switches 
+#ifdef MODULE_LONELY_DRAGON
     #define ESP32_MODULE_2S_NOPORT
     #define PAIRING_BUTTON  9
     #define LED_PIN         8
@@ -83,44 +78,8 @@
 #endif
 
 // IC-Things
+/*
 #ifdef C3_MINI
-    //#define ESP32_MODULE_1S_1V
-    //#define ESP32_MODULE_2S_1V
-    
-    #define PAIRING_BUTTON  9
-    #define LED_PIN         8
-    #define LED_OFF         HIGH
-    #define LED_ON          LOW
-#endif
-
-#ifdef C3_MINI_PORT
-    #define ESP32_MODULE_4S_1V_PORT
-    //#define ESP32_MODULE_4A_1V_ADS
-
-    #define PORT_USED       1
-    #define PAIRING_BUTTON  9
-    #define LED_PIN         8
-    #define LED_OFF         HIGH
-    #define LED_ON          LOW
-    #define SDA_PIN         6
-    #define SCL_PIN         7
-#endif
-
-#ifdef C3_MINI_ADS
-    //#define ESP32_MODULE_4A_1V_ADS
-
-    #define ADS_USED        1
-    #define PAIRING_BUTTON  9
-    #define LED_PIN         8
-    #define LED_OFF         HIGH
-    #define LED_ON          LOW
-    #define SDA_PIN         6
-    #define SCL_PIN         7
-#endif
-
-#ifdef C3_MINI_PORT_ADS
-    #define ESP32_MODULE_4S_4A_1V_PORT
-    
     #define PORT_USED       1
     #define ADS_USED        1
     #define PAIRING_BUTTON  9
@@ -131,9 +90,10 @@
     #define SCL_PIN         7
 #endif
 
-#ifdef ESP8266_PORT
+#ifdef ESP8266
     #define MRD_USED        1
     #define PORT_USED       1
+    #define ADS_USED        1
     #define PAIRING_BUTTON  4
     #define LED_PIN         LED_BUILTIN
     #define LED_OFF         LOW
@@ -141,5 +101,6 @@
     #define SDA_PIN         14
     #define SCL_PIN         12
 #endif
+*/
 
 #endif
