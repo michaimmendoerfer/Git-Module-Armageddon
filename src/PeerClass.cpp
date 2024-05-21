@@ -33,8 +33,7 @@ PeriphClass::PeriphClass()
     _Value = 0;
     _OldValue = 0;
     _Changed = false;
-    _FriendId = -1;
-    _PeerId = -1;
+    _PeerId = 0;
 }
 void  PeriphClass::Setup(const char* Name, int Type, bool isADS, int IOPort, 
                          float Nullwert, float VperAmp, float Vin, int PeerId)
@@ -43,19 +42,11 @@ void  PeriphClass::Setup(const char* Name, int Type, bool isADS, int IOPort,
     _Type = Type;
     _isADS = isADS;
     _IOPort = IOPort;
-    _IOPort2 = -1;
     _Nullwert = Nullwert;
     _VperAmp = VperAmp;
     _Vin = Vin;
     _PeerId = PeerId;
 }
-void  PeriphClass::Setup(const char* Name, int Type, bool isADS, int IOPort, int IOPort2,
-                         float Nullwert, float VperAmp, float Vin, int PeerId)
-{
-    Setup(Name, Type, isADS, IOPort, Nullwert, VperAmp, Vin, PeeriId);
-    _IOPort2 = IOPort2;
-}
-
 bool PeriphClass::IsType(int Type)
 {
     switch (Type) { 
@@ -157,7 +148,7 @@ void PeerClass::Import(char *Buf)
         Periph[Si].SetType(atoi(strtok(NULL, ";")));
         Periph[Si].SetNullwert(atof(strtok(NULL, ";")));
         Periph[Si].SetVin(atof(strtok(NULL, ";")));
-        //Serial.printf("Setze Vin[%d] auf %.2f", Si, Periph[Si].GetVin());
+        Serial.printf("Setze Vin[%d] auf %.2f", Si, Periph[Si].GetVin());
         Periph[Si].SetPos(Si);
         Periph[Si].SetPeerId(_Id);
     }
@@ -168,13 +159,8 @@ void  PeerClass::PeriphSetup(int Pos, const char* Name, int Type, bool isADS, in
                              float Nullwert, float VperAmp, float Vin, int PeerId)
 {
     Periph[Pos].Setup(Name, Type, isADS, IOPort, Nullwert, VperAmp, Vin, PeerId);
+    //Serial.printf("Nullwert von P%d ist jetzt %.3f\n\r", Pos, Periph[Pos].GetNullwert());
 }
-void  PeerClass::PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, int IOPort2, 
-                             float Nullwert, float VperAmp, float Vin, int PeerId)
-{
-    Periph[Pos].Setup(Name, Type, isADS, IOPort, IOPort2, Nullwert, VperAmp, Vin, PeerId);
-}
-
 int   PeerClass::GetPeriphId(char *Name)
 {
     for (int P=0; P<MAX_PERIPHERALS; P++)

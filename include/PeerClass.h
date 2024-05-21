@@ -16,11 +16,10 @@ class PeriphClass {
     private:
         char        _Name[20];
         int         _Id;
-        int         _Type;      //1=Switch, 2=Amp, 3=Volt, 4=Switch+Amp
+        int         _Type;      //1=Switch, 2=Amp, 3=Volt
         int         _Pos;       //Periph 1..4.. from one peer
         bool        _isADS;
         int         _IOPort;
-        int         _IOPort2;
         float       _Nullwert;
         float       _VperAmp;
         float       _Vin;
@@ -32,7 +31,6 @@ class PeriphClass {
     public:
         PeriphClass();
         void  Setup(const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, float Vin, int PeerId);
-        void  Setup(const char* Name, int Type, bool isADS, int IOPort, int IOPort2, float Nullwert, float VperAmp, float Vin, int PeerId);
         
         bool  SetName(const char* Name) { strcpy(_Name, Name); return true; }
         char *GetName(){ return (_Name); }
@@ -48,8 +46,6 @@ class PeriphClass {
         void  SetADS(bool isADS) { _isADS = isADS; }
         int   GetIOPort() { return _IOPort; }
         void  SetIOPort(int IOPort) { _IOPort = IOPort; }
-        int   GetIOPort2() { return _IOPort2; }
-        void  SetIOPort2(int IOPort2) { _IOPort2 = IOPort2; }
         float GetNullwert() { return _Nullwert; }
         void  SetNullwert(float Nullwert) { _Nullwert = Nullwert; }
         float GetVperAmp() { return _VperAmp; }
@@ -65,8 +61,6 @@ class PeriphClass {
         void  SetChanged(bool Changed) { _Changed = Changed; }
         int   GetPeerId() { return _PeerId; }
         void  SetPeerId(int PeerId) { _PeerId = PeerId; }
-        int   GetFriendId() { return _FriendId; }
-        void  SetFriendId(int FriendId) { _FriendId = FriendId; }
         bool  IsSensor() { return ((_Type == SENS_TYPE_VOLT) or (_Type == SENS_TYPE_AMP)); }
         bool  IsSwitch() { return ( _Type == SENS_TYPE_SWITCH) ; }
         bool  isEmpty() { return (_Type == 0); }
@@ -150,7 +144,6 @@ class PeerClass
         void  SetBrightness(int Brightness) {_Brightness = Brightness; }
         
         void  PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, float Nullwert, float VperAmp, float Vin, int PeerId);
-        void  PeriphSetup(int Pos, const char* Name, int Type, bool isADS, int IOPort, int IOPort2, float Nullwert, float VperAmp, float Vin, int PeerId);
         
         char *GetPeriphName(int P) { return Periph[P].GetName(); }
         bool  SetPeriphName(int P, const char *Name) { Periph[P].SetName(Name); return true; }
@@ -160,8 +153,6 @@ class PeerClass
         
         void  SetPeriphPeerId(int P, int PeerId) { Periph[P].SetPeerId(PeerId); }
         int   GetPeriphPeerId(int P) { return Periph[P].GetPeerId(); }
-        void  SetPeriphFriendId(int P, int FriendId) { Periph[P].SetFriendId(FriendId); }
-        int   GetPeriphFriendId(int P) { return Periph[P].GetFriendId(); }
 
         int   GetPeriphPos(int P) { return Periph[P].GetPos(); }
 
@@ -189,7 +180,6 @@ class PeerClass
         void  SetPeriphVperAmp(int P, float VperAmp) { return Periph[P].SetVperAmp(VperAmp); }
         
         int   GetPeriphIOPort(int P) { return Periph[P].GetIOPort(); }
-        int   GetPeriphIOPort2(int P) { return Periph[P].GetIOPort2(); }
 
         float GetPeriphNullwert(int P) { return Periph[P].GetNullwert(); }
         float GetPeriphNullwert(char *Name);

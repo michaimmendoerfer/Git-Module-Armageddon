@@ -3,11 +3,6 @@
 // DEBUG_LEVEL: 0 = nothing, 1 = only Errors, 2 = relevant changes, 3 = all
 const int DEBUG_LEVEL = 3; 
 
-const char _Version[]           = "3.41";
-const char _Protokoll_Version[] = "1.01";
-const char _ModuleName[]        = "LD-2-2";
-const bool _LED_SIGNAL          = true;
-
 #pragma region Includes
 #include <Arduino.h>
 #include "Module_Definitions.h"
@@ -68,6 +63,11 @@ const bool _LED_SIGNAL          = true;
 #include <Spi.h>
 
 #pragma endregion Includes
+
+const char _Version[]           = "3.41";
+const char _Protokoll_Version[] = "1.01";
+const char _ModuleName[]        = "LD-2-2";
+const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
 struct struct_Status {
@@ -200,16 +200,20 @@ void InitModule()
         Module.PeriphSetup(1, "Sw 2",  SENS_TYPE_SWITCH,   0,  3,     0,       0,        0,    0);
     #endif
     #ifdef ESP32_MODULE_4S_4A_1V_ADS_PORT   // Mixed-Module with ADC and Port and VMon ###########################################################
-      // TERMINATOR_PRO (untested) - 4 sensed switches(IO) with acs712(30A, IO2) over Port(IO) and ADS(IO2), Voltage-Monitor:??
+      // TERMINATOR_PRO (untested) - 4 sensed switches with acs712(30A) over ADS and Port, Voltage-Monitor:??
       #define SWITCHES_PER_SCREEN 
       //                Name        Type         Version  Address   sleep  debug  demo   pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, PDC_SENSOR_MIX, _Version, NULL,     false, true,  false, false, 1,  RELAY_NORMAL, 6,  7,     1.5);
-      //                      Name     Type             ADS  IO  IO2  NULL     VpA    Vin   PeerID
-      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_COMBO,   1,  0,   0,  1.65,   0.066,    0,    0);
-      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_COMBO,   1,  1,   1,  1.65,   0.066,    0,    0);
-      Module.PeriphSetup(2, "Amp 3",  SENS_TYPE_COMBO,   1,  2,   2,  1.65,   0.066,    0,    0);
-      Module.PeriphSetup(3, "Amp 4",  SENS_TYPE_COMBO,   1,  3,   3,  1.65,   0.066,    0,    0);
-      Module.PeriphSetup(8, "V-Sens", SENS_TYPE_VOLT,    0,  35,  0,  0,      0,      200,    0); 
+      //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     1,  0,   2.5,     0.066,    0,    0);
+      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     1,  1,   2.5,     0.066,    0,    0);
+      Module.PeriphSetup(2, "Amp 3",  SENS_TYPE_AMP,     1,  2,   2.5,     0.066,    0,    0);
+      Module.PeriphSetup(3, "Amp 4",  SENS_TYPE_AMP,     1,  3,   2.5,     0.066,    0,    0);
+      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,  1,  0,   0,       0,        0,    0);
+      Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,  1,  1,   0,       0    ,    0,    0);
+      Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,  1,  2,   0,       0,        0,    0);
+      Module.PeriphSetup(3, "Sw 4 ",  SENS_TYPE_SWITCH,  1,  3,   0,       0,        0,    0);
+      Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  35,  0,       0,      200,    0); 
     #endif
 
     ////////////////////////////////////////////////////////

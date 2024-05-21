@@ -63,7 +63,6 @@
 #define SENS_TYPE_SENS    104
 #define SENS_TYPE_EQUAL   105
 #define SENS_TYPE_ALL     106
-#define SENS_TYPE_COMBO   107  // Switch/Amp combo
 #define NOT_FOUND         199
 
 // Intervals
