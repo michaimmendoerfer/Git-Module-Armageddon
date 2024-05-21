@@ -3,6 +3,11 @@
 // DEBUG_LEVEL: 0 = nothing, 1 = only Errors, 2 = relevant changes, 3 = all
 const int DEBUG_LEVEL = 3; 
 
+const char _Version[]           = "3.41";
+const char _Protokoll_Version[] = "1.01";
+const char _ModuleName[]        = "LD-2-2";
+const bool _LED_SIGNAL          = true;
+
 #pragma region Includes
 #include <Arduino.h>
 #include "Module_Definitions.h"
@@ -63,11 +68,6 @@ const int DEBUG_LEVEL = 3;
 #include <Spi.h>
 
 #pragma endregion Includes
-
-const char _Version[]           = "3.41";
-const char _Protokoll_Version[] = "1.01";
-const char _ModuleName[]        = "LD-2-2";
-const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
 struct struct_Status {
