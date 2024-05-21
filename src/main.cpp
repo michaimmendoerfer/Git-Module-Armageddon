@@ -204,16 +204,16 @@ void InitModule()
       #define SWITCHES_PER_SCREEN 
       //                Name        Type         Version  Address   sleep  debug  demo   pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, PDC_SENSOR_MIX, _Version, NULL,     false, true,  false, false, 1,  RELAY_NORMAL, 6,  7,     1.5);
-      //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
-      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     1,  0,   2.5,     0.066,    0,    0);
-      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     1,  1,   2.5,     0.066,    0,    0);
-      Module.PeriphSetup(2, "Amp 3",  SENS_TYPE_AMP,     1,  2,   2.5,     0.066,    0,    0);
-      Module.PeriphSetup(3, "Amp 4",  SENS_TYPE_AMP,     1,  3,   2.5,     0.066,    0,    0);
-      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,  1,  0,   0,       0,        0,    0);
-      Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,  1,  1,   0,       0    ,    0,    0);
-      Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,  1,  2,   0,       0,        0,    0);
-      Module.PeriphSetup(3, "Sw 4 ",  SENS_TYPE_SWITCH,  1,  3,   0,       0,        0,    0);
-      Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  35,  0,       0,      200,    0); 
+      //                      Name     Type             ADS  IO    NULL     VpA     Vin   FriendId   PeerID
+      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     1,  0,   2.5,     0.066,    0,     4,         0);
+      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     1,  1,   2.5,     0.066,    0,     5,         0);
+      Module.PeriphSetup(2, "Amp 3",  SENS_TYPE_AMP,     1,  2,   2.5,     0.066,    0,     6,         0);
+      Module.PeriphSetup(3, "Amp 4",  SENS_TYPE_AMP,     1,  3,   2.5,     0.066,    0,     7,         0);
+      Module.PeriphSetup(4, "Sw 1",   SENS_TYPE_SWITCH,  1,  0,   0,       0,        0,     0,         0);
+      Module.PeriphSetup(5, "Sw 2",   SENS_TYPE_SWITCH,  1,  1,   0,       0    ,    0,     1,         0);
+      Module.PeriphSetup(6, "Sw 3",   SENS_TYPE_SWITCH,  1,  2,   0,       0,        0,     2,         0);
+      Module.PeriphSetup(7, "Sw 4 ",  SENS_TYPE_SWITCH,  1,  3,   0,       0,        0,     3,         0);
+      Module.PeriphSetup(8, "V-Sens", SENS_TYPE_VOLT,    0,  35,  0,       0,      200,     0,         0); 
     #endif
 
     ////////////////////////////////////////////////////////
