@@ -5,7 +5,7 @@ const int DEBUG_LEVEL = 3;
 
 #pragma region Includes
 #include <Arduino.h>
-#include "Module_Definitions.h"
+#include <Module_Definitions.h>
 
 #ifdef ESP32_DISPLAY_480
     #include <esp32_smartdisplay.h>
@@ -66,7 +66,7 @@ const int DEBUG_LEVEL = 3;
 
 const char _Version[]           = "3.41";
 const char _Protokoll_Version[] = "1.01";
-const char _ModuleName[]        = "LD-2-2";
+const char _ModuleName[]        = "CD-1";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -76,8 +76,8 @@ struct struct_Status {
 };
 
 PeerClass Module;
-LinkedList<PeriphClass*> SwitchList = LinkedList<PeriphClass*>();
-LinkedList<PeriphClass*> SensorList = LinkedList<PeriphClass*>();
+MyLinkedList<PeriphClass*> SwitchList = MyLinkedList<PeriphClass*>();
+MyLinkedList<PeriphClass*> SensorList = MyLinkedList<PeriphClass*>();
 
 struct_Status Status[MAX_STATUS];
 
@@ -145,7 +145,22 @@ void InitModule()
     dont´t use
     ADC2 (when Wifi): 0, 2, 4, 12, 13, 14, 15, 25, 26, 27
     SPI-Flash:        6,7,8,9,10,11 
+    
+    ESP32 C3 Mini:
+    don´t use 2, 8, 9
     */
+
+    #ifdef ESP32_MODULE_2S_2A_1V_ADS      // Mixed-Module 2 Relays with Sensor over adc and VMon ######################################################################
+        #define SWITCHES_PER_SCREEN 2
+        //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
+        Module.Setup(_ModuleName, PDC_SENSOR_MIX, _Version, NULL,     false, true,  true, false, 1,  RELAY_NORMAL, -1,  -1,     1.5);
+        //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+        Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     1,  0,    2.5,     0.066,    0,    0);
+        Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     1,  1,    2.5,     0.066,    0,    0);
+        Module.PeriphSetup(2, "Sw 1",   SENS_TYPE_SWITCH,  0,  1,    0,       0,        0,    0);
+        Module.PeriphSetup(3, "Sw 2 ",  SENS_TYPE_SWITCH,  0,  2,    0,       0,        0,    0);
+        Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  3,    0,       0,      200,    0); 
+    #endif
 
     #ifdef ESP32_MODULE_4S_1V_NOADC_PORT    // 4-Way Switch via IOBoard with Voltage-Monitor #####################################################
       #define SWITCHES_PER_SCREEN 4
@@ -204,16 +219,17 @@ void InitModule()
       #define SWITCHES_PER_SCREEN 
       //                Name        Type         Version  Address   sleep  debug  demo   pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, PDC_SENSOR_MIX, _Version, NULL,     false, true,  false, false, 1,  RELAY_NORMAL, 6,  7,     1.5);
-      //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
-      Module.PeriphSetup(0, "Amp 1",  SENS_TYPE_AMP,     1,  0,   2.5,     0.066,    0,    0);
-      Module.PeriphSetup(1, "Amp 2",  SENS_TYPE_AMP,     1,  1,   2.5,     0.066,    0,    0);
-      Module.PeriphSetup(2, "Amp 3",  SENS_TYPE_AMP,     1,  2,   2.5,     0.066,    0,    0);
-      Module.PeriphSetup(3, "Amp 4",  SENS_TYPE_AMP,     1,  3,   2.5,     0.066,    0,    0);
-      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,  1,  0,   0,       0,        0,    0);
-      Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,  1,  1,   0,       0    ,    0,    0);
-      Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,  1,  2,   0,       0,        0,    0);
-      Module.PeriphSetup(3, "Sw 4 ",  SENS_TYPE_SWITCH,  1,  3,   0,       0,        0,    0);
-      Module.PeriphSetup(4, "V-Sens", SENS_TYPE_VOLT,    0,  35,  0,       0,      200,    0); 
+      //                      Name     Type             ADS  IO   NULL     VpA      Vin  PeerID   Brother
+      Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_COMBO,   1,  0,   0,       0,        0,    0,       4);
+      Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_COMBO,   1,  1,   0,       0,        0,    0,       5);
+      Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_COMBO,   1,  2,   0,       0,        0,    0,       6);
+      Module.PeriphSetup(3, "Sw 4 ",  SENS_TYPE_COMBO,   1,  3,   0,       0,        0,    0,       7);
+      Module.PeriphSetup(4, "Amp 1",  SENS_TYPE_AMP,     1,  0,   2.5,     0.066,    0,    0,       0);
+      Module.PeriphSetup(5, "Amp 2",  SENS_TYPE_AMP,     1,  1,   2.5,     0.066,    0,    0,       1);
+      Module.PeriphSetup(6, "Amp 3",  SENS_TYPE_AMP,     1,  2,   2.5,     0.066,    0,    0,       2);
+      Module.PeriphSetup(7, "Amp 4",  SENS_TYPE_AMP,     1,  3,   2.5,     0.066,    0,    0,       3);
+      
+      Module.PeriphSetup(8, "V-Sens", SENS_TYPE_VOLT,    0,  35,  0,       0,      200,    0); 
     #endif
 
     ////////////////////////////////////////////////////////
@@ -533,10 +549,16 @@ void SendPairingRequest()
   
   for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) {
     if (!Module.isPeriphEmpty(SNr)) {
-      snprintf(Buf, sizeof(Buf), "T%d", SNr); 
-      doc[Buf] =Module.GetPeriphType(SNr);
-      snprintf(Buf, sizeof(Buf), "N%d", SNr); 
-      doc[Buf] = Module.GetPeriphName(SNr);
+        snprintf(Buf, sizeof(Buf), "T%d", SNr); 
+        doc[Buf] =Module.GetPeriphType(SNr);
+        snprintf(Buf, sizeof(Buf), "N%d", SNr); 
+        doc[Buf] = Module.GetPeriphName(SNr);
+        
+        if (Module.GetPeriphBrotherId(SNr) != -1)
+        {
+            snprintf(Buf, sizeof(Buf), "B%d", SNr); 
+            doc[Buf] = Module.GetPeriphBrotherId(SNr);
+        }
     }
   }
   serializeJson(doc, jsondata);  
