@@ -66,7 +66,7 @@ const int DEBUG_LEVEL = 3;
 
 const char _Version[]           = "3.50";
 const char _Protokoll_Version[] = "1.02";
-const char _ModuleName[]        = "PDC2";
+const char _ModuleName[]        = "PDCx4";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -267,7 +267,18 @@ void InitModule()
         Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,   0,  12,    0,      0,       0,    0);
         Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   0,  13,    0,      0,       0,    0);
     #endif
-
+    #ifdef MODULE_4WAY_INTEGRATED_ESP01       // 4-way Switch klein ESP01 ++++++++++ ############################################################
+        // 4x Switch over Serial
+        #define SWITCHES_PER_SCREEN 4
+        //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl    voltagedevier 
+        Module.Setup(_ModuleName, SWITCH_4_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL,   -1,   -1,     1.5);
+        //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+        Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,   0,  99,    0,      0,       0,    0);
+        Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,   0,  99,    0,      0,       0,    0);
+        Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,   0,  99,    0,      0,       0,    0);
+        Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   0,  99,    0,      0,       0,    0);
+    #endif
+    
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
     {
         if (Module.isPeriphSensor(SNr)) 
@@ -293,7 +304,11 @@ void setup()
     #ifdef ESP32
         Serial.begin(460800);
     #elif defined(ESP8266)
-        Serial.begin(115200);
+        #ifdef BAUD
+            Serial.begin(BAUD);
+        #else
+            Serial.begin(115200);
+        #endif
     #endif
     
     pinMode(LED_PIN, OUTPUT);
@@ -307,10 +322,10 @@ void setup()
     if (DEBUG_LEVEL > 0)                        // Show free entries
     {
         preferences.begin("JeepifyInit", true);
-            Serial.printf("free entries in JeepifyInit now: %d\n\r", preferences.freeEntries());
+            if (DEBUG_LEVEL > 0) Serial.printf("free entries in JeepifyInit now: %d\n\r", preferences.freeEntries());
         preferences.end();
         preferences.begin("JeepifyPeers", true);
-            Serial.printf("free entries in JeepifyPeers now: %d\n\r", preferences.freeEntries());
+            if (DEBUG_LEVEL > 0) Serial.printf("free entries in JeepifyPeers now: %d\n\r", preferences.freeEntries());
         preferences.end();
     }
     
@@ -347,13 +362,13 @@ void setup()
         mrd = new MultiResetDetector(MRD_TIMEOUT, MRD_ADDRESS);
 
         if (mrd->detectMultiReset()) {
-          Serial.println("Multi Reset Detected");
+          if (DEBUG_LEVEL > 0) Serial.println("Multi Reset Detected");
           digitalWrite(LED_BUILTIN, LED_ON);
           ClearPeers(); ClearInit(); InitModule(); SaveModule(); delay(10000); ESP.restart();
           Module.SetPairMode(true); TSPair = millis();
         }
         else {
-          Serial.println("No Multi Reset Detected");
+          if (DEBUG_LEVEL > 0) Serial.println("No Multi Reset Detected");
           digitalWrite(LED_BUILTIN, LED_OFF);
         }
     #endif
@@ -688,7 +703,14 @@ void UpdateSwitches()
                     case 7: IOBoard.digitalWrite(P7,  LOW); break;
                 }
             */
-              
+          #elif defined (SERIALCOM)
+              byte RelayOrder[4];
+              RelayOrder[0] = 0xA0;
+              RelayOrder[1] = SNr+1;
+              RelayOrder[2] = Value;
+              RelayOrder[3] = RelayOrder[0] + RelayOrder[1] + RelayOrder[2];
+              Serial.write(RelayOrder, sizeof(RelayOrder));
+              Serial.flush();
           #else
               digitalWrite(Module.GetPeriphIOPort(SNr), Value);
               /*if (Value == 1) digitalWrite(Module.GetPeriphIOPort(SNr), HIGH);
@@ -767,11 +789,11 @@ void GetModule()
         
         char ToImport[250];
         strcpy(ToImport,ImportStringPeer.c_str());
-        Serial.printf("ToImport = %s\r\n", ToImport);
+        if (DEBUG_LEVEL > 0) Serial.printf("ToImport = %s\r\n", ToImport);
         
         if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
         
-        Serial.printf("Module.Vin[4] = %.2f", Module.GetPeriphVin(4));
+        if (DEBUG_LEVEL > 0) Serial.printf("Module.Vin[4] = %.2f", Module.GetPeriphVin(4));
 
     preferences.end();
 }
@@ -847,12 +869,12 @@ void VoltageCalibration(int SNr, float V)
         }
         TempRead = (float) TempRead / 20;
         
-        Serial.printf("TempRead nach filter = %.2f\n\r", TempRead);
-        Serial.printf("Eich-soll Volt: %.2f\n\r", V);
+        if (DEBUG_LEVEL > 0) Serial.printf("TempRead nach filter = %.2f\n\r", TempRead);
+        if (DEBUG_LEVEL > 0) Serial.printf("Eich-soll Volt: %.2f\n\r", V);
        
         NewVin = TempRead / V;
         Module.SetPeriphVin(SNr, NewVin);        
-        Serial.printf("NewVin = %.2f\n\r", Module.GetPeriphVin(SNr));
+        if (DEBUG_LEVEL > 0) Serial.printf("NewVin = %.2f\n\r", Module.GetPeriphVin(SNr));
         
         if (DEBUG_LEVEL > 2)  Serial.printf("S[%d].Vin = %.2f - volt after calibration: %.2fV", SNr, Module.GetPeriphVin(SNr), TempRead/Module.GetPeriphVin(SNr));
         if (DEBUG_LEVEL > 1)  
@@ -931,7 +953,7 @@ float ReadAmp (int SNr)
 }
 float ReadVolt(int SNr) 
 {
-    if (!Module.GetPeriphVin(SNr)) { Serial.println("Vin must not be zero !!!"); return 0; }
+    if (!Module.GetPeriphVin(SNr)) { if (DEBUG_LEVEL > 0) Serial.println("Vin must not be zero !!!"); return 0; }
     
     //Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
 
@@ -977,7 +999,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
           bool exists = esp_now_is_peer_exist((u8 *) mac);
           if (exists) 
           { 
-            PrintMAC(mac); Serial.println(" already exists...");
+            if (DEBUG_LEVEL > 0) { PrintMAC(mac); Serial.println(" already exists..."); }
           }
           else 
           {
