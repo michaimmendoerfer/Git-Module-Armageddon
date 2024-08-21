@@ -64,9 +64,9 @@ const int DEBUG_LEVEL = 3;
 
 #pragma endregion Includes
 
-const char _Version[]           = "3.50";
+const char _Version[]           = "3.61";
 const char _Protokoll_Version[] = "1.02";
-const char _ModuleName[]        = "PDCx4";
+const char _ModuleName[]        = "C3x4";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -213,6 +213,20 @@ void InitModule()
         //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
         Module.PeriphSetup(0, "LEDBar",  SENS_TYPE_SWITCH,   0,  4,     0,       0,        0,    0);
         Module.PeriphSetup(1, "Fridge",  SENS_TYPE_SWITCH,   0,  3,     0,       0,        0,    0);
+    #endif
+    #ifdef ESP32_MODULE_4S_NOPORT           // 4-Way Switch via PIO ##############################################################################
+        // LonelyDragon
+        #define SWITCHES_PER_SCREEN 4       
+        //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon    RelayType     sda scl voltagedevier 
+        Module.Setup(_ModuleName, SWITCH_4_WAY,   _Version, NULL,     false, true, false, false, -1,  RELAY_REVERSED, -1,  -1,     -1);
+        //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+        Module.PeriphSetup(0, "LEDBar",  SENS_TYPE_SWITCH,   0,  0,     0,     0,        0,    0);
+        Module.PeriphSetup(1, "Fridge",  SENS_TYPE_SWITCH,   0,  1,     0,     0,        0,    0);
+        Module.PeriphSetup(2, "Table",   SENS_TYPE_SWITCH,   0,  2,     0,     0,        0,    0);
+        Module.PeriphSetup(3, "Inside",  SENS_TYPE_SWITCH,   0,  3,     0,     0,        0,    0);
+        Module.PeriphSetup(4, "Amp",     SENS_TYPE_AMP,      0,  5,    2.5,   0.066,     0,    0,     1);
+        Module.PeriphSetup(5, "Volt",    SENS_TYPE_VOLT,     0,  6,     0,     0,        0,    0);
+        
     #endif
     #ifdef ESP32_MODULE_4S_4A_1V_ADS_PORT   // Mixed-Module with ADC and Port and VMon ###########################################################
       // TERMINATOR_PRO (untested) - 4 sensed switches with acs712(30A) over ADS and Port, Voltage-Monitor:??
