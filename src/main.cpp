@@ -65,8 +65,8 @@ const int DEBUG_LEVEL = 3;
 #pragma endregion Includes
 
 const char _Version[]           = "3.61";
-const char _Protokoll_Version[] = "1.02";
-const char _ModuleName[]        = "C3x4";
+const char _Protokoll_Version[] = "1.10";
+const char _ModuleName[]        = "JL-Bat";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -219,12 +219,12 @@ void InitModule()
         #define SWITCHES_PER_SCREEN 4       
         //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon    RelayType     sda scl voltagedevier 
         Module.Setup(_ModuleName, SWITCH_4_WAY,   _Version, NULL,     false, true, false, false, -1,  RELAY_REVERSED, -1,  -1,     -1);
-        //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
-        Module.PeriphSetup(0, "LEDBar",  SENS_TYPE_SWITCH,   0,  0,     0,     0,        0,    0);
+        //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID   Brother
+        Module.PeriphSetup(0, "LEDBar",  SENS_TYPE_SWITCH,   0,  0,     0,     0,        0,    0,     4);
         Module.PeriphSetup(1, "Fridge",  SENS_TYPE_SWITCH,   0,  1,     0,     0,        0,    0);
         Module.PeriphSetup(2, "Table",   SENS_TYPE_SWITCH,   0,  2,     0,     0,        0,    0);
         Module.PeriphSetup(3, "Inside",  SENS_TYPE_SWITCH,   0,  3,     0,     0,        0,    0);
-        Module.PeriphSetup(4, "Amp",     SENS_TYPE_AMP,      0,  5,    2.5,   0.066,     0,    0,     1);
+        Module.PeriphSetup(4, "Amp",     SENS_TYPE_AMP,      0,  5,    2.5,   0.066,     0,    0);
         Module.PeriphSetup(5, "Volt",    SENS_TYPE_VOLT,     0,  6,     0,     0,        0,    0);
         
     #endif
@@ -261,13 +261,13 @@ void InitModule()
       // 4x acs712(30A) over ADC1115, Voltage-Monitor:A0
       #define SWITCHES_PER_SCREEN 4
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
-      Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true, false, false, 4,  RELAY_NORMAL, 14,  12,     1);
+      Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true, false, false, 4,  RELAY_NORMAL, 14,  12,     5);
       //                      Name     Type            ADS  IO   NULL   VpA   Vin  PeerID
       Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    1,    0,  1.65,  0.066,  0,    0);
       Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    1,    1,  1.65,  0.066,  0,    0);
       Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    1,    2,  1.65,  0.066,  0,    0);
       Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    3,  1.65,  0.066,  0,    0);
-      Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,   A0,   0,      0,   310,   0);  // 8266: 310 = 1023/3.3v
+      Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,   A0,   0,      0,   310,    0);  // 8266: 310 = 1023/3.3v
     #endif
     //works
     #ifdef ESP8266_MODULE_4S_INTEGRATED       // 4-way Switch - 8266 onBoard +++++++ ############################################################
@@ -309,7 +309,7 @@ void InitModule()
 }
 void setup()
 {
-    //Wire.begin(SDA_PIN, SCL_PIN);
+    Wire.begin(SDA_PIN, SCL_PIN);
 
     #ifdef ARDUINO_USB_CDC_ON_BOOT
         delay(3000);
@@ -378,7 +378,7 @@ void setup()
         if (mrd->detectMultiReset()) {
           if (DEBUG_LEVEL > 0) Serial.println("Multi Reset Detected");
           digitalWrite(LED_BUILTIN, LED_ON);
-          ClearPeers(); ClearInit(); InitModule(); SaveModule(); delay(10000); ESP.restart();
+          //ClearPeers(); ClearInit(); InitModule(); SaveModule(); delay(10000); ESP.restart();
           Module.SetPairMode(true); TSPair = millis();
         }
         else {
@@ -583,10 +583,10 @@ void SendPairingRequest()
         snprintf(Buf, sizeof(Buf), "N%d", SNr); 
         doc[Buf] = Module.GetPeriphName(SNr);
         
-        if (Module.GetPeriphBrotherId(SNr) != -1)
+        if (Module.GetPeriphBrotherPos(SNr) != -1)
         {
             snprintf(Buf, sizeof(Buf), "B%d", SNr); 
-            doc[Buf] = Module.GetPeriphBrotherId(SNr);
+            doc[Buf] = Module.GetPeriphBrotherPos(SNr);
         }
     }
   }
@@ -886,7 +886,7 @@ void VoltageCalibration(int SNr, float V)
         if (DEBUG_LEVEL > 0) Serial.printf("TempRead nach filter = %.2f\n\r", TempRead);
         if (DEBUG_LEVEL > 0) Serial.printf("Eich-soll Volt: %.2f\n\r", V);
        
-        NewVin = TempRead / V;
+        NewVin = TempRead / V * Module.GetVoltageDevider();
         Module.SetPeriphVin(SNr, NewVin);        
         if (DEBUG_LEVEL > 0) Serial.printf("NewVin = %.2f\n\r", Module.GetPeriphVin(SNr));
         
@@ -972,10 +972,10 @@ float ReadVolt(int SNr)
     //Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
 
     float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
-    float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr);
+    float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * Module.GetVoltageDevider();
 
     if (DEBUG_LEVEL > 2) {
-        Serial.printf("(V) Raw: %.1f - Vin:%.2f --> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), TempVolt);
+        Serial.printf("(V) Raw: %.1f / Vin:%.2f * V-Devider:%d--> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), Module.GetVoltageDevider(), TempVolt);
     } 
     return TempVolt;
 }
