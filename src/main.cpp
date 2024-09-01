@@ -516,7 +516,9 @@ void SendMessage ()
                   Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
                   Module.SetPeriphChanged(SNr, false);
               }
-              doc["Vin"] = Module.GetPeriphVin(SNr);
+              char VinBuf[10];
+              dtostrf(Module.GetPeriphVin(SNr), 0, 2, VinBuf);
+              doc["Vin"] = VinBuf;
             }
             doc[Module.GetPeriphName(SNr)] = buf;
             //if (DEBUG_LEVEL > 2) Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
