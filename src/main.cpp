@@ -66,7 +66,7 @@ const int DEBUG_LEVEL = 3;
 
 const char _Version[]           = "3.61";
 const char _Protokoll_Version[] = "1.10";
-const char _ModuleName[]        = "JL-Bat";
+const char _ModuleName[]        = "S30_2";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -256,6 +256,25 @@ void InitModule()
     
     dont´t use
     */
+
+   #ifdef MODULE_1WAY_INTEGRATED_8266           // 1-way Switch (10A) - 8266 onBoard +++++++ ############################################################
+        // 1 Switch over PIO
+      #define SWITCHES_PER_SCREEN 2
+      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl    voltagedevier 
+        Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL,   -1,   -1,     1.5);
+        //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+        Module.PeriphSetup(0, "S10-1",   SENS_TYPE_SWITCH,   0,  4,    0,      0,       0,    0);
+    #endif
+
+   #ifdef MODULE_2WAY_INTEGRATED_8266           // 2-way Switch (30A) - 8266 onBoard +++++++ ############################################################
+        // 2 Switch over PIO
+      #define SWITCHES_PER_SCREEN 2
+      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl    voltagedevier 
+        Module.Setup(_ModuleName, SWITCH_2_WAY,   _Version, NULL,     false, true,  true, false, -1,  RELAY_NORMAL,   -1,   -1,     1.5);
+        //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+        Module.PeriphSetup(0, "S30-1",   SENS_TYPE_SWITCH,   0,  14,    0,      0,       0,    0);
+        Module.PeriphSetup(1, "S30-2",   SENS_TYPE_SWITCH,   0,  12,    0,      0,       0,    0);
+    #endif
     //works
     #ifdef ESP8266_MODULE_4A_1V_ADS           // 4-way Battery-Sensor with ADS and VMon #########################################################
       // 4x acs712(30A) over ADC1115, Voltage-Monitor:A0
