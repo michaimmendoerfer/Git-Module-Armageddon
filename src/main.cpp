@@ -64,8 +64,8 @@ const int DEBUG_LEVEL = 3;
 
 #pragma endregion Includes
 
-const char _Version[]           = "3.61";
-const char _Protokoll_Version[] = "1.10";
+const char _Version[]           = "3.71";
+const char _Protokoll_Version[] = "1.12";
 const char _ModuleName[]        = "S30_2";
 const bool _LED_SIGNAL          = true;
 
@@ -266,7 +266,7 @@ void InitModule()
         Module.PeriphSetup(0, "S10-1",   SENS_TYPE_SWITCH,   0,  4,    0,      0,       0,    0);
     #endif
 
-   #ifdef MODULE_2WAY_INTEGRATED_8266           // 2-way Switch (30A) - 8266 onBoard +++++++ ############################################################
+   #ifdef ESP8266_MODULE_2S_INTEGRATED           // 2-way Switch (30A) - 8266 onBoard +++++++ ############################################################
         // 2 Switch over PIO
       #define SWITCHES_PER_SCREEN 2
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl    voltagedevier 
@@ -328,7 +328,9 @@ void InitModule()
 }
 void setup()
 {
-    Wire.begin(SDA_PIN, SCL_PIN);
+    #if defined(PORT_USED) || defined(ADS_USED)
+        Wire.begin(SDA_PIN, SCL_PIN);
+    #endif
 
     #ifdef ARDUINO_USB_CDC_ON_BOOT
         delay(3000);
@@ -473,6 +475,7 @@ void setup()
     AddStatus("Init fertig");
   
     Module.SetLastContact(millis());
+    //Module.SetConfirm(true);
     
     #ifdef ESP32_DISPLAY_480
       ui_init();
@@ -550,7 +553,7 @@ void SendMessage ()
     if (Module.GetDebugMode())   bitSet(Status, 0);
     if (Module.GetSleepMode())   bitSet(Status, 1);
     if (Module.GetDemoMode())    bitSet(Status, 2);
-    if (Module.GetPairMode())    bitSet(Status, 3);
+    if (Module.GetPairMode())    bitSet(Status, 3);    
     
     doc["Status"]  = Status;
 
@@ -618,6 +621,76 @@ void SendPairingRequest()
   if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata.c_str()); 
   
   AddStatus("Send Pairing request...");                                     
+}
+void SendCommand(int Command) 
+{
+    digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
+
+    TSLed = millis();
+    SetMessageLED(3);
+    
+    JsonDocument doc; String jsondata; 
+    
+    doc["Node"]    = Module.GetName();   
+    doc["Type"]    = Module.GetType();
+    doc["Version"] = Module.GetVersion();
+    doc["Order"]   = Command;
+
+    serializeJson(doc, jsondata); 
+
+    for (int PNr=0; PNr<PeerList.size(); PNr++) 
+    {
+        PeerClass *Peer = PeerList.get(PNr);
+
+        if (Peer->GetType() >= MONITOR_ROUND)
+        {
+            if (DEBUG_LEVEL > 2) Serial.printf("Sending to: %s ", Peer->GetName()); 
+            
+            if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 200) == 0) 
+            {
+                    if (DEBUG_LEVEL > 2) Serial.println("ESP_OK");  //Sending "jsondata" 
+            } 
+            else 
+            {
+                    if (DEBUG_LEVEL > 0) Serial.println("ESP_ERROR"); 
+            }     
+            
+            if (DEBUG_LEVEL > 2) Serial.println(jsondata);
+        }
+    }
+    AddStatus("Send Command...");                                     
+}
+void SendConfirm(const uint8_t * mac, uint32_t TSConfirm) 
+{
+    digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
+
+    TSLed = millis();
+    SetMessageLED(3);
+    
+    JsonDocument doc; String jsondata; 
+    char Buf[100] = {};
+
+    doc["Node"]        = Module.GetName();   
+    doc["Type"]        = Module.GetType();
+    doc["Version"]     = Module.GetVersion();
+    doc["TSConfirm"]   = TSConfirm;
+
+    serializeJson(doc, jsondata); 
+
+    if (DEBUG_LEVEL > 2) Serial.printf("Sending Confirm (%d) to: %s ", TSConfirm, FindPeerByMAC(mac)->GetName()); 
+            
+    if (esp_now_send((u8 *) mac, (uint8_t *) jsondata.c_str(), 200) == 0) 
+    {
+            if (DEBUG_LEVEL > 2) Serial.println("ESP_OK");  //Sending "jsondata" 
+    } 
+    else 
+    {
+            if (DEBUG_LEVEL > 0) Serial.println("ESP_ERROR"); 
+    }     
+    
+    if (DEBUG_LEVEL > 2) Serial.println(jsondata);
+    
+    AddStatus("Send Command...");                                     
 }
 void SendNameChange(int Pos)
 {
@@ -809,7 +882,6 @@ void SaveModule()
         }
     preferences.end();
 }
-
 void GetModule()
 {
     preferences.begin("JeepifyInit", true);
@@ -917,7 +989,7 @@ void VoltageCalibration(int SNr, float V)
             snprintf(Buf, sizeof(Buf), "[%d] %s (Type: %d): Spannung ist jetzt: %.2fV", SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), (float)TempRead/Module.GetPeriphVin(SNr));
             AddStatus(Buf);
         }
-
+        SendCommand(SEND_CMD_CONFIRM_VOLT);
         SaveModule();
     }
 }
@@ -959,6 +1031,7 @@ void CurrentCalibration()
         AddStatus(Buf);
       }
     }
+    SendCommand(SEND_CMD_CONFIRM_CURRENT);
     SaveModule();
 }
 float ReadAmp (int SNr) 
@@ -1027,6 +1100,11 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
           Serial.println(jsondata);    
       }
       
+      if (doc.containsKey("TSConfirm"))
+      {
+          SendConfirm(mac, (uint32_t) doc["TSConfirm"]);
+      }
+
       if (((int)doc["Order"] == SEND_CMD_YOU_ARE_PAIRED) and (doc["Peer"] == Module.GetName())) 
       { 
           //Serial.println("in you are paired und node");
