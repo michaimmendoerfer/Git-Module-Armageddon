@@ -13,7 +13,6 @@ const int DEBUG_LEVEL = 3;
     #define PORT_USED 1
     #include <ui/ui.h>
 #endif
-
 #ifdef MRD_USED
     #ifdef ESP8266 // ESP8266_MRD_USE_RTC false
         #define ESP8266_MRD_USE_RTC   false  
@@ -59,14 +58,16 @@ const int DEBUG_LEVEL = 3;
 #include "pref_manager.h"
 #include <Preferences.h>
 #include <ArduinoJson.h>
-#include <Wire.h>
-#include <Spi.h>
-
+#if defined(PORT_USED) || defined(ADS_USED)
+    #include <Wire.h>
+    #include <Spi.h>
+#endif
+    
 #pragma endregion Includes
 
 const char _Version[]           = "3.71";
 const char _Protokoll_Version[] = "1.12";
-const char _ModuleName[]        = "S30_2";
+const char _ModuleName[]        = "S10-1";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -694,7 +695,7 @@ void SendConfirm(const uint8_t * mac, uint32_t TSConfirm)
 }
 void SendNameChange(int Pos)
 {
-    // sendet auf Broadcast: "Order"="UpdateName"; "Pos"="32; "NewName"="Horst"; Pos==99 is ModuleName
+    // sendet auf Broadcast: "Order"="UpdateName"; "Pos"="3"; "NewName"="Horst"; Pos==99 is ModuleName
   
   TSLed = millis();
   SetMessageLED(4);
