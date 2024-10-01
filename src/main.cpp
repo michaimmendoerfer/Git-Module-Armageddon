@@ -603,7 +603,7 @@ void SendPairingRequest()
   for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) {
     if (!Module.isPeriphEmpty(SNr)) {
         snprintf(Buf, sizeof(Buf), "T%d", SNr); 
-        doc[Buf] =Module.GetPeriphType(SNr);
+        doc[Buf] = Module.GetPeriphType(SNr);
         snprintf(Buf, sizeof(Buf), "N%d", SNr); 
         doc[Buf] = Module.GetPeriphName(SNr);
         
@@ -690,7 +690,7 @@ void SendConfirm(const uint8_t * mac, uint32_t TSConfirm)
     
     if (DEBUG_LEVEL > 2) Serial.println(jsondata);
     
-    AddStatus("Send Command...");                                     
+    AddStatus("Send Confirm...");                                     
 }
 void SendNameChange(int Pos)
 {
@@ -786,31 +786,6 @@ void UpdateSwitches()
           
           #ifdef PORT_USED
               IOBoard.digitalWrite(SNr, Value);
-              /*if (Value == 1)   
-                switch (Module.GetPeriphIOPort(SNr))
-                {
-                    case 0: IOBoard.digitalWrite(P0,  HIGH); break;
-                    case 1: IOBoard.digitalWrite(P1,  HIGH); break;
-                    case 2: IOBoard.digitalWrite(P2,  HIGH); break;
-                    case 3: IOBoard.digitalWrite(P3,  HIGH); break;
-                    case 4: IOBoard.digitalWrite(P4,  HIGH); break;
-                    case 5: IOBoard.digitalWrite(P5,  HIGH); break;
-                    case 6: IOBoard.digitalWrite(P6,  HIGH); break;
-                    case 7: IOBoard.digitalWrite(P7,  HIGH); break;
-                }
-              else
-                switch (Module.GetPeriphIOPort(SNr))
-                {
-                    case 0: IOBoard.digitalWrite(P0,  LOW); break;
-                    case 1: IOBoard.digitalWrite(P1,  LOW); break;
-                    case 2: IOBoard.digitalWrite(P2,  LOW); break;
-                    case 3: IOBoard.digitalWrite(P3,  LOW); break;
-                    case 4: IOBoard.digitalWrite(P4,  LOW); break;
-                    case 5: IOBoard.digitalWrite(P5,  LOW); break;
-                    case 6: IOBoard.digitalWrite(P6,  LOW); break;
-                    case 7: IOBoard.digitalWrite(P7,  LOW); break;
-                }
-            */
           #elif defined (SERIALCOM)
               byte RelayOrder[4];
               RelayOrder[0] = 0xA0;
@@ -821,9 +796,6 @@ void UpdateSwitches()
               Serial.flush();
           #else
               digitalWrite(Module.GetPeriphIOPort(SNr), Value);
-              /*if (Value == 1) digitalWrite(Module.GetPeriphIOPort(SNr), HIGH);
-              else digitalWrite(Module.GetPeriphIOPort(SNr), LOW);
-              */
           #endif
 
           if (DEBUG_LEVEL > 2) Serial.printf("Setze %s (Port:%d) auf %d", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr), Serial.print(Value));
