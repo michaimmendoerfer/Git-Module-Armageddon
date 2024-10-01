@@ -482,6 +482,7 @@ void setup()
     #endif
 }
 #pragma region Send-Things
+
 void SendMessage () 
 {
     //sendet NAME0:Value0, NAME1:Value1... Status:(bitwise)int
@@ -490,61 +491,61 @@ void SendMessage ()
 
     JsonDocument doc; String jsondata; 
     char buf[100]; 
+    float TempValue = 0;
 
     doc["Node"] = Module.GetName();   
 
     for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
     {
-        if (Module.isPeriphEmpty(SNr) == false)
+        if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
         {
-            //temp
-            Module.SetPeriphChanged(SNr, true);
-            //SWITCH
-            if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
-            {
-                dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
-            }
-            //AMP
-            else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
-            {
-              if (Module.GetDemoMode()) Module.SetPeriphValue(SNr, (float) random(0,300)/10);
-              else                      Module.SetPeriphValue(SNr, ReadAmp(SNr));
-              
-              if (abs(Module.GetPeriphValue(SNr)) > 99) Module.SetPeriphValue(SNr, -99);
-              dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
-              
-              if (Module.GetPeriphChanged(SNr))
-              {
-                  Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                  Module.SetPeriphChanged(SNr, true);
-              }
-              else {
-                  Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                  Module.SetPeriphChanged(SNr, false);
-              }
-            }
-            //VOLT
-            else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) {
-              if (Module.GetDemoMode()) Module.SetPeriphValue(SNr, (float) random(90,150)/10);
-              else                      Module.SetPeriphValue(SNr, ReadVolt(SNr));
-
-              dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
-              
-              if (Module.GetPeriphChanged(SNr)) {
-                  Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                  Module.SetPeriphChanged(SNr, true);
-              }
-              else {
-                  Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                  Module.SetPeriphChanged(SNr, false);
-              }
-              char VinBuf[10];
-              dtostrf(Module.GetPeriphVin(SNr), 0, 2, VinBuf);
-              doc["Vin"] = VinBuf;
-            }
-            doc[Module.GetPeriphName(SNr)] = buf;
-            //if (DEBUG_LEVEL > 2) Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
+            dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
         }
+        else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
+        {
+            if (Module.GetDemoMode()) 
+            {
+                Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                Module.SetPeriphValue(SNr, (float) random(0,300)/10);
+            else
+                TempValue = ReadAmp(SNr);
+                if (abs(TempValue) > 99) TempValue = -99;
+            
+                if (TempValue != Module.GetPeriphValue(SNr))
+                {   
+                    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                    Module.SetPeriphValue(SNr, TempValue);
+                }
+            }
+            
+            dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
+        }
+        else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) 
+        {
+            if (Module.GetDemoMode()) 
+            { 
+                Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                Module.SetPeriphValue(SNr, (float) random(90,150)/10);
+            }
+            else
+            {
+                TempValue = ReadVolt(SNr);
+                                
+                if (TempValue != Module.GetPeriphValue(SNr))
+                {   
+                    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                    Module.SetPeriphValue(SNr, TempValue);
+                }
+            }                      
+            
+            dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
+            
+            char VinBuf[10];
+            dtostrf(Module.GetPeriphVin(SNr), 0, 2, VinBuf);
+            doc["Vin"] = VinBuf;
+        }
+        doc[Module.GetPeriphName(SNr)] = buf;
+        //if (DEBUG_LEVEL > 2) Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
         //if (DEBUG_LEVEL > 2) Serial.println();
     }
   
@@ -1053,11 +1054,11 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
   JsonDocument doc;
   String jsondata;
   int Pos = -1;
-  float NewVperAmp = 0;
-  float NewVin     = 0;
-  float NewVoltage = 0;
-  float NewNullwert = 0;
-  String NewName = "";
+  float  NewVperAmp  = 0;
+  float  NewVin      = 0;
+  float  NewVoltage  = 0;
+  float  NewNullwert = 0;
+  String NewName     = "";
 
   jsondata = String(buff);                  //converting into STRING
   
@@ -1077,36 +1078,37 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
           SendConfirm(mac, (uint32_t) doc["TSConfirm"]);
       }
 
-      if (((int)doc["Order"] == SEND_CMD_YOU_ARE_PAIRED) and (doc["Peer"] == Module.GetName())) 
-      { 
-          //Serial.println("in you are paired und node");
-        
-          bool exists = esp_now_is_peer_exist((u8 *) mac);
-          if (exists) 
-          { 
-            if (DEBUG_LEVEL > 0) { PrintMAC(mac); Serial.println(" already exists..."); }
-          }
-          else 
-          {
-            PeerClass *Peer = new PeerClass;
-                Peer->Setup(doc["Node"], (int) doc["Type"], "xxx", mac, false, false, false, false);
-                Peer->SetTSLastSeen(millis());
-                PeerList.add(Peer);
-
-                SavePeers();
-                RegisterPeers();
-                
-                if (DEBUG_LEVEL > 1) {
-                  Serial.printf("New Peer added: %s (Type:%d), MAC:", Peer->GetName(), Peer->GetType());
-                  PrintMAC(Peer->GetBroadcastAddress());
-                  Serial.println("\n\rSaving Peers after received new one...");
-                  ReportAll();
-                }
-                Module.SetPairMode(false);
-            }
-      }
+      
       switch ((int) doc["Order"]) 
       {
+        case SEND_CMD_YOU_ARE_PAIRED:
+            if (doc["Peer"] == Module.GetName())
+            {
+                if (esp_now_is_peer_exist((u8 *) mac)) 
+                { 
+                    if (DEBUG_LEVEL > 0) { PrintMAC(mac); Serial.println(" already exists..."); }
+                }
+                else 
+                {
+                    PeerClass *Peer = new PeerClass;
+                    Peer->Setup(doc["Node"], (int) doc["Type"], "xxx", mac, false, false, false, false);
+                    Peer->SetTSLastSeen(millis());
+                    PeerList.add(Peer);
+
+                    SavePeers();
+                    RegisterPeers();
+                    
+                    if (DEBUG_LEVEL > 1) 
+                    {
+                        Serial.printf("New Peer added: %s (Type:%d), MAC:", Peer->GetName(), Peer->GetType());
+                        PrintMAC(Peer->GetBroadcastAddress());
+                        Serial.println("\n\rSaving Peers after received new one...");
+                        ReportAll();
+                    }
+                    Module.SetPairMode(false);
+                }
+            }
+            break;
         case SEND_CMD_STAY_ALIVE: 
             Module.SetLastContact(millis());
             if (DEBUG_LEVEL > 2) { Serial.print("LastContact: "); Serial.println(Module.GetLastContact()); }
