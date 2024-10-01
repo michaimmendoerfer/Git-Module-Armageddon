@@ -483,6 +483,7 @@ void setup()
     #endif
 }
 #pragma region Send-Things
+
 void SendMessage () 
 {
     //sendet NAME0:Value0, NAME1:Value1... Status:(bitwise)int
@@ -491,61 +492,61 @@ void SendMessage ()
 
     JsonDocument doc; String jsondata; 
     char buf[100]; 
+    float TempValue = 0;
 
     doc["Node"] = Module.GetName();   
 
     for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
     {
-        if (Module.isPeriphEmpty(SNr) == false)
+        if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
         {
-            //temp
-            Module.SetPeriphChanged(SNr, true);
-            //SWITCH
-            if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
-            {
-                dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
-            }
-            //AMP
-            else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
-            {
-              if (Module.GetDemoMode()) Module.SetPeriphValue(SNr, (float) random(0,300)/10);
-              else                      Module.SetPeriphValue(SNr, ReadAmp(SNr));
-              
-              if (abs(Module.GetPeriphValue(SNr)) > 99) Module.SetPeriphValue(SNr, -99);
-              dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
-              
-              if (Module.GetPeriphChanged(SNr))
-              {
-                  Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                  Module.SetPeriphChanged(SNr, true);
-              }
-              else {
-                  Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                  Module.SetPeriphChanged(SNr, false);
-              }
-            }
-            //VOLT
-            else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) {
-              if (Module.GetDemoMode()) Module.SetPeriphValue(SNr, (float) random(90,150)/10);
-              else                      Module.SetPeriphValue(SNr, ReadVolt(SNr));
-
-              dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
-              
-              if (Module.GetPeriphChanged(SNr)) {
-                  Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                  Module.SetPeriphChanged(SNr, true);
-              }
-              else {
-                  Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                  Module.SetPeriphChanged(SNr, false);
-              }
-              char VinBuf[10];
-              dtostrf(Module.GetPeriphVin(SNr), 0, 2, VinBuf);
-              doc["Vin"] = VinBuf;
-            }
-            doc[Module.GetPeriphName(SNr)] = buf;
-            //if (DEBUG_LEVEL > 2) Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
+            dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
         }
+        else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
+        {
+            if (Module.GetDemoMode()) 
+            {
+                Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                Module.SetPeriphValue(SNr, (float) random(0,300)/10);
+            else
+                TempValue = ReadAmp(SNr);
+                if (abs(TempValue) > 99) TempValue = -99;
+            
+                if (TempValue != Module.GetPeriphValue(SNr))
+                {   
+                    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                    Module.SetPeriphValue(SNr, TempValue);
+                }
+            }
+            
+            dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
+        }
+        else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) 
+        {
+            if (Module.GetDemoMode()) 
+            { 
+                Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                Module.SetPeriphValue(SNr, (float) random(90,150)/10);
+            }
+            else
+            {
+                TempValue = ReadVolt(SNr);
+                                
+                if (TempValue != Module.GetPeriphValue(SNr))
+                {   
+                    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                    Module.SetPeriphValue(SNr, TempValue);
+                }
+            }                      
+            
+            dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
+            
+            char VinBuf[10];
+            dtostrf(Module.GetPeriphVin(SNr), 0, 2, VinBuf);
+            doc["Vin"] = VinBuf;
+        }
+        doc[Module.GetPeriphName(SNr)] = buf;
+        //if (DEBUG_LEVEL > 2) Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
         //if (DEBUG_LEVEL > 2) Serial.println();
     }
   
@@ -604,7 +605,7 @@ void SendPairingRequest()
   for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) {
     if (!Module.isPeriphEmpty(SNr)) {
         snprintf(Buf, sizeof(Buf), "T%d", SNr); 
-        doc[Buf] =Module.GetPeriphType(SNr);
+        doc[Buf] = Module.GetPeriphType(SNr);
         snprintf(Buf, sizeof(Buf), "N%d", SNr); 
         doc[Buf] = Module.GetPeriphName(SNr);
         
@@ -691,7 +692,7 @@ void SendConfirm(const uint8_t * mac, uint32_t TSConfirm)
     
     if (DEBUG_LEVEL > 2) Serial.println(jsondata);
     
-    AddStatus("Send Command...");                                     
+    AddStatus("Send Confirm...");                                     
 }
 void SendNameChange(int Pos)
 {
@@ -787,31 +788,6 @@ void UpdateSwitches()
           
           #ifdef PORT_USED
               IOBoard.digitalWrite(SNr, Value);
-              /*if (Value == 1)   
-                switch (Module.GetPeriphIOPort(SNr))
-                {
-                    case 0: IOBoard.digitalWrite(P0,  HIGH); break;
-                    case 1: IOBoard.digitalWrite(P1,  HIGH); break;
-                    case 2: IOBoard.digitalWrite(P2,  HIGH); break;
-                    case 3: IOBoard.digitalWrite(P3,  HIGH); break;
-                    case 4: IOBoard.digitalWrite(P4,  HIGH); break;
-                    case 5: IOBoard.digitalWrite(P5,  HIGH); break;
-                    case 6: IOBoard.digitalWrite(P6,  HIGH); break;
-                    case 7: IOBoard.digitalWrite(P7,  HIGH); break;
-                }
-              else
-                switch (Module.GetPeriphIOPort(SNr))
-                {
-                    case 0: IOBoard.digitalWrite(P0,  LOW); break;
-                    case 1: IOBoard.digitalWrite(P1,  LOW); break;
-                    case 2: IOBoard.digitalWrite(P2,  LOW); break;
-                    case 3: IOBoard.digitalWrite(P3,  LOW); break;
-                    case 4: IOBoard.digitalWrite(P4,  LOW); break;
-                    case 5: IOBoard.digitalWrite(P5,  LOW); break;
-                    case 6: IOBoard.digitalWrite(P6,  LOW); break;
-                    case 7: IOBoard.digitalWrite(P7,  LOW); break;
-                }
-            */
           #elif defined (SERIALCOM)
               byte RelayOrder[4];
               RelayOrder[0] = 0xA0;
@@ -822,9 +798,6 @@ void UpdateSwitches()
               Serial.flush();
           #else
               digitalWrite(Module.GetPeriphIOPort(SNr), Value);
-              /*if (Value == 1) digitalWrite(Module.GetPeriphIOPort(SNr), HIGH);
-              else digitalWrite(Module.GetPeriphIOPort(SNr), LOW);
-              */
           #endif
 
           if (DEBUG_LEVEL > 2) Serial.printf("Setze %s (Port:%d) auf %d", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr), Serial.print(Value));
@@ -1082,11 +1055,11 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
   JsonDocument doc;
   String jsondata;
   int Pos = -1;
-  float NewVperAmp = 0;
-  float NewVin     = 0;
-  float NewVoltage = 0;
-  float NewNullwert = 0;
-  String NewName = "";
+  float  NewVperAmp  = 0;
+  float  NewVin      = 0;
+  float  NewVoltage  = 0;
+  float  NewNullwert = 0;
+  String NewName     = "";
 
   jsondata = String(buff);                  //converting into STRING
   
@@ -1106,36 +1079,37 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
           SendConfirm(mac, (uint32_t) doc["TSConfirm"]);
       }
 
-      if (((int)doc["Order"] == SEND_CMD_YOU_ARE_PAIRED) and (doc["Peer"] == Module.GetName())) 
-      { 
-          //Serial.println("in you are paired und node");
-        
-          bool exists = esp_now_is_peer_exist((u8 *) mac);
-          if (exists) 
-          { 
-            if (DEBUG_LEVEL > 0) { PrintMAC(mac); Serial.println(" already exists..."); }
-          }
-          else 
-          {
-            PeerClass *Peer = new PeerClass;
-                Peer->Setup(doc["Node"], (int) doc["Type"], "xxx", mac, false, false, false, false);
-                Peer->SetTSLastSeen(millis());
-                PeerList.add(Peer);
-
-                SavePeers();
-                RegisterPeers();
-                
-                if (DEBUG_LEVEL > 1) {
-                  Serial.printf("New Peer added: %s (Type:%d), MAC:", Peer->GetName(), Peer->GetType());
-                  PrintMAC(Peer->GetBroadcastAddress());
-                  Serial.println("\n\rSaving Peers after received new one...");
-                  ReportAll();
-                }
-                Module.SetPairMode(false);
-            }
-      }
+      
       switch ((int) doc["Order"]) 
       {
+        case SEND_CMD_YOU_ARE_PAIRED:
+            if (doc["Peer"] == Module.GetName())
+            {
+                if (esp_now_is_peer_exist((u8 *) mac)) 
+                { 
+                    if (DEBUG_LEVEL > 0) { PrintMAC(mac); Serial.println(" already exists..."); }
+                }
+                else 
+                {
+                    PeerClass *Peer = new PeerClass;
+                    Peer->Setup(doc["Node"], (int) doc["Type"], "xxx", mac, false, false, false, false);
+                    Peer->SetTSLastSeen(millis());
+                    PeerList.add(Peer);
+
+                    SavePeers();
+                    RegisterPeers();
+                    
+                    if (DEBUG_LEVEL > 1) 
+                    {
+                        Serial.printf("New Peer added: %s (Type:%d), MAC:", Peer->GetName(), Peer->GetType());
+                        PrintMAC(Peer->GetBroadcastAddress());
+                        Serial.println("\n\rSaving Peers after received new one...");
+                        ReportAll();
+                    }
+                    Module.SetPairMode(false);
+                }
+            }
+            break;
         case SEND_CMD_STAY_ALIVE: 
             Module.SetLastContact(millis());
             if (DEBUG_LEVEL > 2) { Serial.print("LastContact: "); Serial.println(Module.GetLastContact()); }
