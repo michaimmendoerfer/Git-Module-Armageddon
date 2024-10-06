@@ -508,7 +508,9 @@ void SendMessage ()
             {
                 Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
                 Module.SetPeriphValue(SNr, (float) random(0,300)/10);
+            }
             else
+             {
                 TempValue = ReadAmp(SNr);
                 if (abs(TempValue) > 99) TempValue = -99;
             
@@ -546,11 +548,8 @@ void SendMessage ()
             doc["Vin"] = VinBuf;
         }
         doc[Module.GetPeriphName(SNr)] = buf;
-        //if (DEBUG_LEVEL > 2) Serial.printf("doc[%s] = %s, ", Module.GetPeriphName(SNr), buf);
-        //if (DEBUG_LEVEL > 2) Serial.println();
     }
   
-    // Status bit1 DebugMode, bit2 Sleep, bit3 Demo, bit4 RTP
     int Status = 0;
     if (Module.GetDebugMode())   bitSet(Status, 0);
     if (Module.GetSleepMode())   bitSet(Status, 1);
@@ -560,8 +559,6 @@ void SendMessage ()
     doc["Status"]  = Status;
 
     serializeJson(doc, jsondata);  
-
-    //if (DEBUG_LEVEL > 2) Serial.println(jsondata);
 
     for (int PNr=0; PNr<PeerList.size(); PNr++) 
     {
@@ -670,8 +667,7 @@ void SendConfirm(const uint8_t * mac, uint32_t TSConfirm)
     SetMessageLED(3);
     
     JsonDocument doc; String jsondata; 
-    char Buf[100] = {};
-
+    
     doc["Node"]        = Module.GetName();   
     doc["Type"]        = Module.GetType();
     doc["Version"]     = Module.GetVersion();
@@ -697,27 +693,26 @@ void SendConfirm(const uint8_t * mac, uint32_t TSConfirm)
 void SendNameChange(int Pos)
 {
     // sendet auf Broadcast: "Order"="UpdateName"; "Pos"="3"; "NewName"="Horst"; Pos==99 is ModuleName
-  
-  TSLed = millis();
-  SetMessageLED(4);
-  
-  JsonDocument doc; String jsondata; 
-  
-  doc["Node"]    = Module.GetName();   
-  doc["Order"]   = SEND_CMD_UPDATE_NAME;
-  doc["Pos"]     = Pos;
+    TSLed = millis();
+    SetMessageLED(4);
+    
+    JsonDocument doc; String jsondata; 
+    
+    doc["Node"]    = Module.GetName();   
+    doc["Order"]   = SEND_CMD_UPDATE_NAME;
+    doc["Pos"]     = Pos;
 
-  //ModuleName (99) or PeriphName(1-...);
-  if (Pos == 99) doc["NewName"] = Module.GetName();
-  else           doc["NewName"] = Module.GetPeriphName(Pos);
-  
-  serializeJson(doc, jsondata);  
+    //ModuleName (99) or PeriphName(1-...);
+    if (Pos == 99) doc["NewName"] = Module.GetName();
+    else           doc["NewName"] = Module.GetPeriphName(Pos);
+    
+    serializeJson(doc, jsondata);  
 
-  esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
-  
-  if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata.c_str()); 
-  
-  AddStatus("Send NameChange announce...");        
+    esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
+    
+    if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata.c_str()); 
+    
+    AddStatus("Send NameChange announce...");        
 }
 #pragma endregion Send-Things
 #pragma region System-Things
@@ -764,6 +759,8 @@ void ToggleSwitch(int SNr)
 {
     int Value = Module.GetPeriphValue(SNr);
     
+    Module.SetPeriphOldValue(SNr, Value);
+    
     if (Value == 0) Value = 1;
     else Value = 0;
 
@@ -779,7 +776,7 @@ void UpdateSwitches()
       {
           uint8_t Value = (uint8_t)Module.GetPeriphValue(SNr);
           if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f",SNr, (float)Value);
-          //Serial.println(Value);
+          
           if (Module.GetRelayType() == RELAY_REVERSED) 
           {
               if (Value == 0) Value = 1;
@@ -981,7 +978,12 @@ void CurrentCalibration()
         #endif    
         
         #ifdef ADS_USED
-            TempVolt = ADSBoard.computeVolts(ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr)));
+            for (int i=0; i<20; i++) 
+            {
+                TempVolt += ADSBoard.computeVolts(ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr)));
+                delay(10);
+            }
+            TempVolt /= 20;
         #else
             int TempVal = 0;
             for (int i=0; i<20; i++) 
