@@ -71,6 +71,11 @@ const char _ModuleName[]        = "S10-1";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
+
+char *ArrNullwert[MAX_PERIPHERALS] = {"NW0", "NW1", "NW2", "NW3", "NW4", "NW5", "NW6", "NW7", "NW8"};
+char *ArrVperAmp[MAX_PERIPHERALS] = {"VpA0", "VpA1", "VpA2", "VpA3", "VpA4", "VpA5", "VpA6", "VpA7", "VpA8"};
+char *ArrVin[MAX_PERIPHERALS] = {"Vin0", "Vin1", "Vin2", "Vin3", "Vin4", "Vin5", "Vin6", "Vin7", "Vin8"};
+
 struct struct_Status {
   String    Msg;
   uint32_t  TSMsg;
@@ -84,11 +89,12 @@ struct_Status Status[MAX_STATUS];
 
 u_int8_t broadcastAddressAll[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff}; 
 
-volatile uint32_t TSButton = 0;
-volatile uint32_t TSSend   = 0;
-volatile uint32_t TSPair   = 0;
-volatile uint32_t TSLed    = 0;
-volatile uint32_t TSStatus = 0;
+volatile uint32_t TSButton   = 0;
+volatile uint32_t TSSend     = 0;
+volatile uint32_t TSPair     = 0;
+volatile uint32_t TSLed      = 0;
+volatile uint32_t TSStatus   = 0;
+volatile uint32_t TSSettings = 0;
 
 bool NameChanged = false;
 
@@ -548,6 +554,69 @@ void SendMessage ()
             doc["Vin"] = VinBuf;
         }
         doc[Module.GetPeriphName(SNr)] = buf;
+    }
+  
+    int Status = 0;
+    if (Module.GetDebugMode())   bitSet(Status, 0);
+    if (Module.GetSleepMode())   bitSet(Status, 1);
+    if (Module.GetDemoMode())    bitSet(Status, 2);
+    if (Module.GetPairMode())    bitSet(Status, 3);    
+    
+    doc["Status"]  = Status;
+
+    serializeJson(doc, jsondata);  
+
+    for (int PNr=0; PNr<PeerList.size(); PNr++) 
+    {
+        PeerClass *Peer = PeerList.get(PNr);
+
+        if (Peer->GetType() >= MONITOR_ROUND)
+        {
+            if (DEBUG_LEVEL > 2) Serial.printf("Sending to: %s ", Peer->GetName()); 
+            
+            if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 200) == 0) 
+            {
+                    if (DEBUG_LEVEL > 2) Serial.println("ESP_OK");  //Sending "jsondata" 
+            } 
+            else 
+            {
+                    if (DEBUG_LEVEL > 0) Serial.println("ESP_ERROR"); 
+            }     
+            
+            if (DEBUG_LEVEL > 2) Serial.println(jsondata);
+        }
+    }
+
+  //AddStatus("SendStatus");
+}
+void SendSettings() 
+{
+    TSLed = millis();
+    SetMessageLED(2);
+
+    JsonDocument doc; String jsondata; 
+    char buf[100]; 
+    
+    doc["Node"] = Module.GetName();   
+
+    for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
+    {
+        if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
+        {
+            if (Module.GetPeriphValue(SNr) == 0) doc[Module.GetPeriphName(SNr)] = "Off";
+            if (Module.GetPeriphValue(SNr) == 1) doc[Module.GetPeriphName(SNr)] = "On";
+        }
+        else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
+        {
+            //doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
+            doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
+            doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
+        }
+        else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) 
+        {
+            doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
+            doc["V-Div"] = Module.GetVoltageDevider();
+        }                      
     }
   
     int Status = 0;
@@ -1257,6 +1326,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             {
                 Module.SetPeriphVperAmp(Pos, NewVperAmp);
                 SaveModule();
+                Serial.printf("Updated VperAmp at Pos:%d to %.3f\n\r", Pos, NewVperAmp);
             }
             break;
         case SEND_CMD_UPDATE_NULLWERT:
@@ -1267,6 +1337,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             {
                 Module.SetPeriphNullwert(Pos, NewNullwert);
                 SaveModule();
+                Serial.printf("Updated Nullwert at Pos:%d to %.3f\n\r", Pos, NewNullwert);
             }
             break;
       }
@@ -1324,6 +1395,12 @@ void loop()
         TSStatus = millis();
         NameChanged = false;
         SendPairingRequest();
+    }
+
+    if  ((millis() - TSSettings) > MSG_INTERVAL*5)                            // Send Settings
+    {
+        TSSettings = millis();
+        SendSettings();
     }
 
     if (((millis() - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
