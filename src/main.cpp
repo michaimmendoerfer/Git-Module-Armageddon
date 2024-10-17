@@ -289,10 +289,10 @@ void InitModule()
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true, false, false, 4,  RELAY_NORMAL, 14,  12,     5);
       //                      Name     Type            ADS  IO   NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    1,    0,  1.65,  0.066,  0,    0);
-      Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    1,    1,  1.65,  0.066,  0,    0);
-      Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    1,    2,  1.65,  0.066,  0,    0);
-      Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    3,  1.65,  0.066,  0,    0);
+      Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    1,    0,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    1,    1,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    1,    2,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    3,  2.5,  0.066,  0,    0);
       Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,   A0,   0,      0,   310,    0);  // 8266: 310 = 1023/3.3v
     #endif
     //works
@@ -675,7 +675,7 @@ void SendPairingRequest()
         
         if (Module.GetPeriphBrotherPos(SNr) != -1)
         {
-            snprintf(Buf, sizeof(Buf), "B%d", SNr); 
+            snprintf(Buf, sizeof(Buf), "Br%d", SNr); 
             doc[Buf] = Module.GetPeriphBrotherPos(SNr);
         }
     }
