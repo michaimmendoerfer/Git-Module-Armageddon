@@ -595,28 +595,26 @@ void SendSettings()
     SetMessageLED(2);
 
     JsonDocument doc; String jsondata; 
-    char buf[100]; 
     
     doc["Node"] = Module.GetName();   
 
     for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
     {
-        if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
+        switch (Module.GetPeriphType(SNr)) 
         {
-            if (Module.GetPeriphValue(SNr) == 0) doc[Module.GetPeriphName(SNr)] = "Off";
-            if (Module.GetPeriphValue(SNr) == 1) doc[Module.GetPeriphName(SNr)] = "On";
-        }
-        else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
-        {
-            //doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
-            doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
-            doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
-        }
-        else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) 
-        {
-            doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
-            doc["V-Div"] = Module.GetVoltageDevider();
-        }                      
+		case SENS_TYPE_SWITCH):	
+			Module.GetPeriphValue(SNr) ? doc[Module.GetPeriphName(SNr)] = "On" : doc[Module.GetPeriphName(SNr)] = "Off"; 
+			break
+		case SENS_TYPE_AMP:
+			//doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
+            		doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
+            		doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
+			break;
+		case SENS_TYPE_VOLT:
+			doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
+            		doc["V-Div"] = Module.GetVoltageDevider();
+			break;
+        }                                 
     }
   
     int Status = 0;
