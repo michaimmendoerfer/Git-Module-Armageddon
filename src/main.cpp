@@ -1273,70 +1273,70 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
         case SEND_CMD_SLEEPMODE_OFF:
             AddStatus("Sleep: off"); 
             SetSleepMode(false); 
-            SendMessage(); 
+            SendMessage(true, false, false); 
             break;
         case SEND_CMD_SLEEPMODE_TOGGLE:
             if (Module.GetSleepMode()) 
             { 
                 AddStatus("Sleep: off");   
                 SetSleepMode(false); 
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             else 
             { 
                 AddStatus("Sleep: on");    
                 SetSleepMode(true);  
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             break;
         case SEND_CMD_DEBUGMODE_ON:
             AddStatus("DebugMode: on");  
             SetDebugMode(true);  
             SaveModule();
-            SendMessage(); 
+            SendMessage(true, false, false); 
             break;
         case SEND_CMD_DEBUGMODE_OFF:
             AddStatus("DebugMode: off"); 
             SetDebugMode(false); 
             SaveModule();
-            SendMessage(); 
+            SendMessage(true, false, false); 
             break;
         case SEND_CMD_DEBUGMODE_TOGGLE:
             if (Module.GetDebugMode()) 
             {   
                 AddStatus("DebugMode: off");   
                 SetDebugMode(false); 
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             else 
             { 
                 AddStatus("DebugMode: on");    
                 SetDebugMode(true);  
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             break;
         case SEND_CMD_DEMOMODE_ON:
             AddStatus("Demo: on");   
             SetDemoMode(true);   
-            SendMessage(); 
+            SendMessage(true, false, false); 
             break;
         case SEND_CMD_DEMOMODE_OFF:
             AddStatus("Demo: off");  
             SetDemoMode(false);  
-            SendMessage(); 
+            SendMessage(true, false, false); 
             break;
         case SEND_CMD_DEMOMODE_TOGGLE:
             if (Module.GetDemoMode()) 
             { 
                 AddStatus("DemoMode: off"); 
                 SetDemoMode(false); 
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             else 
             { 
                 AddStatus("DemoMode: on");  
                 SetDemoMode(true);  
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             break;
         case SEND_CMD_RESET:
@@ -1354,7 +1354,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
         case SEND_CMD_PAIRMODE_ON:
             Module.SetPairMode(true);
             AddStatus("Pairing beginnt"); 
-            SendMessage(); 
+            SendMessage(true, false, false); 
             #ifdef ESP32_DISPLAY_480
               smartdisplay_led_set_rgb(1,0,0);
             #endif
@@ -1467,20 +1467,20 @@ void loop()
     {
         TSSend = millis();
         if (Module.GetPairMode()) SendPairingRequest();
-        else SendMessage();
+        else SendMessage(true, false, false);
     }
 
     if  (((millis() - TSStatus ) > STATUS_INTERVAL) or (NameChanged))          // Send status update (inclusive names)
     {
         TSStatus = millis();
         NameChanged = false;
-        SendStatus();
+        SendMessage(false, true, false);
     }
 
     if  ((millis() - TSSettings) > MSG_INTERVAL*5)                            // Send Settings
     {
         TSSettings = millis();
-        SendSettings();
+        SendMessage(false, false, true);
     }
 
     if (((millis() - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
