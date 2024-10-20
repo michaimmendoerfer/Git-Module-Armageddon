@@ -119,7 +119,7 @@ void   InitModule();
 
 float  ReadAmp (int A);
 float  ReadVolt(int V);
-void   SendMessage();
+void   SendMessage(bool, bool, bool);
 void   SendPairingRequest();
 
 void   UpdateSwitches();
@@ -570,15 +570,15 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
 	  {
 	    if (!Module.isPeriphEmpty(SNr)) 
 	    {
-	        snprintf(Buf, sizeof(Buf), "T%d", SNr); 
-	        doc[Buf] = Module.GetPeriphType(SNr);
-	        snprintf(Buf, sizeof(Buf), "N%d", SNr); 
-	        doc[Buf] = Module.GetPeriphName(SNr);
+	        snprintf(buf, sizeof(buf), "T%d", SNr); 
+	        doc[buf] = Module.GetPeriphType(SNr);
+	        snprintf(buf, sizeof(buf), "N%d", SNr); 
+	        doc[buf] = Module.GetPeriphName(SNr);
 	        
 	        if (Module.GetPeriphBrotherPos(SNr) != -1)
 	        {
-	            snprintf(Buf, sizeof(Buf), "Br%d", SNr); 
-	            doc[Buf] = Module.GetPeriphBrotherPos(SNr);
+	            snprintf(buf, sizeof(buf), "Br%d", SNr); 
+	            doc[buf] = Module.GetPeriphBrotherPos(SNr);
 	        }
 	    }
   	  }
@@ -590,18 +590,18 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
 	    {
 	        switch (Module.GetPeriphType(SNr)) 
 	        {
-			case SENS_TYPE_SWITCH):	
-				Module.GetPeriphValue(SNr) ? doc[Module.GetPeriphName(SNr)] = "On" : doc[Module.GetPeriphName(SNr)] = "Off"; 
-				break
-			case SENS_TYPE_AMP:
-				//doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
-	            		doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
-	            		doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
-				break;
-			case SENS_TYPE_VOLT:
-				doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
-	            		doc["V-Div"] = Module.GetVoltageDevider();
-				break;
+                case SENS_TYPE_SWITCH:	
+                    Module.GetPeriphValue(SNr) ? doc[Module.GetPeriphName(SNr)] = "1" : doc[Module.GetPeriphName(SNr)] = "0"; 
+                    break;
+                case SENS_TYPE_AMP:
+                    //doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
+                    doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
+                    doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
+                    break;
+                case SENS_TYPE_VOLT:
+                    doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
+                    doc["V-Div"] = Module.GetVoltageDevider();
+                    break;
 	        }                                 
 	    }
     }
@@ -624,7 +624,7 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
         {
             if (DEBUG_LEVEL > 2) Serial.printf("Sending to: %s ", Peer->GetName()); 
             
-            if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 200) == 0) 
+            if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) 
             {
                     if (DEBUG_LEVEL > 2) Serial.println("ESP_OK");  //Sending "jsondata" 
             } 
@@ -652,9 +652,9 @@ void SendSettings()
     {
         switch (Module.GetPeriphType(SNr)) 
         {
-		case SENS_TYPE_SWITCH):	
+		case SENS_TYPE_SWITCH:	
 			Module.GetPeriphValue(SNr) ? doc[Module.GetPeriphName(SNr)] = "On" : doc[Module.GetPeriphName(SNr)] = "Off"; 
-			break
+			break;
 		case SENS_TYPE_AMP:
 			//doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
             		doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
@@ -830,7 +830,7 @@ void SendConfirm(const uint8_t * mac, uint32_t TSConfirm)
 
     serializeJson(doc, jsondata); 
 
-    if (DEBUG_LEVEL > 2) Serial.printf("Sending Confirm (%d) to: %s ", TSConfirm, FindPeerByMAC(mac)->GetName()); 
+    if (DEBUG_LEVEL > 2) Serial.printf("%d: Sending Confirm (%d) to: %s ", millis(), TSConfirm, FindPeerByMAC(mac)->GetName()); 
             
     if (esp_now_send((u8 *) mac, (uint8_t *) jsondata.c_str(), 200) == 0) 
     {
@@ -955,7 +955,7 @@ void UpdateSwitches()
           if (DEBUG_LEVEL > 2) Serial.printf("Setze %s (Port:%d) auf %d", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr), Serial.print(Value));
       }
   }
-  SendMessage();
+  SendMessage(true, false, false);
 }
 void PrintMAC(const uint8_t * mac_addr)
 {
@@ -976,7 +976,7 @@ void GoToSleep()
     serializeJson(doc, jsondata);  
 
     esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
-    
+    delay(500);
     if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s", jsondata.c_str());
     AddStatus("Send Going to sleep..."); 
     
@@ -987,8 +987,8 @@ void GoToSleep()
     }
     
     #ifdef ESP32
-    gpio_deep_sleep_hold_en();
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) gpio_hold_en((gpio_num_t)Module.GetPeriphIOPort(SNr));  
+    //gpio_deep_sleep_hold_en();
+    //for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) gpio_hold_en((gpio_num_t)Module.GetPeriphIOPort(SNr));  
     
     esp_sleep_enable_timer_wakeup(SLEEP_INTERVAL * 1000);
     esp_deep_sleep_start();
@@ -1115,7 +1115,7 @@ void VoltageCalibration(int SNr, float V)
             snprintf(Buf, sizeof(Buf), "[%d] %s (Type: %d): Spannung ist jetzt: %.2fV", SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), (float)TempRead/Module.GetPeriphVin(SNr));
             AddStatus(Buf);
         }
-        SendCommand(SEND_CMD_CONFIRM_VOLT);
+        //SendCommand(SEND_CMD_CONFIRM_VOLT);
         SaveModule();
     }
 }
@@ -1162,7 +1162,7 @@ void CurrentCalibration()
         AddStatus(Buf);
       }
     }
-    SendCommand(SEND_CMD_CONFIRM_CURRENT);
+    //SendCommand(SEND_CMD_CONFIRM_CURRENT);
     SaveModule();
 }
 float ReadAmp (int SNr) 
@@ -1219,16 +1219,16 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
   String NewName     = "";
 
   jsondata = String(buff);                  //converting into STRING
-  
-  if (DEBUG_LEVEL > 2) { Serial.print("Recieved from: "); PrintMAC(mac); }
+  //Serial.println(jsondata);
+  if (DEBUG_LEVEL > 2) { Serial.printf("%d: Recieved from: ", millis()); PrintMAC(mac); }
   
   DeserializationError error = deserializeJson(doc, jsondata);
   
   if (!error) {
       String TempName = doc["Node"];
-      if (DEBUG_LEVEL > 2) Serial.printf("(%s) - %s\n\r", TempName, jsondata);    
+      if (DEBUG_LEVEL > 2) Serial.printf("(%s) - %s\n\r", TempName, jsondata.c_str());    
       
-      unint32_t TempTSConfirm = (uint32_t) doc["TSConfirm"];
+      uint32_t TempTSConfirm = (uint32_t) doc["TSConfirm"];
       if (TempTSConfirm) SendConfirm(mac, TempTSConfirm);
       
       switch ((int) doc["Order"]) 
@@ -1268,7 +1268,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
         case SEND_CMD_SLEEPMODE_ON:
             AddStatus("Sleep: on");  
             SetSleepMode(true);  
-            SendMessage(); 
+            SendMessage(true, false, false); 
             break;
         case SEND_CMD_SLEEPMODE_OFF:
             AddStatus("Sleep: off"); 
@@ -1477,7 +1477,7 @@ void loop()
         SendMessage(false, true, false);
     }
 
-    if  ((millis() - TSSettings) > MSG_INTERVAL*5)                            // Send Settings
+    if  ((millis() - TSSettings) > MSG_INTERVAL*5+500)                            // Send Settings
     {
         TSSettings = millis();
         SendMessage(false, false, true);
@@ -1499,6 +1499,12 @@ void loop()
             SetMessageLED(1);
         else
             SetMessageLED(0);
+    }
+
+    if (millis() > 10000)                // clear LED after LED interval
+    {
+        Serial.println("Try to sleep");
+        GoToSleep();
     }
 
     #ifdef PAIRING_BUTTON                                                       // check for Pairing/Reset Button
