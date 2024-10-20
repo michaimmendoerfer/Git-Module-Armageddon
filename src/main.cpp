@@ -289,10 +289,10 @@ void InitModule()
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true, false, false, 4,  RELAY_NORMAL, 14,  12,     5);
       //                      Name     Type            ADS  IO   NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    1,    0,  1.65,  0.066,  0,    0);
-      Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    1,    1,  1.65,  0.066,  0,    0);
-      Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    1,    2,  1.65,  0.066,  0,    0);
-      Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    3,  1.65,  0.066,  0,    0);
+      Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    1,    0,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    1,    1,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    1,    2,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    3,  2.5,  0.066,  0,    0);
       Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,   A0,   0,      0,   310,    0);  // 8266: 310 = 1023/3.3v
     #endif
     //works
@@ -490,7 +490,7 @@ void setup()
 }
 #pragma region Send-Things
 
-void SendMessage () 
+void SendMessage (bool SendValues, bool SendStatus, bool SendSettings) 
 {
     //sendet NAME0:Value0, NAME1:Value1... Status:(bitwise)int
     TSLed = millis();
@@ -501,61 +501,111 @@ void SendMessage ()
     float TempValue = 0;
 
     doc["Node"] = Module.GetName();   
-
-    for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
+	
+    if (SendValues)
     {
-        if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
-        {
-            dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
-        }
-        else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
-        {
-            if (Module.GetDemoMode()) 
-            {
-                Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                Module.SetPeriphValue(SNr, (float) random(0,300)/10);
-            }
-            else
-             {
-                TempValue = ReadAmp(SNr);
-                if (abs(TempValue) > 99) TempValue = -99;
-            
-                if (TempValue != Module.GetPeriphValue(SNr))
-                {   
-                    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                    Module.SetPeriphValue(SNr, TempValue);
-                }
-            }
-            
-            dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
-        }
-        else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) 
-        {
-            if (Module.GetDemoMode()) 
-            { 
-                Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                Module.SetPeriphValue(SNr, (float) random(90,150)/10);
-            }
-            else
-            {
-                TempValue = ReadVolt(SNr);
-                                
-                if (TempValue != Module.GetPeriphValue(SNr))
-                {   
-                    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-                    Module.SetPeriphValue(SNr, TempValue);
-                }
-            }                      
-            
-            dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
-            
-            char VinBuf[10];
-            dtostrf(Module.GetPeriphVin(SNr), 0, 2, VinBuf);
-            doc["Vin"] = VinBuf;
-        }
-        doc[Module.GetPeriphName(SNr)] = buf;
+	    for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
+	    {
+		if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
+		{
+		    dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
+		}
+		else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
+		{
+		    if (Module.GetDemoMode()) 
+		    {
+			Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+			Module.SetPeriphValue(SNr, (float) random(0,300)/10);
+		    }
+		    else
+		    {
+			TempValue = ReadAmp(SNr);
+			if (abs(TempValue) > 99) TempValue = -99;
+		    
+			if (TempValue != Module.GetPeriphValue(SNr))
+			{   
+			    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+			    Module.SetPeriphValue(SNr, TempValue);
+			}
+		    }
+		    
+		    dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
+		}
+		else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) 
+		{
+		    if (Module.GetDemoMode()) 
+		    { 
+			Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+			Module.SetPeriphValue(SNr, (float) random(90,150)/10);
+		    }
+		    else
+		    {
+			TempValue = ReadVolt(SNr);
+					
+			if (TempValue != Module.GetPeriphValue(SNr))
+			{   
+			    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+			    Module.SetPeriphValue(SNr, TempValue);
+			}
+		    }                      
+		    dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
+	    
+	    	    char VinBuf[10];
+	            dtostrf(Module.GetPeriphVin(SNr), 0, 2, VinBuf);
+	            doc["Vin"] = VinBuf;
+	        }
+		doc[Module.GetPeriphName(SNr)] = buf;
+	}
     }
+
+    if (SendStatus)
+    {
+	 // sendet auf Broadcast: "addme", T0:Type, N0:Name, T1:Type, N1:Name...
   
+	  doc["Type"]    = Module.GetType();
+	  doc["Version"] = Module.GetVersion();
+	  doc["Order"]   = SEND_CMD_STATUS;
+	  
+	  for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) 
+	  {
+	    if (!Module.isPeriphEmpty(SNr)) 
+	    {
+	        snprintf(Buf, sizeof(Buf), "T%d", SNr); 
+	        doc[Buf] = Module.GetPeriphType(SNr);
+	        snprintf(Buf, sizeof(Buf), "N%d", SNr); 
+	        doc[Buf] = Module.GetPeriphName(SNr);
+	        
+	        if (Module.GetPeriphBrotherPos(SNr) != -1)
+	        {
+	            snprintf(Buf, sizeof(Buf), "Br%d", SNr); 
+	            doc[Buf] = Module.GetPeriphBrotherPos(SNr);
+	        }
+	    }
+  	  }
+    }
+
+    if (SendSettings)
+    {
+	    for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
+	    {
+	        switch (Module.GetPeriphType(SNr)) 
+	        {
+			case SENS_TYPE_SWITCH):	
+				Module.GetPeriphValue(SNr) ? doc[Module.GetPeriphName(SNr)] = "On" : doc[Module.GetPeriphName(SNr)] = "Off"; 
+				break
+			case SENS_TYPE_AMP:
+				//doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
+	            		doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
+	            		doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
+				break;
+			case SENS_TYPE_VOLT:
+				doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
+	            		doc["V-Div"] = Module.GetVoltageDevider();
+				break;
+	        }                                 
+	    }
+    }
+	
     int Status = 0;
     if (Module.GetDebugMode())   bitSet(Status, 0);
     if (Module.GetSleepMode())   bitSet(Status, 1);
@@ -595,28 +645,26 @@ void SendSettings()
     SetMessageLED(2);
 
     JsonDocument doc; String jsondata; 
-    char buf[100]; 
     
     doc["Node"] = Module.GetName();   
 
     for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
     {
-        if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
+        switch (Module.GetPeriphType(SNr)) 
         {
-            if (Module.GetPeriphValue(SNr) == 0) doc[Module.GetPeriphName(SNr)] = "Off";
-            if (Module.GetPeriphValue(SNr) == 1) doc[Module.GetPeriphName(SNr)] = "On";
-        }
-        else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
-        {
-            //doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
-            doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
-            doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
-        }
-        else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) 
-        {
-            doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
-            doc["V-Div"] = Module.GetVoltageDevider();
-        }                      
+		case SENS_TYPE_SWITCH):	
+			Module.GetPeriphValue(SNr) ? doc[Module.GetPeriphName(SNr)] = "On" : doc[Module.GetPeriphName(SNr)] = "Off"; 
+			break
+		case SENS_TYPE_AMP:
+			//doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
+            		doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
+            		doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
+			break;
+		case SENS_TYPE_VOLT:
+			doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
+            		doc["V-Div"] = Module.GetVoltageDevider();
+			break;
+        }                                 
     }
   
     int Status = 0;
@@ -677,7 +725,45 @@ void SendPairingRequest()
         
         if (Module.GetPeriphBrotherPos(SNr) != -1)
         {
-            snprintf(Buf, sizeof(Buf), "B%d", SNr); 
+            snprintf(Buf, sizeof(Buf), "Br%d", SNr); 
+            doc[Buf] = Module.GetPeriphBrotherPos(SNr);
+        }
+    }
+  }
+  serializeJson(doc, jsondata);  
+
+  esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  
+  
+  if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata.c_str()); 
+  
+  AddStatus("Send Pairing request...");                                     
+}
+void SendStatus() 
+{
+  // sendet auf Status mit Namen an alle bekannten Peers
+  digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
+
+  TSLed = millis();
+  SetMessageLED(3);
+  
+  JsonDocument doc; String jsondata; 
+  char Buf[100] = {};
+
+  doc["Node"]    = Module.GetName();   
+  doc["Type"]    = Module.GetType();
+  doc["Version"] = Module.GetVersion();
+  doc["Order"]   = SEND_CMD_STATUS;
+  
+  for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) {
+    if (!Module.isPeriphEmpty(SNr)) {
+        snprintf(Buf, sizeof(Buf), "T%d", SNr); 
+        doc[Buf] = Module.GetPeriphType(SNr);
+        snprintf(Buf, sizeof(Buf), "N%d", SNr); 
+        doc[Buf] = Module.GetPeriphName(SNr);
+        
+        if (Module.GetPeriphBrotherPos(SNr) != -1)
+        {
+            snprintf(Buf, sizeof(Buf), "Br%d", SNr); 
             doc[Buf] = Module.GetPeriphBrotherPos(SNr);
         }
     }
@@ -1140,16 +1226,10 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
   
   if (!error) {
       String TempName = doc["Node"];
-      if (DEBUG_LEVEL > 2) {
-          Serial.print("("); Serial.print(TempName); Serial.print(") - ");
-          Serial.println(jsondata);    
-      }
+      if (DEBUG_LEVEL > 2) Serial.printf("(%s) - %s\n\r", TempName, jsondata);    
       
-      if (doc.containsKey("TSConfirm"))
-      {
-          SendConfirm(mac, (uint32_t) doc["TSConfirm"]);
-      }
-
+      unint32_t TempTSConfirm = (uint32_t) doc["TSConfirm"];
+      if (TempTSConfirm) SendConfirm(mac, TempTSConfirm);
       
       switch ((int) doc["Order"]) 
       {
@@ -1193,76 +1273,76 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
         case SEND_CMD_SLEEPMODE_OFF:
             AddStatus("Sleep: off"); 
             SetSleepMode(false); 
-            SendMessage(); 
+            SendMessage(true, false, false); 
             break;
         case SEND_CMD_SLEEPMODE_TOGGLE:
             if (Module.GetSleepMode()) 
             { 
                 AddStatus("Sleep: off");   
                 SetSleepMode(false); 
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             else 
             { 
                 AddStatus("Sleep: on");    
                 SetSleepMode(true);  
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             break;
         case SEND_CMD_DEBUGMODE_ON:
             AddStatus("DebugMode: on");  
             SetDebugMode(true);  
             SaveModule();
-            SendMessage(); 
+            SendMessage(true, false, false); 
             break;
         case SEND_CMD_DEBUGMODE_OFF:
             AddStatus("DebugMode: off"); 
             SetDebugMode(false); 
             SaveModule();
-            SendMessage(); 
+            SendMessage(true, false, false); 
             break;
         case SEND_CMD_DEBUGMODE_TOGGLE:
             if (Module.GetDebugMode()) 
             {   
                 AddStatus("DebugMode: off");   
                 SetDebugMode(false); 
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             else 
             { 
                 AddStatus("DebugMode: on");    
                 SetDebugMode(true);  
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             break;
         case SEND_CMD_DEMOMODE_ON:
             AddStatus("Demo: on");   
             SetDemoMode(true);   
-            SendMessage(); 
+            SendMessage(true, false, false); 
             break;
         case SEND_CMD_DEMOMODE_OFF:
             AddStatus("Demo: off");  
             SetDemoMode(false);  
-            SendMessage(); 
+            SendMessage(true, false, false); 
             break;
         case SEND_CMD_DEMOMODE_TOGGLE:
             if (Module.GetDemoMode()) 
             { 
                 AddStatus("DemoMode: off"); 
                 SetDemoMode(false); 
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             else 
             { 
                 AddStatus("DemoMode: on");  
                 SetDemoMode(true);  
-                SendMessage(); 
+                SendMessage(true, false, false); 
             }
             break;
         case SEND_CMD_RESET:
             AddStatus("Clear all"); 
             #ifdef ESP32
-                ClearPeers(); ClearInit();nvs_flash_erase(); nvs_flash_init();
+                ClearPeers(); ClearInit(); nvs_flash_erase(); nvs_flash_init();
             #elif defined(ESP8266)
                 ClearPeers(); ClearInit();
             #endif
@@ -1274,7 +1354,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
         case SEND_CMD_PAIRMODE_ON:
             Module.SetPairMode(true);
             AddStatus("Pairing beginnt"); 
-            SendMessage(); 
+            SendMessage(true, false, false); 
             #ifdef ESP32_DISPLAY_480
               smartdisplay_led_set_rgb(1,0,0);
             #endif
@@ -1387,20 +1467,20 @@ void loop()
     {
         TSSend = millis();
         if (Module.GetPairMode()) SendPairingRequest();
-        else SendMessage();
+        else SendMessage(true, false, false);
     }
 
     if  (((millis() - TSStatus ) > STATUS_INTERVAL) or (NameChanged))          // Send status update (inclusive names)
     {
         TSStatus = millis();
         NameChanged = false;
-        SendPairingRequest();
+        SendMessage(false, true, false);
     }
 
     if  ((millis() - TSSettings) > MSG_INTERVAL*5)                            // Send Settings
     {
         TSSettings = millis();
-        SendSettings();
+        SendMessage(false, false, true);
     }
 
     if (((millis() - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
