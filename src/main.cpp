@@ -67,7 +67,7 @@ const int DEBUG_LEVEL = 3;
 
 const char _Version[]           = "3.71";
 const char _Protokoll_Version[] = "1.12";
-const char _ModuleName[]        = "S10-1";
+const char _ModuleName[]        = "s3-test";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -103,11 +103,11 @@ Preferences preferences;
 
 #pragma region Functions
 #ifdef ESP32 
-    void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len);
+    void OnDataRecv(const esp_now_recv_info *info, const uint8_t* incomingData, int len);
 #elif defined(ESP8266)
     void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len);
 #endif
-void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len);
+//void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len);
 #ifdef ESP32 
     void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status); 
 #elif defined(ESP8266)
@@ -1352,9 +1352,9 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
     }
 }
 #ifdef ESP32 
-void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len)
+void OnDataRecv(const esp_now_recv_info *info, const uint8_t* incomingData, int len)
 {
-    OnDataRecvCommon(mac, incomingData, len);
+    OnDataRecvCommon(info->src_addr, incomingData, len);
 }
 #elif defined(ESP8266)
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) 
@@ -1445,7 +1445,7 @@ void loop()
                 }
             }
         }
-        else TSButton = 0;
+        else TSButton = 0; 
     #endif
 
     #ifdef ESP32_DISPLAY_480                                                    // start ui if module has display
