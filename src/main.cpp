@@ -66,7 +66,7 @@ const int DEBUG_LEVEL = 3;
 #pragma endregion Includes
 
 const char _Version[]           = "3.71";
-const char _Protokoll_Version[] = "1.12";
+const char _Protokoll_Version[] = "1.20";
 const char _ModuleName[]        = "s3-test";
 const bool _LED_SIGNAL          = true;
 
@@ -1503,8 +1503,8 @@ void loop()
 
     if (millis() > 10000)                // clear LED after LED interval
     {
-        Serial.println("Try to sleep");
-        GoToSleep();
+        //Serial.println("Try to sleep");
+        //GoToSleep();
     }
 
     #ifdef PAIRING_BUTTON                                                       // check for Pairing/Reset Button
