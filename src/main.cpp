@@ -67,7 +67,7 @@ const int DEBUG_LEVEL = 3;
 
 const char _Version[]           = "3.71";
 const char _Protokoll_Version[] = "1.20";
-const char _ModuleName[]        = "s3-test";
+const char _ModuleName[]        = "JL-Bat";
 const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
@@ -289,11 +289,11 @@ void InitModule()
       //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
       Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true, false, false, 4,  RELAY_NORMAL, 14,  12,     5);
       //                      Name     Type            ADS  IO   NULL   VpA   Vin  PeerID
-      Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    1,    0,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    1,    0,  2.5,  0.040,  0,    0);
       Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    1,    1,  2.5,  0.066,  0,    0);
       Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    1,    2,  2.5,  0.066,  0,    0);
       Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    3,  2.5,  0.066,  0,    0);
-      Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,   A0,   0,      0,   310,    0);  // 8266: 310 = 1023/3.3v
+      Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,   A0,   0,      0,   333,    0);  // 8266: 310 = 1023/3.3v
     #endif
     //works
     #ifdef ESP8266_MODULE_4S_INTEGRATED       // 4-way Switch - 8266 onBoard +++++++ ############################################################
@@ -639,67 +639,7 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
 
   //AddStatus("SendStatus");
 }
-void SendSettings() 
-{
-    TSLed = millis();
-    SetMessageLED(2);
 
-    JsonDocument doc; String jsondata; 
-    
-    doc["Node"] = Module.GetName();   
-
-    for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
-    {
-        switch (Module.GetPeriphType(SNr)) 
-        {
-		case SENS_TYPE_SWITCH:	
-			Module.GetPeriphValue(SNr) ? doc[Module.GetPeriphName(SNr)] = "On" : doc[Module.GetPeriphName(SNr)] = "Off"; 
-			break;
-		case SENS_TYPE_AMP:
-			//doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
-            		doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
-            		doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
-			break;
-		case SENS_TYPE_VOLT:
-			doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
-            		doc["V-Div"] = Module.GetVoltageDevider();
-			break;
-        }                                 
-    }
-  
-    int Status = 0;
-    if (Module.GetDebugMode())   bitSet(Status, 0);
-    if (Module.GetSleepMode())   bitSet(Status, 1);
-    if (Module.GetDemoMode())    bitSet(Status, 2);
-    if (Module.GetPairMode())    bitSet(Status, 3);    
-    
-    doc["Status"]  = Status;
-
-    serializeJson(doc, jsondata);  
-
-    for (int PNr=0; PNr<PeerList.size(); PNr++) 
-    {
-        PeerClass *Peer = PeerList.get(PNr);
-
-        if (Peer->GetType() >= MONITOR_ROUND)
-        {
-            if (DEBUG_LEVEL > 2) Serial.printf("Sending to: %s ", Peer->GetName()); 
-            
-            if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 200) == 0) 
-            {
-                    if (DEBUG_LEVEL > 2) Serial.println("ESP_OK");  //Sending "jsondata" 
-            } 
-            else 
-            {
-                    if (DEBUG_LEVEL > 0) Serial.println("ESP_ERROR"); 
-            }     
-            
-            if (DEBUG_LEVEL > 2) Serial.println(jsondata);
-        }
-    }
-
-  //AddStatus("SendStatus");
-}
 void SendPairingRequest() 
 {
   // sendet auf Broadcast: "addme", T0:Type, N0:Name, T1:Type, N1:Name...
