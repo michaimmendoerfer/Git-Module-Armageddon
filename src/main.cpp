@@ -602,10 +602,16 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
                     //doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
                     doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
                     doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
+			 #ifdef ADS_USED
+				doc[ArrRaw[SNr] = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr);
+			#else
+				analogRead(Module.GetPeriphIOPort(SNr));
+			#endif
                     break;
                 case SENS_TYPE_VOLT:
                     doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
                     doc["V-Div"] = Module.GetVoltageDevider();
+			doc[ArrRaw[SNr] = analogRead(Module.GetPeriphIOPort(SNr));
                     break;
 	        }                                 
 	    }
@@ -1071,11 +1077,6 @@ void CurrentCalibration()
     for(int SNr=0; SNr<MAX_PERIPHERALS; SNr++) {
       if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) {
         float TempVolt = 0;
-        int   MaxValue = 1023;
-
-        #ifdef ESP32
-            MaxValue = 4095;
-        #endif    
         
         #ifdef ADS_USED
             for (int i=0; i<20; i++) 
@@ -1093,7 +1094,7 @@ void CurrentCalibration()
             }
             TempVal /= 20;
             
-            TempVolt = 3.3/MaxValue*TempVal; // 1.5???  
+            TempVolt = BOARD_VOLTAGE/BOARD_ANALOG_MAX*TempVal; // 1.5???  
         #endif
 
         if (DEBUG_LEVEL > 2) { 
