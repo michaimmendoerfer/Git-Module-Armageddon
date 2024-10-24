@@ -47,9 +47,13 @@ const int DEBUG_LEVEL = 3;
     #include <WiFi.h>
     #include <nvs_flash.h>
     #define u8 unsigned char
+	BOARD_VOLTAGE = 3.3;
+	BOARD_ANALOG_MAX = 4095;
 #elif defined(ESP8266)
     #include <ESP8266WiFi.h>
     #include <espnow.h>
+	BOARD_VOLTAGE = 3.3;
+	BOARD_ANALOG_MAX = 1023;
 #endif 
 
 #include <LinkedList.h>
@@ -73,6 +77,7 @@ const bool _LED_SIGNAL          = true;
 #pragma region Globals
 
 char *ArrNullwert[MAX_PERIPHERALS] = {"NW0", "NW1", "NW2", "NW3", "NW4", "NW5", "NW6", "NW7", "NW8"};
+char *ArrRaw[MAX_PERIPHERALS] = {"Raw0", "Raw1", "Raw2", "Raw3", "Raw4", "Raw5", "Raw6", "Raw7", "Raw8"};
 char *ArrVperAmp[MAX_PERIPHERALS] = {"VpA0", "VpA1", "VpA2", "VpA3", "VpA4", "VpA5", "VpA6", "VpA7", "VpA8"};
 char *ArrVin[MAX_PERIPHERALS] = {"Vin0", "Vin1", "Vin2", "Vin3", "Vin4", "Vin5", "Vin6", "Vin7", "Vin8"};
 
@@ -1118,7 +1123,7 @@ float ReadAmp (int SNr)
         delay(10);
     #else
         TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
-        TempVolt = 3.3/4095*TempVal;
+        TempVolt = BOARD_VOLTAGE/BOARD_ANALOG_MAX*TempVal;
         TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * Module.GetVoltageDevider();// 1.5 wegen Voltage-Devider
         delay(10);
     #endif
