@@ -653,8 +653,11 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
                     break;
                 case SENS_TYPE_AMP:
                     //doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
-                    doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
-                    doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
+                    dtostrf(Module.GetPeriphNullwert(SNr), 0, 3, buf);
+                    doc[ArrNullwert[SNr]] = buf;
+                    dtostrf(Module.GetPeriphVperAmp(SNr), 0, 3, buf);
+                    doc[ArrVperAmp[SNr]]  = buf;
+                    
                     #ifdef ADS_USED
                         doc[ArrRaw[SNr]] = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
                     #else
@@ -662,7 +665,8 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
                     #endif
                     break;
                 case SENS_TYPE_VOLT:
-                    doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
+                    dtostrf(Module.GetPeriphVin(SNr), 0, 0, buf);
+                    doc[ArrVin[SNr]] = buf;
                     doc["V-Div"] = Module.GetVoltageDevider();
 			        doc[ArrRaw[SNr]] = analogRead(Module.GetPeriphIOPort(SNr));
                     break;
