@@ -65,6 +65,7 @@ const int DEBUG_LEVEL = 3;
 #if defined(PORT_USED) || defined(ADS_USED)
     #include <Wire.h>
     #include <Spi.h>
+    TwoWire I2C_1 = TwoWire();
 #endif
     
 #pragma endregion Includes
@@ -340,17 +341,9 @@ void InitModule()
 }
 void setup()
 {
-    Serial.println("Begin Setup");
-
-    #if defined(PORT_USED) || defined(ADS_USED)
-        Wire.begin(SDA_PIN, SCL_PIN);
-    #endif
-
-    Serial.println("Wire ini fertg");
-
-    #ifdef ARDUINO_USB_CDC_ON_BOOT
-        delay(3000);
-    #endif
+    //#ifdef ARDUINO_USB_CDC_ON_BOOT
+    //    delay(3000);
+    //#endif
     
     #ifdef ESP32
         Serial.begin(460800);
@@ -361,7 +354,58 @@ void setup()
             Serial.begin(74880);
         #endif
     #endif
+    while (!Serial);
+
+    Serial.println("Begin Setup");
+
+    #if defined(PORT_USED) || defined(ADS_USED)
+        //Wire.begin(SDA_PIN, SCL_PIN);
+        byte error, address;
+        int nDevices;
+        Serial.println("Scanning...");
+        nDevices = 0;
+
+        I2C_1.begin(SDA_PIN, SCL_PIN, I2C_FREQ);
+
+        for(address = 1; address < 127; address++ )
+        {
+            // The i2c_scanner uses the return value of
+            // the Write.endTransmisstion to see if
+            // a device did acknowledge to the address.
+            I2C_1.beginTransmission(address);
+            error = I2C_1.endTransmission();
+            if (error == 0)
+            {
+            Serial.print("I2C device found at address 0x");
+            if (address<16)
+                Serial.print("0");
+            Serial.print(address,HEX);
+            Serial.println("  !");
+            nDevices++;
+            }
+            else if (error==4)
+            {
+            Serial.print("Unknown error at address 0x");
+            if (address<16)
+                Serial.print("0");
+            Serial.println(address,HEX);
+            }    
+        }
+        if (nDevices == 0)
+        {
+            Serial.println("No I2C devices found\n");
+            while(1);
+        }
+        else
+        {
+            Serial.println("done\n");
+            delay(1000);
+        }
+    #endif
     
+    Serial.println("Wire init fertg");
+    delay(1000);
+
     pinMode(LED_PIN, OUTPUT);
 
     #ifdef PAIRING_BUTTON
@@ -369,16 +413,21 @@ void setup()
     #endif
     
     LEDBlink(3, 3, 100);
+    delay(1000);
+    Serial.println("Blink fertg");
+    delay(1000);
+    
     
     if (DEBUG_LEVEL > 0)                        // Show free entries
     {
         preferences.begin("JeepifyInit", true);
-            if (DEBUG_LEVEL > 0) Serial.printf("free entries in JeepifyInit now: %d\n\r", preferences.freeEntries());
+            Serial.printf("free entries in JeepifyInit now: %d\n\r", preferences.freeEntries());
         preferences.end();
         preferences.begin("JeepifyPeers", true);
-            if (DEBUG_LEVEL > 0) Serial.printf("free entries in JeepifyPeers now: %d\n\r", preferences.freeEntries());
+            Serial.printf("free entries in JeepifyPeers now: %d\n\r", preferences.freeEntries());
         preferences.end();
     }
+    delay(1000);
     
     #ifdef ESP32_DISPLAY_480
         smartdisplay_init();
@@ -1083,12 +1132,12 @@ void CurrentCalibration()
         float TempVolt = 0;
         
         #ifdef ADS_USED
-            for (int i=0; i<20; i++) 
+            //for (int i=0; i<20; i++) 
             {
                 TempVolt += ADSBoard.computeVolts(ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr)));
                 delay(10);
             }
-            TempVolt /= 20;
+            //TempVolt /= 20;
         #else
             int TempVal = 0;
             for (int i=0; i<20; i++) 
@@ -1189,6 +1238,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 if (esp_now_is_peer_exist((u8 *) mac)) 
                 { 
                     if (DEBUG_LEVEL > 0) { PrintMAC(mac); Serial.println(" already exists..."); }
+                    Module.SetPairMode(false);
                 }
                 else 
                 {
@@ -1420,14 +1470,14 @@ void loop()
         else SendMessage(true, false, false);
     }
 
-    if  (((millis() - TSStatus ) > STATUS_INTERVAL) or (NameChanged))          // Send status update (inclusive names)
+    if  (((millis() - TSStatus ) > STATUS_INTERVAL+333) or (NameChanged))          // Send status update (inclusive names)
     {
         TSStatus = millis();
         NameChanged = false;
         SendMessage(false, true, false);
     }
 
-    if  ((millis() - TSSettings) > MSG_INTERVAL*5+500)                            // Send Settings
+    if  ((millis() - TSSettings) > MSG_INTERVAL*5+666)                            // Send Settings
     {
         TSSettings = millis();
         SendMessage(false, false, true);
