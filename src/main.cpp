@@ -52,8 +52,8 @@ const int DEBUG_LEVEL = 3;
 #elif defined(ESP8266)
     #include <ESP8266WiFi.h>
     #include <espnow.h>
-	BOARD_VOLTAGE = 3.3;
-	BOARD_ANALOG_MAX = 1023;
+	#define BOARD_VOLTAGE 3.3
+	#define BOARD_ANALOG_MAX 1023
 #endif 
 
 #include <LinkedList.h>
@@ -340,9 +340,13 @@ void InitModule()
 }
 void setup()
 {
+    Serial.println("Begin Setup");
+
     #if defined(PORT_USED) || defined(ADS_USED)
         Wire.begin(SDA_PIN, SCL_PIN);
     #endif
+
+    Serial.println("Wire ini fertg");
 
     #ifdef ARDUINO_USB_CDC_ON_BOOT
         delay(3000);
@@ -354,7 +358,7 @@ void setup()
         #ifdef BAUD
             Serial.begin(BAUD);
         #else
-            Serial.begin(115200);
+            Serial.begin(74880);
         #endif
     #endif
     
@@ -602,16 +606,16 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
                     //doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
                     doc[ArrNullwert[SNr]] = Module.GetPeriphNullwert(SNr);
                     doc[ArrVperAmp[SNr]]  = Module.GetPeriphVperAmp(SNr);
-			 #ifdef ADS_USED
-				doc[ArrRaw[SNr] = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr);
-			#else
-				analogRead(Module.GetPeriphIOPort(SNr));
-			#endif
+                    #ifdef ADS_USED
+                        doc[ArrRaw[SNr]] = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
+                    #else
+                        analogRead(Module.GetPeriphIOPort(SNr));
+                    #endif
                     break;
                 case SENS_TYPE_VOLT:
                     doc[ArrVin[SNr]] = Module.GetPeriphVin(SNr);
                     doc["V-Div"] = Module.GetVoltageDevider();
-			doc[ArrRaw[SNr] = analogRead(Module.GetPeriphIOPort(SNr));
+			        doc[ArrRaw[SNr]] = analogRead(Module.GetPeriphIOPort(SNr));
                     break;
 	        }                                 
 	    }
@@ -1094,7 +1098,7 @@ void CurrentCalibration()
             }
             TempVal /= 20;
             
-            TempVolt = BOARD_VOLTAGE/BOARD_ANALOG_MAX*TempVal; // 1.5???  
+            TempVolt = BOARD_VOLTAGE / BOARD_ANALOG_MAX * TempVal; // 1.5???  
         #endif
 
         if (DEBUG_LEVEL > 2) { 
@@ -1172,7 +1176,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
   
   if (!error) {
       String TempName = doc["Node"];
-      if (DEBUG_LEVEL > 2) Serial.printf("(%s) - %s\n\r", TempName, jsondata.c_str());    
+      if (DEBUG_LEVEL > 2) Serial.printf("(%s) - %s\n\r", TempName.c_str(), jsondata.c_str());    
       
       uint32_t TempTSConfirm = (uint32_t) doc["TSConfirm"];
       if (TempTSConfirm) SendConfirm(mac, TempTSConfirm);
