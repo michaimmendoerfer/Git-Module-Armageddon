@@ -47,8 +47,6 @@ const int DEBUG_LEVEL = 3;
     #include <WiFi.h>
     #include <nvs_flash.h>
     #define u8 unsigned char
-	BOARD_VOLTAGE = 3.3;
-	BOARD_ANALOG_MAX = 4095;
 #elif defined(ESP8266)
     #include <ESP8266WiFi.h>
     #include <espnow.h>
@@ -65,15 +63,9 @@ const int DEBUG_LEVEL = 3;
 #if defined(PORT_USED) || defined(ADS_USED)
     #include <Wire.h>
     #include <Spi.h>
-    TwoWire I2C_1 = TwoWire();
 #endif
     
 #pragma endregion Includes
-
-const char _Version[]           = "3.71";
-const char _Protokoll_Version[] = "1.20";
-const char _ModuleName[]        = "JL-Bat";
-const bool _LED_SIGNAL          = true;
 
 #pragma region Globals
 
@@ -162,6 +154,19 @@ void InitModule()
     ESP32 C3 Mini:
     don´t use 2, 8, 9
     */
+
+   #ifdef MODULE_JL_BATTERY_SENSOR_C3           // 4-way Battery-Sensor with ADS and VMon C3 #########################################################
+      // 4x acs712(30A) over ADC1115, Voltage-Monitor:A0
+      #define SWITCHES_PER_SCREEN 4
+      //                Name        Type         Version  Address   sleep  debug  demo  pair  vMon RelayType    adc1 adc2 voltagedevier 
+      Module.Setup(_ModuleName, BATTERY_SENSOR, _Version, NULL,     false, true, false, false, 4,  RELAY_NORMAL, 14,  12,     5);
+      //                      Name     Type            ADS  IO   NULL   VpA   Vin  PeerID
+      Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    1,    3,  2.53, 0.040,  0,    0);
+      Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    1,    2,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    1,    1,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    0,  2.5,  0.066,  0,    0);
+      Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,    1,   0,      0,   BOARD_ANALOG_MAX/BOARD_VOLTAGE,    0);  // 8266: 310 = 4095/3.3v
+    #endif
 
     #ifdef ESP32_MODULE_2S_2A_1V_ADS      // Mixed-Module 2 Relays with Sensor over adc and VMon ######################################################################
         #define SWITCHES_PER_SCREEN 2
@@ -365,15 +370,15 @@ void setup()
         Serial.println("Scanning...");
         nDevices = 0;
 
-        I2C_1.begin(SDA_PIN, SCL_PIN, I2C_FREQ);
+        Wire.begin(SDA_PIN, SCL_PIN, I2C_FREQ);
 
         for(address = 1; address < 127; address++ )
         {
             // The i2c_scanner uses the return value of
             // the Write.endTransmisstion to see if
             // a device did acknowledge to the address.
-            I2C_1.beginTransmission(address);
-            error = I2C_1.endTransmission();
+            Wire.beginTransmission(address);
+            error = Wire.endTransmission();
             if (error == 0)
             {
             Serial.print("I2C device found at address 0x");
@@ -407,6 +412,7 @@ void setup()
     delay(1000);
 
     pinMode(LED_PIN, OUTPUT);
+    //pinMode(10, INPUT);
 
     #ifdef PAIRING_BUTTON
         pinMode(PAIRING_BUTTON, INPUT_PULLUP); 
@@ -414,7 +420,7 @@ void setup()
     
     LEDBlink(3, 3, 100);
     delay(1000);
-    Serial.println("Blink fertg");
+    Serial.println("Blink fertig");
     delay(1000);
     
     
@@ -746,44 +752,7 @@ void SendPairingRequest()
   
   AddStatus("Send Pairing request...");                                     
 }
-void SendStatus() 
-{
-  // sendet auf Status mit Namen an alle bekannten Peers
-  digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
 
-  TSLed = millis();
-  SetMessageLED(3);
-  
-  JsonDocument doc; String jsondata; 
-  char Buf[100] = {};
-
-  doc["Node"]    = Module.GetName();   
-  doc["Type"]    = Module.GetType();
-  doc["Version"] = Module.GetVersion();
-  doc["Order"]   = SEND_CMD_STATUS;
-  
-  for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) {
-    if (!Module.isPeriphEmpty(SNr)) {
-        snprintf(Buf, sizeof(Buf), "T%d", SNr); 
-        doc[Buf] = Module.GetPeriphType(SNr);
-        snprintf(Buf, sizeof(Buf), "N%d", SNr); 
-        doc[Buf] = Module.GetPeriphName(SNr);
-        
-        if (Module.GetPeriphBrotherPos(SNr) != -1)
-        {
-            snprintf(Buf, sizeof(Buf), "Br%d", SNr); 
-            doc[Buf] = Module.GetPeriphBrotherPos(SNr);
-        }
-    }
-  }
-  serializeJson(doc, jsondata);  
-
-  esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  
-  
-  if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata.c_str()); 
-  
-  AddStatus("Send Pairing request...");                                     
-}
 void SendCommand(int Command) 
 {
     digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
