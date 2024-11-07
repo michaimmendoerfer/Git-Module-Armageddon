@@ -2,17 +2,19 @@
 
 // DEBUG_LEVEL: 0 = nothing, 1 = only Errors, 2 = relevant changes, 3 = all
 const int DEBUG_LEVEL = 3; 
+const int _LED_SIGNAL = 1;
 
 #pragma region Includes
 #include <Arduino.h>
-#include <Module_Definitions.h>
+#include <Module.h>
 
-#ifdef ESP32_DISPLAY_480
+#ifdef MODULE_TERMINATOR_PRO
     #include <esp32_smartdisplay.h>
-    #define ADS_USED  1
-    #define PORT_USED 1
+#endif
+#ifdef MODULA_HAS_DISPLAY
     #include <ui/ui.h>
 #endif
+
 #ifdef MRD_USED
     #ifdef ESP8266 // ESP8266_MRD_USE_RTC false
         #define ESP8266_MRD_USE_RTC   false  
@@ -26,21 +28,22 @@ const int DEBUG_LEVEL = 3;
     #include <ESP_MultiResetDetector.h>
     MultiResetDetector* mrd;
 #endif
-#pragma region I2C_BUS
-#define I2C_FREQ 400000
-#define ADS_ADDRESS  0x48
-#define PORT_ADDRESS 0x20
 
-#ifdef ADS_USED
-    #include <Adafruit_ADS1X15.h>
-    Adafruit_ADS1115 ADSBoard;
-#endif
-
-#ifdef PORT_USED
+#if defined(PORT_USED) || defined(ADC_USED)
+    #include <Wire.h>
+    #include <Spi.h>
+    #define I2C_FREQ 400000
+    #ifdef ADC_USED
+        #include <Adafruit_ADS1X15.h>
+        Adafruit_ADS1115 ADCBoard;
+        #define ADC_ADDRESS  0x48
+    #endif
+    #ifdef PORT_USED
     #include "PCF8575.h"
-    PCF8575 IOBoard(PORT_ADDRESS, SDA_PIN, SCL_PIN);
+        PCF8575 IOBoard(PORT_ADDRESS, SDA_PIN, SCL_PIN);
+        #define PORT_ADDRESS 0x20
+    #endif
 #endif
-#pragma endregion I2C_BUS
 
 #ifdef ESP32
     #include <esp_now.h>
@@ -60,10 +63,6 @@ const int DEBUG_LEVEL = 3;
 #include "pref_manager.h"
 #include <Preferences.h>
 #include <ArduinoJson.h>
-#if defined(PORT_USED) || defined(ADS_USED)
-    #include <Wire.h>
-    #include <Spi.h>
-#endif
     
 #pragma endregion Includes
 
@@ -113,7 +112,7 @@ Preferences preferences;
 #endif
 void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len);
 
-void   InitModule();
+void   InitModule2();
 
 float  ReadAmp (int A);
 float  ReadVolt(int V);
@@ -136,7 +135,7 @@ void   LEDBlink(int Color, int n, uint8_t ms);
 
 #pragma endregion Functions
 
-void InitModule()
+void InitModule2()
 {    
     ////////////////////////////////////////////////////////
     ////////////// ESP32 ///////////////////////////////////
@@ -344,27 +343,9 @@ void InitModule()
         }
     }
 }
-void setup()
+void InitSCL()
 {
-    //#ifdef ARDUINO_USB_CDC_ON_BOOT
-    //    delay(3000);
-    //#endif
-    
-    #ifdef ESP32
-        Serial.begin(460800);
-    #elif defined(ESP8266)
-        #ifdef BAUD
-            Serial.begin(BAUD);
-        #else
-            Serial.begin(74880);
-        #endif
-    #endif
-    while (!Serial);
-
-    Serial.println("Begin Setup");
-
-    #if defined(PORT_USED) || defined(ADS_USED)
-        //Wire.begin(SDA_PIN, SCL_PIN);
+    #if defined(PORT_USED) || defined(ADC_USED)
         byte error, address;
         int nDevices;
         Serial.println("Scanning...");
@@ -407,22 +388,47 @@ void setup()
             delay(1000);
         }
     #endif
-    
-    Serial.println("Wire init fertg");
-    delay(1000);
 
-    pinMode(LED_PIN, OUTPUT);
-    //pinMode(10, INPUT);
-
-    #ifdef PAIRING_BUTTON
-        pinMode(PAIRING_BUTTON, INPUT_PULLUP); 
+    #ifdef PORT_USED                            // init IOBoard
+	      if (!IOBoard.begin())
+          {
+                if (DEBUG_LEVEL > 0) Serial.println("IOBoard not found!");
+                while (1);
+          }
+          else 
+          {
+                if (DEBUG_LEVEL > 1) Serial.println("IOBoard initialised.");
+          }
     #endif
+    #ifdef ADC_USED                             // init ADS
+        ADSBoard.setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
+        if (!ADSBoard.begin(ADC_ADDRESS)) { 
+          if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
+          while (1);
+        }
+        else
+        {
+            if (DEBUG_LEVEL > 1) Serial.println("ADS initialised.");
+        }
+    #endif
+}
+
+void setup()
+{
+    //#ifdef ARDUINO_USB_CDC_ON_BOOT
+    //    delay(3000);
+    //#endif
     
+    #ifdef ESP32
+        Serial.begin(460800);
+    #elif defined(ESP8266)
+        Serial.begin(74880);
+    #endif
+
+    while (!Serial);
+
+    InitSCL();
     LEDBlink(3, 3, 100);
-    delay(1000);
-    Serial.println("Blink fertig");
-    delay(1000);
-    
     
     if (DEBUG_LEVEL > 0)                        // Show free entries
     {
@@ -433,9 +439,8 @@ void setup()
             Serial.printf("free entries in JeepifyPeers now: %d\n\r", preferences.freeEntries());
         preferences.end();
     }
-    delay(1000);
     
-    #ifdef ESP32_DISPLAY_480
+    #ifdef MODULE_TERMINATOR_PRO
         smartdisplay_init();
 
         __attribute__((unused)) auto disp = lv_disp_get_default();
@@ -443,26 +448,7 @@ void setup()
     #endif
 
     InitModule();
-    LEDBlink(3, 1, 100);
-
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) // Set pinModes
-    { 
-        switch (Module.GetPeriphType(SNr)) {
-            case SENS_TYPE_SWITCH: 
-                #ifdef PORT_USED
-                    IOBoard.pinMode(Module.GetPeriphIOPort(SNr), OUTPUT);
-                #else
-                    pinMode(Module.GetPeriphIOPort(SNr), OUTPUT); 
-                #endif
-                break;
-            case SENS_TYPE_VOLT:   pinMode(Module.GetPeriphIOPort(SNr), INPUT ); break;
-            case SENS_TYPE_AMP:    
-                #ifndef ADS_USED
-                    pinMode(Module.GetPeriphIOPort(SNr), INPUT );
-                #endif
-                break;
-        }
-    }
+    LEDBlink(3, 3, 100);
     
     #ifdef MRD_USED                             // MultiReset-Check
         mrd = new MultiResetDetector(MRD_TIMEOUT, MRD_ADDRESS);
@@ -478,28 +464,7 @@ void setup()
           digitalWrite(LED_BUILTIN, LED_OFF);
         }
     #endif
-    #ifdef PORT_USED                            // init IOBoard
-	      if (!IOBoard.begin())
-          {
-                if (DEBUG_LEVEL > 0) Serial.println("IOBoard not found!");
-                while (1);
-          }
-          else 
-          {
-                if (DEBUG_LEVEL > 1) Serial.println("IOBoard initialised.");
-          }
-    #endif
-    #ifdef ADS_USED                             // init ADS
-        ADSBoard.setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
-        if (!ADSBoard.begin(ADS_ADDRESS)) { 
-          if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
-          while (1);
-        }
-        else
-        {
-            if (DEBUG_LEVEL > 1) Serial.println("ADS initialised.");
-        }
-    #endif
+    
     if (preferences.begin("JeepifyInit", true)) // import saved Module... if available
     {
         String SavedModule   = preferences.getString("Module", "");
@@ -546,9 +511,8 @@ void setup()
     AddStatus("Init fertig");
   
     Module.SetLastContact(millis());
-    //Module.SetConfirm(true);
     
-    #ifdef ESP32_DISPLAY_480
+    #ifdef MODULE_HAS_DISPLAY
       ui_init();
     #endif
 }
@@ -664,8 +628,8 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
                     dtostrf(Module.GetPeriphVperAmp(SNr), 0, 3, buf);
                     doc[ArrVperAmp[SNr]]  = buf;
                     
-                    #ifdef ADS_USED
-                        doc[ArrRaw[SNr]] = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
+                    #ifdef ADC_USED
+                        doc[ArrRaw[SNr]] = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
                     #else
                         analogRead(Module.GetPeriphIOPort(SNr));
                     #endif
@@ -1014,35 +978,35 @@ void SetMessageLED(int Color)
     switch (Color)
     {
         case 0: 
-            #ifdef ESP32_DISPLAY_480
+            #ifdef MODULE_TERMINATOR_PRO
                 smartdisplay_led_set_rgb(0, 0, 0);
             #else
                 digitalWrite(LED_PIN, LED_OFF);
             #endif
             break;
         case 1:
-            #ifdef ESP32_DISPLAY_480
+            #ifdef MODULE_TERMINATOR_PRO
                 smartdisplay_led_set_rgb(1, 0, 0);
             #else
                 digitalWrite(LED_PIN, LED_ON);
             #endif
             break;
         case 2:
-            #ifdef ESP32_DISPLAY_480
+            #ifdef MODULE_TERMINATOR_PRO
                 smartdisplay_led_set_rgb(0, 1, 0);
             #else
             #endif
                 digitalWrite(LED_PIN, LED_ON);
             break;
         case 3:
-            #ifdef ESP32_DISPLAY_480
+            #ifdef MODULE_TERMINATOR_PRO
                 smartdisplay_led_set_rgb(0, 0, 1);
             #else
                 digitalWrite(LED_PIN, LED_ON);
             #endif
             break;
         case 4:
-            #ifdef ESP32_DISPLAY_480
+            #ifdef MODULE_TERMINATOR_PRO
                 smartdisplay_led_set_rgb(1, 0, 1);
             #else
                 digitalWrite(LED_PIN, LED_ON);
@@ -1104,7 +1068,7 @@ void CurrentCalibration()
       if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) {
         float TempVolt = 0;
         
-        #ifdef ADS_USED
+        #ifdef ADC_USED
             //for (int i=0; i<20; i++) 
             {
                 TempVolt += ADSBoard.computeVolts(ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr)));
@@ -1143,9 +1107,9 @@ float ReadAmp (int SNr)
     float TempVolt     = 0;
     float TempAmp      = 0;
   
-    #ifdef ADS_USED
-        TempVal  = ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
-        TempVolt = ADSBoard.computeVolts(TempVal); 
+    #ifdef ADC_USED
+        TempVal  = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
+        TempVolt = ADCBoard.computeVolts(TempVal); 
         TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
         delay(10);
     #else
