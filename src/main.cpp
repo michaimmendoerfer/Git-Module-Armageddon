@@ -1,6 +1,9 @@
 //#define KILL_NVS 1
 
 // DEBUG_LEVEL: 0 = nothing, 1 = only Errors, 2 = relevant changes, 3 = all
+
+#define DEBUG(S) if (DEBUG_LEVEL > 2) Serial.printf(S)
+
 const int DEBUG_LEVEL = 3; 
 const int _LED_SIGNAL = 1;
 
@@ -907,7 +910,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             break;
         case SEND_CMD_STAY_ALIVE: 
             Module.SetLastContact(millis());
-            if (DEBUG_LEVEL > 2) { Serial.print("LastContact: "); Serial.println(Module.GetLastContact()); }
+            DEBUG("LastContact: %6ld", Module.GetLastContact());
             break;
         case SEND_CMD_SLEEPMODE_ON:
             AddStatus("Sleep: on");  
