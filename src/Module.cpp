@@ -25,7 +25,7 @@ void InitModule()
     #ifdef MODULE_TERMINATOR_PRO   
         #define SWITCHES_PER_SCREEN 4
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
-        Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true,  false, false, 1,  RELAY_NORMAL, SDA_PIN,  SCL_PIN,   5);
+        Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true,  false, false, 1,  RELAY_NORMAL, SDA_PIN,  SCL_PIN, VOLTAGE_DEVIDER);
         //                      Name     Type             ADS  IO   NULL     VpA      Vin  PeerID   Brother
         Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_COMBO,   1,  0,   0,       0,        0,    0,       4);
         Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_COMBO,   1,  1,   0,       0,        0,    0,       5);
@@ -37,6 +37,17 @@ void InitModule()
         Module.PeriphSetup(7, "Amp 4",  SENS_TYPE_AMP,     1,  3,   2.5,     0.066,    0,    0,       3);
         
         Module.PeriphSetup(8, "V-Sens", SENS_TYPE_VOLT,    0,  35,  0,       0,      200,    0); 
+    #endif
+
+    #ifdef ESP8266_MODULE_4S_INTEGRATED       
+        #define SWITCHES_PER_SCREEN 4
+        //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl  voltagedevier 
+        Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true,  true, false, -1,  RELAY_NORMAL,   -1,   -1,     -1);
+        //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+        Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,   0,  15,    0,      0,       0,    0);
+        Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,   0,  14,    0,      0,       0,    0);
+        Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,   0,  12,    0,      0,       0,    0);
+        Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   0,  13,    0,      0,       0,    0);
     #endif
 
     // Register Periphs

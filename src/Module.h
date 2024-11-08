@@ -49,7 +49,7 @@ void InitModule();
 
 // Jeepify-Terminator-Pro (ESP32-3248S035C)
 // 4 Switches
-// 4 AMP-Sensors
+// 4 AMP-Sensors (ACS712)
 // 1 VOLT-Sensor
 // 480x320 Display
 #ifdef MODULE_TERMINATOR_PRO
@@ -64,6 +64,7 @@ void InitModule();
     #define SDA_PIN             6
     #define SCL_PIN             7
     #define MODULE_NAME         "Term_1"
+    #define VOLTAGE_DEVIDER     5
     #define BOARD_VOLTAGE       3.3
 	#define BOARD_ANALOG_MAX    4095
 #endif
