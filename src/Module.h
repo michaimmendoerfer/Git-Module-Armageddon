@@ -38,7 +38,6 @@ void InitModule();
 // 4 Switches
 #ifdef MODULE_4WAY_INTEGRATED_8266
     #define PROZ_ESP8266
-    #define MRD_USED            1
     #define PAIRING_BUTTON      4 
     #define LED_PIN             LED_BUILTIN
     #define LED_OFF             LOW
