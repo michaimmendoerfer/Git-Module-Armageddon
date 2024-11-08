@@ -3,8 +3,6 @@
 
 #define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
-//#define MODULE_DOUBLE_DRAGON          // ESP32-c3 - port, no adc
-//#define MODULE_LONELY_DRAGON            // (tut) ESP32-c3 - no port, no adc
 //#define MODULE_4WAY_INTEGRATED_8266   // (tut)
 //#define MODULE_4WAY_INTEGRATED_ESP01  // 
 
@@ -44,7 +42,7 @@ void InitModule();
     #define LED_ON              HIGH
     #define MODULE_NAME         "8266_4S"
     #define BOARD_VOLTAGE       3.3
-	#define BOARD_ANALOG_MAX    4095
+	#define BOARD_ANALOG_MAX    1023
 #endif
 
 // Jeepify-Terminator-Pro (ESP32-3248S035C)
