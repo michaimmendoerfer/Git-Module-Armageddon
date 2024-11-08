@@ -29,7 +29,7 @@ void InitModule();
     #define VOLTAGE_DEVIDER     5
     #define MODULE_NAME         "JL_BAT"
     #define BOARD_VOLTAGE       3.3
-	#define BOARD_ANALOG_MAX    4095
+    #define BOARD_ANALOG_MAX    4095
 #endif
 
 // fertiges 4-Kanal mit ESP8266 (tut)
@@ -42,7 +42,7 @@ void InitModule();
     #define LED_ON              HIGH
     #define MODULE_NAME         "8266_4S"
     #define BOARD_VOLTAGE       3.3
-	#define BOARD_ANALOG_MAX    1023
+    #define BOARD_ANALOG_MAX    1023
 #endif
 
 // Jeepify-Terminator-Pro (ESP32-3248S035C)
@@ -64,7 +64,7 @@ void InitModule();
     #define MODULE_NAME         "Term_1"
     #define VOLTAGE_DEVIDER     5
     #define BOARD_VOLTAGE       3.3
-	#define BOARD_ANALOG_MAX    4095
+    #define BOARD_ANALOG_MAX    4095
 #endif
 
 #endif
