@@ -427,6 +427,9 @@ void setup()
 
     while (!Serial);
 
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LED_OFF);    
+
     InitSCL();
     LEDBlink(3, 3, 100);
     
@@ -455,13 +458,13 @@ void setup()
 
         if (mrd->detectMultiReset()) {
           if (DEBUG_LEVEL > 0) Serial.println("Multi Reset Detected");
-          digitalWrite(LED_BUILTIN, LED_ON);
+          digitalWrite(LED_PIN, LED_ON);
           //ClearPeers(); ClearInit(); InitModule(); SaveModule(); delay(10000); ESP.restart();
           Module.SetPairMode(true); TSPair = millis();
         }
         else {
           if (DEBUG_LEVEL > 0) Serial.println("No Multi Reset Detected");
-          digitalWrite(LED_BUILTIN, LED_OFF);
+          digitalWrite(LED_PIN, LED_OFF);
         }
     #endif
     

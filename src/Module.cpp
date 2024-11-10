@@ -74,8 +74,6 @@ void InitModule()
         }
     }
     
-    pinMode(LED_PIN, OUTPUT);
-    
     #ifdef PAIRING_BUTTON
         pinMode(PAIRING_BUTTON, INPUT_PULLUP); 
     #endif
