@@ -917,7 +917,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             break;
         case SEND_CMD_STAY_ALIVE: 
             Module.SetLastContact(millis());
-            DEBUG("LastContact: %6ld", Module.GetLastContact());
+            if (DEBUG_LEVEL > 2) Serial.printf("LastContact: %6ld\\r", Module.GetLastContact());
             break;
         case SEND_CMD_SLEEPMODE_ON:
             AddStatus("Sleep: on");  
@@ -1156,10 +1156,10 @@ void loop()
             SetMessageLED(0);
     }
 
-    if (millis() > 10000)                // clear LED after LED interval
+    if ((Module.GetSleepMode()) and (millis() - Module.GetLastContact() > SLEEP_INTERVAL))       
     {
-        //Serial.println("Try to sleep");
-        //GoToSleep();
+        Serial.println("Try to sleep");
+        GoToSleep();
     }
 
     #ifdef PAIRING_BUTTON                                                       // check for Pairing/Reset Button
@@ -1253,8 +1253,8 @@ void InitSCL()
           }
     #endif
     #ifdef ADC_USED                             // init ADS
-        ADSBoard.setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
-        if (!ADSBoard.begin(ADC_ADDRESS)) { 
+        ADCBoard.setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
+        if (!ADCBoard.begin(ADC_ADDRESS)) { 
           if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
           while (1);
         }

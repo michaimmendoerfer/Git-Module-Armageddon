@@ -107,7 +107,7 @@ void InitModule2()
     
     ESP32 C3 Mini:
     don´t use 2, 8, 9
-    */
+    
 
    #ifdef MODULE_JL_BATTERY_SENSOR_C3           // 4-way Battery-Sensor with ADS and VMon C3 #########################################################
       // 4x acs712(30A) over ADC1115, Voltage-Monitor:A0
@@ -227,7 +227,7 @@ void InitModule2()
     best: 
     
     dont´t use
-    */
+    
 
    #ifdef MODULE_1WAY_INTEGRATED_8266           // 1-way Switch (10A) - 8266 onBoard +++++++ ############################################################
         // 1 Switch over PIO

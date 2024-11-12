@@ -21,8 +21,8 @@ void InitModule();
     #define ADC_USED            1
     #define PAIRING_BUTTON      9
     #define LED_PIN             LED_BUILTIN
-    #define LED_OFF             HIGH
-    #define LED_ON              LOW
+    #define LED_OFF             0
+    #define LED_ON              1
     #define SDA_PIN             6
     #define SCL_PIN             8
     #define VOLTAGE_PIN         10
