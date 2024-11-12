@@ -20,7 +20,7 @@ void InitModule();
 
 #ifdef MODULE_JL_BATTERY_SENSOR
     #define PROZ_ESP32_C3       1
-    #define ADS_USED            1
+    #define ADC_USED            1
     #define PAIRING_BUTTON      9
     #define LED_PIN             LED_BUILTIN
     #define LED_OFF             HIGH

@@ -8,18 +8,18 @@ extern MyLinkedList<PeriphClass*> PeriphList;
 
 void InitModule()
 {
-    float Vin = BOARD_ANALOG_MAX/BOARD_VOLTAGE;
+    float Vin = BOARD_VOLTAGE/BOARD_ANALOG_MAX;
         
     #ifdef MODULE_JL_BATTERY_SENSOR           
         #define SWITCHES_PER_SCREEN 4
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
         Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false, 4,  RELAY_NORMAL, SDA_PIN,  SCL_PIN, VOLTAGE_DEVIDER);
-        //                      Name     Type            ADC   IO   NULL   VpA   Vin  PeerID
-        Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    1,    3,  2.53, 0.040,  0,    0);
-        Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    1,    2,  2.5,  0.066,  0,    0);
-        Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    1,    1,  2.5,  0.066,  0,    0);
-        Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    0,  2.5,  0.066,  0,    0);
-        Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,    1,   0,      0,   Vin,  0);  // 8266: 310 = 4095/3.3v
+        //                      Name     Type            ADC   IO   NULL     VpA   Vin  PeerID
+        Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    1,    3,  2.5410,  0.040,  0,    0);
+        Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    1,    2,  2.4954,  0.066,  0,    0);
+        Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    1,    1,  2.5005,  0.066,  0,    0);
+        Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    0,  2.5005,  0.066,  0,    0);
+        Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,    1,   0,      0,      Vin,  0);  // 8266: 310 = 4095/3.3v
     #endif
 
     #ifdef MODULE_TERMINATOR_PRO   

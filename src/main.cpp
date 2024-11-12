@@ -401,8 +401,8 @@ void InitSCL()
           }
     #endif
     #ifdef ADC_USED                             // init ADS
-        ADSBoard.setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
-        if (!ADSBoard.begin(ADC_ADDRESS)) { 
+        ADCBoard.setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
+        if (!ADCBoard.begin(ADC_ADDRESS)) { 
           if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
           while (1);
         }
@@ -1074,7 +1074,7 @@ void CurrentCalibration()
         #ifdef ADC_USED
             //for (int i=0; i<20; i++) 
             {
-                TempVolt += ADSBoard.computeVolts(ADSBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr)));
+                TempVolt += ADCBoard.computeVolts(ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr)));
                 delay(10);
             }
             //TempVolt /= 20;
@@ -1123,9 +1123,12 @@ float ReadAmp (int SNr)
     #endif
   
     if (DEBUG_LEVEL > 2) {
-        Serial.printf("(A): Raw:%.3f Null:%.3f --> %.2fV --> %.2fA\n\r", TempVal, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
+        Serial.printf("(A): Raw:%.3f Null:%.4f --> %.4fV --> %.4fA", TempVal, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
     } 
     if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
+    if (DEBUG_LEVEL > 2) {
+        Serial.printf(" --> %.2fA\n\r", TempAmp);
+    } 
     
     return (TempAmp); 
 }
@@ -1136,7 +1139,8 @@ float ReadVolt(int SNr)
     //Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
 
     float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
-    float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * Module.GetVoltageDevider();
+    //float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * Module.GetVoltageDevider();
+    float TempVolt = (float) TempVal / BOARD_ANALOG_MAX * BOARD_VOLTAGE * Module.GetVoltageDevider();
 
     if (DEBUG_LEVEL > 2) {
         Serial.printf("(V) Raw: %.1f / Vin:%.2f * V-Devider:%d--> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), Module.GetVoltageDevider(), TempVolt);
@@ -1474,7 +1478,7 @@ void loop()
         else TSButton = 0; 
     #endif
 
-    #ifdef ESP32_DISPLAY_480                                                    // start ui if module has display
+    #ifdef MODULA_HAS_DISPLAY                                                    // start ui if module has display
         lv_timer_handler();
         delay(5);
     #endif
