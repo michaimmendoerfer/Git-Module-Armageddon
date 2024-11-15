@@ -6,6 +6,7 @@
 
 const int DEBUG_LEVEL = 3; 
 const int _LED_SIGNAL = 1;
+int WaitForContact = 2000;
 
 #pragma region Includes
 #include <Arduino.h>
@@ -148,6 +149,19 @@ void setup()
     //    delay(3000);
     //#endif
     
+    esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+
+    switch (wakeup_reason) {
+        case ESP_SLEEP_WAKEUP_TIMER:    
+            WaitForContact = 2000; 
+            LEDBlink(4, 1, 100);
+            break;
+        default:                        
+            WaitForContact = 10000; 
+            LEDBlink(3, 3, 100);
+            break;
+    }
+
     #ifdef ESP32
         Serial.begin(460800);
     #elif defined(ESP8266)
@@ -162,8 +176,7 @@ void setup()
     #endif
 
     InitSCL();
-    LEDBlink(3, 3, 100);
-    
+
     if (DEBUG_LEVEL > 0)                        // Show free entries
     {
         preferences.begin("JeepifyInit", true);
@@ -182,7 +195,6 @@ void setup()
     #endif
 
     InitModule();
-    LEDBlink(3, 3, 100);
     
     if (preferences.begin("JeepifyInit", true)) // import saved Module... if available
     {
@@ -1178,7 +1190,7 @@ void loop()
             SetMessageLED(0);
     }
 
-    if ((Module.GetSleepMode()) and (millis() - Module.GetLastContact() > SLEEP_INTERVAL))       
+    if ((Module.GetSleepMode()) and (millis() - Module.GetLastContact() > WaitForContact))       
     {
         Serial.printf("millis:%d, LastContact:%d - Try to sleep...........................................................\n\r", millis(), Module.GetLastContact());
         Module.SetLastContact(millis());

@@ -23,8 +23,8 @@ void InitModule();
     #define RGBLED_PIN          8
     #define LED_OFF             0
     #define LED_ON              1
-    #define SDA_PIN             6
-    #define SCL_PIN             8
+    #define SDA_PIN             5
+    #define SCL_PIN             6
     #define VOLTAGE_PIN         10
     #define VOLTAGE_DEVIDER     5
     #define MODULE_NAME         "JL_BAT"
