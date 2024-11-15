@@ -17,7 +17,10 @@ const int _LED_SIGNAL = 1;
 #ifdef MODULA_HAS_DISPLAY
     #include <ui/ui.h>
 #endif
-
+#ifdef RGBLED_PIN
+    #include <Adafruit_NeoPixel.h>
+    Adafruit_NeoPixel pixels (1, RGBLED_PIN, NEO_GRB + NEO_KHZ800);
+#endif
 #ifdef MRD_USED
     #ifdef ESP8266 // ESP8266_MRD_USE_RTC false
         #define ESP8266_MRD_USE_RTC   false  
@@ -151,10 +154,12 @@ void setup()
         Serial.begin(74880);
     #endif
 
-    while (!Serial);
+    delay(1000);
+    //while (!Serial);
 
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LED_OFF);    
+    #ifdef LED_PIN
+        pinMode(LED_PIN, OUTPUT);
+    #endif
 
     InitSCL();
     LEDBlink(3, 3, 100);
@@ -248,56 +253,58 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
     {
 	    for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
 	    {
-		if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
-		{
-		    dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
-		}
-		else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
-		{
-		    if (Module.GetDemoMode()) 
-		    {
-			Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-			Module.SetPeriphValue(SNr, (float) random(0,300)/10);
-		    }
-		    else
-		    {
-			TempValue = ReadAmp(SNr);
-			if (abs(TempValue) > 99) TempValue = -99;
-		    
-			if (TempValue != Module.GetPeriphValue(SNr))
-			{   
-			    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-			    Module.SetPeriphValue(SNr, TempValue);
-			}
-		    }
-		    
-		    dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
-		}
-		else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) 
-		{
-		    if (Module.GetDemoMode()) 
-		    { 
-			Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-			Module.SetPeriphValue(SNr, (float) random(90,150)/10);
-		    }
-		    else
-		    {
-			TempValue = ReadVolt(SNr);
-					
-			if (TempValue != Module.GetPeriphValue(SNr))
-			{   
-			    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
-			    Module.SetPeriphValue(SNr, TempValue);
-			}
-		    }                      
-		    dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
-	    
-	    	    char VinBuf[10];
-	            dtostrf(Module.GetPeriphVin(SNr), 0, 2, VinBuf);
-	            doc["Vin"] = VinBuf;
-	        }
-		doc[Module.GetPeriphName(SNr)] = buf;
-	}
+            if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
+            {
+                dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
+                doc[Module.GetPeriphName(SNr)] = buf;
+            }
+            else if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) 
+            {
+                if (Module.GetDemoMode()) 
+                {
+                    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                    Module.SetPeriphValue(SNr, (float) random(0,300)/10);
+                }
+                else
+                {
+                    TempValue = ReadAmp(SNr);
+                    if (abs(TempValue) > 99) TempValue = -99;
+                    
+                    if (TempValue != Module.GetPeriphValue(SNr))
+                    {   
+                        Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                        Module.SetPeriphValue(SNr, TempValue);
+                    }
+                }
+                
+                dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
+                doc[Module.GetPeriphName(SNr)] = buf;
+            }
+            else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) 
+            {
+                char VinBuf[10];
+                dtostrf(Module.GetPeriphVin(SNr), 0, 2, VinBuf);
+                doc["Vin"] = VinBuf;
+                
+                if (Module.GetDemoMode()) 
+                { 
+                    Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                    Module.SetPeriphValue(SNr, (float) random(90,150)/10);
+                }
+                else
+                {
+                    TempValue = ReadVolt(SNr);
+                        
+                    if (TempValue != Module.GetPeriphValue(SNr))
+                    {   
+                        Module.SetPeriphOldValue(SNr, Module.GetPeriphValue(SNr));
+                        Module.SetPeriphValue(SNr, TempValue);
+                    }
+                }                      
+                dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
+                doc[Module.GetPeriphName(SNr)] = buf;
+            }
+	    }
     }
 
     if (SendStatus)
@@ -395,8 +402,6 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
 void SendPairingRequest() 
 {
   // sendet auf Broadcast: "addme", T0:Type, N0:Name, T1:Type, N1:Name...
-  digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
-
   TSLed = millis();
   SetMessageLED(3);
   
@@ -433,8 +438,6 @@ void SendPairingRequest()
 
 void SendCommand(int Command) 
 {
-    digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
-
     TSLed = millis();
     SetMessageLED(3);
     
@@ -471,8 +474,6 @@ void SendCommand(int Command)
 }
 void SendConfirm(const uint8_t * mac, uint32_t TSConfirm) 
 {
-    digitalWrite(LED_PIN, LED_ON); delay(100); digitalWrite(LED_PIN, LED_OFF);
-
     TSLed = millis();
     SetMessageLED(3);
     
@@ -629,15 +630,15 @@ void GoToSleep()
     doc["Msg"]  = "GoodBye - going to sleep";
     
     serializeJson(doc, jsondata);  
-
+        
     esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
     delay(500);
     if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s", jsondata.c_str());
-    AddStatus("Send Going to sleep..."); 
+    AddStatus("Send Going to sleep......"); 
     
     if (DEBUG_LEVEL > 1) 
     {
-        Serial.printf("Going to sleep at: %lu", millis());
+        Serial.printf("Going to sleep at: %lu....................................................................................\n\r", millis());
         Serial.printf("LastContact    at: %u", Module.GetLastContact()); 
     }
     
@@ -688,45 +689,66 @@ void GetModule()
 void SetMessageLED(int Color)
 {
     // 0-off, 1-Red, 2-Green, 3-Blue, 4=violett
-    if (_LED_SIGNAL) 
-    switch (Color)
-    {
-        case 0: 
-            #ifdef MODULE_TERMINATOR_PRO
-                smartdisplay_led_set_rgb(0, 0, 0);
-            #else
-                digitalWrite(LED_PIN, LED_OFF);
-            #endif
-            break;
-        case 1:
-            #ifdef MODULE_TERMINATOR_PRO
-                smartdisplay_led_set_rgb(1, 0, 0);
-            #else
-                digitalWrite(LED_PIN, LED_ON);
-            #endif
-            break;
-        case 2:
-            #ifdef MODULE_TERMINATOR_PRO
-                smartdisplay_led_set_rgb(0, 1, 0);
-            #else
-            #endif
-                digitalWrite(LED_PIN, LED_ON);
-            break;
-        case 3:
-            #ifdef MODULE_TERMINATOR_PRO
-                smartdisplay_led_set_rgb(0, 0, 1);
-            #else
-                digitalWrite(LED_PIN, LED_ON);
-            #endif
-            break;
-        case 4:
-            #ifdef MODULE_TERMINATOR_PRO
-                smartdisplay_led_set_rgb(1, 0, 1);
-            #else
-                digitalWrite(LED_PIN, LED_ON);
-            #endif
-            break;  
-  }
+    #if defined(LED_PIN) || defined(RGBLED_PIN)    
+        if (_LED_SIGNAL) 
+        switch (Color)
+        {
+            case 0: 
+                #ifdef MODULE_TERMINATOR_PRO
+                    smartdisplay_led_set_rgb(0, 0, 0);
+                #elif RGBLED_PIN
+                    pixels.clear();
+                    pixels.show();
+                #else
+                    digitalWrite(LED_PIN, LED_OFF);
+                #endif
+                break;
+            case 1:
+                #ifdef MODULE_TERMINATOR_PRO
+                    smartdisplay_led_set_rgb(1, 0, 0);
+                #elif RGBLED_PIN
+                    pixels.clear();
+                    pixels.setPixelColor(0, pixels.Color (255,0,0));
+                    pixels.show();
+                #else
+                    digitalWrite(LED_PIN, LED_ON);
+                #endif
+                break;
+            case 2:
+                #ifdef MODULE_TERMINATOR_PRO
+                    smartdisplay_led_set_rgb(0, 1, 0);
+                #elif RGBLED_PIN
+                    pixels.clear();
+                    pixels.setPixelColor(0, pixels.Color (0,255,0));
+                    pixels.show();
+                #else
+                    digitalWrite(LED_PIN, LED_ON);
+                #endif
+                break;
+            case 3:
+                #ifdef MODULE_TERMINATOR_PRO
+                    smartdisplay_led_set_rgb(0, 0, 1);
+                #elif RGBLED_PIN
+                    pixels.clear();
+                    pixels.setPixelColor(0, pixels.Color (0,0,255));
+                    pixels.show();
+                #else
+                    digitalWrite(LED_PIN, LED_ON);
+                #endif
+                break;
+            case 4:
+                #ifdef MODULE_TERMINATOR_PRO
+                    smartdisplay_led_set_rgb(1, 0, 1);
+                #elif RGBLED_PIN
+                    pixels.clear();
+                    pixels.setPixelColor(0, pixels.Color (255,0,255));
+                    pixels.show();
+                #else
+                    digitalWrite(LED_PIN, LED_ON);
+                #endif
+                break;  
+        }
+    #endif
 }
 void LEDBlink(int Color, int n, uint8_t ms)
 {
@@ -851,7 +873,7 @@ float ReadVolt(int SNr)
 
     float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
     //float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * Module.GetVoltageDevider();
-    float TempVolt = (float) TempVal / BOARD_ANALOG_MAX * BOARD_VOLTAGE * Module.GetVoltageDevider();
+    float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * Module.GetVoltageDevider();
 
     if (DEBUG_LEVEL > 2) {
         Serial.printf("(V) Raw: %.1f / Vin:%.2f * V-Devider:%d--> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), Module.GetVoltageDevider(), TempVolt);
@@ -917,7 +939,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             break;
         case SEND_CMD_STAY_ALIVE: 
             Module.SetLastContact(millis());
-            if (DEBUG_LEVEL > 2) Serial.printf("LastContact: %6ld\\r", Module.GetLastContact());
+            if (DEBUG_LEVEL > 2) Serial.printf("LastContact: %6ld\n\r", Module.GetLastContact());
             break;
         case SEND_CMD_SLEEPMODE_ON:
             AddStatus("Sleep: on");  
@@ -1158,7 +1180,8 @@ void loop()
 
     if ((Module.GetSleepMode()) and (millis() - Module.GetLastContact() > SLEEP_INTERVAL))       
     {
-        Serial.println("Try to sleep");
+        Serial.printf("millis:%d, LastContact:%d - Try to sleep...........................................................\n\r", millis(), Module.GetLastContact());
+        Module.SetLastContact(millis());
         GoToSleep();
     }
 

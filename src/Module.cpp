@@ -8,7 +8,7 @@ extern MyLinkedList<PeriphClass*> PeriphList;
 
 void InitModule()
 {
-    float Vin = BOARD_VOLTAGE/BOARD_ANALOG_MAX;
+    float Vin = BOARD_ANALOG_MAX/BOARD_VOLTAGE;
         
     #ifdef MODULE_JL_BATTERY_SENSOR           
         #define SWITCHES_PER_SCREEN 4
