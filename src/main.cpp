@@ -2,15 +2,14 @@
 
 // DEBUG_LEVEL: 0 = nothing, 1 = only Errors, 2 = relevant changes, 3 = all
 
-#define DEBUG(S) if (DEBUG_LEVEL > 2) Serial.printf(S)
+#include <Arduino.h>
+#include <Module.h>
 
 const int DEBUG_LEVEL = 3; 
 const int _LED_SIGNAL = 1;
-int WaitForContact = 2000;
+uint32_t WaitForContact = 2000;
 
 #pragma region Includes
-#include <Arduino.h>
-#include <Module.h>
 
 #ifdef MODULE_TERMINATOR_PRO
     #include <esp32_smartdisplay.h>
@@ -932,7 +931,8 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 {
                     PeerClass *Peer = new PeerClass;
                     Peer->Setup(doc["Node"], (int) doc["Type"], "xxx", mac, false, false, false, false);
-                    Peer->SetTSLastSeen(millis());
+                    Peer->SetLastContact(millis());
+                    WaitForContact = 10000; 
                     PeerList.add(Peer);
 
                     SavePeers();
@@ -951,6 +951,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             break;
         case SEND_CMD_STAY_ALIVE: 
             Module.SetLastContact(millis());
+            WaitForContact = 10000; 
             if (DEBUG_LEVEL > 2) Serial.printf("LastContact: %6ld\n\r", Module.GetLastContact());
             break;
         case SEND_CMD_SLEEPMODE_ON:
@@ -1152,27 +1153,29 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 #pragma endregion ESP-Things
 void loop()
 {
-    if  ((millis() - TSSend ) > MSG_INTERVAL  )                                 // Send-interval (Message or Pairing-request)
+    uint32_t actTime = millis();
+    
+    if  ((actTime - TSSend ) > MSG_INTERVAL  )                                 // Send-interval (Message or Pairing-request)
     {
-        TSSend = millis();
+        TSSend = actTime;
         if (Module.GetPairMode()) SendPairingRequest();
         else SendMessage(true, false, false);
     }
 
-    if  (((millis() - TSStatus ) > STATUS_INTERVAL+333) or (NameChanged))          // Send status update (inclusive names)
+    if  (((actTime - TSStatus ) > STATUS_INTERVAL+333) or (NameChanged))          // Send status update (inclusive names)
     {
-        TSStatus = millis();
+        TSStatus = actTime;
         NameChanged = false;
         SendMessage(false, true, false);
     }
 
-    if  ((millis() - TSSettings) > MSG_INTERVAL*5+666)                            // Send Settings
+    if  ((actTime - TSSettings) > MSG_INTERVAL*5+666)                            // Send Settings
     {
-        TSSettings = millis();
+        TSSettings = actTime;
         SendMessage(false, false, true);
     }
 
-    if (((millis() - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
+    if (((actTime - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
     {
         TSPair = 0;
         Module.SetPairMode(false);
@@ -1180,7 +1183,7 @@ void loop()
         SetMessageLED(0);
     }
 
-    if ((millis() - TSLed > MSGLIGHT_INTERVAL) and (TSLed > 0))                 // clear LED after LED interval
+    if ((actTime - TSLed > MSGLIGHT_INTERVAL) and (TSLed > 0))                 // clear LED after LED interval
     {
         TSLed = 0;
         
@@ -1190,9 +1193,9 @@ void loop()
             SetMessageLED(0);
     }
 
-    if ((Module.GetSleepMode()) and (millis() - Module.GetLastContact() > WaitForContact))       
+    if ((Module.GetSleepMode()) and (actTime+10 - Module.GetLastContact() > WaitForContact))       
     {
-        Serial.printf("millis:%d, LastContact:%d - Try to sleep...........................................................\n\r", millis(), Module.GetLastContact());
+        Serial.printf("actTime:%d, LastContact:%d - (actTime - Module.GetLastContact()) = %d, WaitForContact = %d, - Try to sleep...........................................................\n\r", actTime, Module.GetLastContact(), actTime - Module.GetLastContact(), WaitForContact);
         Module.SetLastContact(millis());
         GoToSleep();
     }
@@ -1200,16 +1203,16 @@ void loop()
     #ifdef PAIRING_BUTTON                                                       // check for Pairing/Reset Button
         int BB = !digitalRead(PAIRING_BUTTON);
         if (BB == 1) {
-            TSPair = millis();
+            TSPair = actTime;
             Module.SetPairMode(true);
             SetMessageLED(1);
     
             AddStatus("Pairing beginnt...");
             
-            if (!TSButton) TSButton = millis();
+            if (!TSButton) TSButton = actTime;
             else 
             {
-                if ((millis() - TSButton) > 3000) {
+                if ((actTime - TSButton) > 3000) {
                     if (DEBUG_LEVEL > 1) Serial.println("Button pressed... Clearing Peers and Reset");
                     AddStatus("Clearing Peers and Reset");
                     #ifdef ESP32
