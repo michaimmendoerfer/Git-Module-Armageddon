@@ -5,9 +5,12 @@
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 3; 
+const int DEBUG_LEVEL = 1; 
 const int _LED_SIGNAL = 1;
-uint32_t WaitForContact = 2000;
+#define WAIT_ALIVE       15000
+#define WAIT_AFTER_SLEEP  3000
+
+uint32_t WaitForContact = WAIT_AFTER_SLEEP;
 
 #pragma region Includes
 
@@ -152,11 +155,11 @@ void setup()
 
     switch (wakeup_reason) {
         case ESP_SLEEP_WAKEUP_TIMER:    
-            WaitForContact = 2000; 
+            WaitForContact = WAIT_AFTER_SLEEP; 
             LEDBlink(4, 1, 100);
             break;
         default:                        
-            WaitForContact = 10000; 
+            WaitForContact = WAIT_ALIVE; 
             LEDBlink(3, 3, 100);
             break;
     }
@@ -252,7 +255,6 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
 {
     //sendet NAME0:Value0, NAME1:Value1... Status:(bitwise)int
     TSLed = millis();
-    SetMessageLED(2);
 
     JsonDocument doc; String jsondata; 
     char buf[100]; 
@@ -262,7 +264,8 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
 	
     if (SendValues)
     {
-	    for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
+	    SetMessageLED(2);
+        for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
 	    {
             if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
             {
@@ -320,33 +323,34 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
 
     if (SendStatus)
     {
-	 // sendet auf Broadcast: "addme", T0:Type, N0:Name, T1:Type, N1:Name...
-  
-	  doc["Type"]    = Module.GetType();
-	  doc["Version"] = Module.GetVersion();
-	  doc["Order"]   = SEND_CMD_STATUS;
-	  
-	  for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) 
-	  {
-	    if (!Module.isPeriphEmpty(SNr)) 
-	    {
-	        snprintf(buf, sizeof(buf), "T%d", SNr); 
-	        doc[buf] = Module.GetPeriphType(SNr);
-	        snprintf(buf, sizeof(buf), "N%d", SNr); 
-	        doc[buf] = Module.GetPeriphName(SNr);
-	        
-	        if (Module.GetPeriphBrotherPos(SNr) != -1)
-	        {
-	            snprintf(buf, sizeof(buf), "Br%d", SNr); 
-	            doc[buf] = Module.GetPeriphBrotherPos(SNr);
-	        }
-	    }
-  	  }
+	    // sendet auf Broadcast: "addme", T0:Type, N0:Name, T1:Type, N1:Name...
+        SetMessageLED(3);
+        doc["Type"]    = Module.GetType();
+        doc["Version"] = Module.GetVersion();
+        doc["Order"]   = SEND_CMD_STATUS;
+        
+        for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) 
+        {
+            if (!Module.isPeriphEmpty(SNr)) 
+            {
+                snprintf(buf, sizeof(buf), "T%d", SNr); 
+                doc[buf] = Module.GetPeriphType(SNr);
+                snprintf(buf, sizeof(buf), "N%d", SNr); 
+                doc[buf] = Module.GetPeriphName(SNr);
+                
+                if (Module.GetPeriphBrotherPos(SNr) != -1)
+                {
+                    snprintf(buf, sizeof(buf), "Br%d", SNr); 
+                    doc[buf] = Module.GetPeriphBrotherPos(SNr);
+                }
+            }
+        }
     }
 
     if (SendSettings)
     {
-	    for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
+	    SetMessageLED(4);
+        for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
 	    {
 	        switch (Module.GetPeriphType(SNr)) 
 	        {
@@ -932,7 +936,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                     PeerClass *Peer = new PeerClass;
                     Peer->Setup(doc["Node"], (int) doc["Type"], "xxx", mac, false, false, false, false);
                     Peer->SetLastContact(millis());
-                    WaitForContact = 10000; 
+                    WaitForContact = WAIT_AFTER_SLEEP; 
                     PeerList.add(Peer);
 
                     SavePeers();
@@ -951,7 +955,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             break;
         case SEND_CMD_STAY_ALIVE: 
             Module.SetLastContact(millis());
-            WaitForContact = 10000; 
+            WaitForContact = WAIT_ALIVE; 
             if (DEBUG_LEVEL > 2) Serial.printf("LastContact: %6ld\n\r", Module.GetLastContact());
             break;
         case SEND_CMD_SLEEPMODE_ON:
@@ -1193,7 +1197,7 @@ void loop()
             SetMessageLED(0);
     }
 
-    if ((Module.GetSleepMode()) and (actTime+10 - Module.GetLastContact() > WaitForContact))       
+    if ((Module.GetSleepMode()) and (actTime+100 - Module.GetLastContact() > WaitForContact))       
     {
         Serial.printf("actTime:%d, LastContact:%d - (actTime - Module.GetLastContact()) = %d, WaitForContact = %d, - Try to sleep...........................................................\n\r", actTime, Module.GetLastContact(), actTime - Module.GetLastContact(), WaitForContact);
         Module.SetLastContact(millis());

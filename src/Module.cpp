@@ -19,7 +19,7 @@ void InitModule()
         Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    1,    2,  2.4954,  0.066,  0,    0);
         Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    1,    1,  2.5005,  0.066,  0,    0);
         Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    0,  2.5005,  0.066,  0,    0);
-        Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,    1,   0,      0,      Vin,  0);  // 8266: 310 = 4095/3.3v
+        Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,   VOLTAGE_PIN,   0,      0,      Vin,  0);  // 8266: 310 = 4095/3.3v
     #endif
 
     #ifdef MODULE_TERMINATOR_PRO   

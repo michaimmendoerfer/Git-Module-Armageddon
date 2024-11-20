@@ -25,7 +25,7 @@ void InitModule();
     #define LED_ON              1
     #define SDA_PIN             5
     #define SCL_PIN             6
-    #define VOLTAGE_PIN         10
+    #define VOLTAGE_PIN         3
     #define VOLTAGE_DEVIDER     5
     #define MODULE_NAME         "JL_BAT"
     #define BOARD_VOLTAGE       3.3
