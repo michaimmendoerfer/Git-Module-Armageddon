@@ -1,9 +1,10 @@
 #ifndef MODULE_H
 #define MODULE_H
 
-#define MODULE_JL_BATTERY_SENSOR      // (tut)
+//#define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
 //#define MODULE_4WAY_INTEGRATED_8266   // (tut)
+#define MODULE_4WAY_INTEGRATED_C3   // (tut)
 //#define MODULE_4WAY_INTEGRATED_ESP01  // 
 
 void InitModule();
@@ -43,6 +44,19 @@ void InitModule();
     #define MODULE_NAME         "8266_4S"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    1023
+#endif
+
+// fertiges 4-Kanal mit ESP-C3-Upgrade
+// 4 Switches
+#ifdef MODULE_4WAY_INTEGRATED_C3
+    #define PROZ_ESP32_C3       1
+    #define PAIRING_BUTTON      4 
+    #define LED_PIN             8
+    #define LED_OFF             LOW
+    #define LED_ON              HIGH
+    #define MODULE_NAME         "C3_4S"
+    #define BOARD_VOLTAGE       3.3
+    #define BOARD_ANALOG_MAX    4095
 #endif
 
 // Jeepify-Terminator-Pro (ESP32-3248S035C)

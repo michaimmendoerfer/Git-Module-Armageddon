@@ -50,6 +50,17 @@ void InitModule()
         Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   0,  13,    0,      0,       0,    0);
     #endif
 
+    #ifdef MODULE_4WAY_INTEGRATED_C3      
+        #define SWITCHES_PER_SCREEN 4
+        //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl  voltagedevier 
+        Module.Setup(MODULE_NAME, SWITCH_4_WAY, MODULE_VERSION,   NULL,     false, true, false, false, -1,  RELAY_NORMAL,   -1,   -1,     -1);
+        //                      Name     Type             ADS  IO    NULL     VpA      Vin  PeerID
+        Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,   0,  5,    0,      0,       0,    0);
+        Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,   0,  6,    0,      0,       0,    0);
+        Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,   0,  7,    0,      0,       0,    0);
+        Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   0,  10,   0,      0,       0,    0);
+    #endif
+
     // Register Periphs
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
     {
