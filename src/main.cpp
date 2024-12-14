@@ -1197,7 +1197,7 @@ void loop()
             SetMessageLED(0);
     }
 
-    if ((Module.GetSleepMode()) and (actTime+100 - Module.GetLastContact() > WaitForContact))       
+    if ((Module.GetSleepMode()) and (!Module.GetPairMode()) and (actTime+100 - Module.GetLastContact() > WaitForContact))       
     {
         Serial.printf("actTime:%d, LastContact:%d - (actTime - Module.GetLastContact()) = %d, WaitForContact = %d, - Try to sleep...........................................................\n\r", actTime, Module.GetLastContact(), actTime - Module.GetLastContact(), WaitForContact);
         Module.SetLastContact(millis());
