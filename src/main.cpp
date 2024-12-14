@@ -170,7 +170,7 @@ void setup()
         Serial.begin(74880);
     #endif
 
-    delay(1000);
+    //delay(1000);
     //while (!Serial);
 
     #ifdef LED_PIN

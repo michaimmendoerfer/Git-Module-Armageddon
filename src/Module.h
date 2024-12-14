@@ -1,10 +1,10 @@
 #ifndef MODULE_H
 #define MODULE_H
 
-//#define MODULE_JL_BATTERY_SENSOR      // (tut)
+#define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
 //#define MODULE_4WAY_INTEGRATED_8266   // (tut)
-#define MODULE_4WAY_INTEGRATED_C3   // (tut)
+//#define MODULE_4WAY_INTEGRATED_C3   // (tut)
 //#define MODULE_4WAY_INTEGRATED_ESP01  // 
 
 void InitModule();
