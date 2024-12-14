@@ -4,7 +4,7 @@
 #define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
 //#define MODULE_4WAY_INTEGRATED_8266   // (tut)
-//#define MODULE_4WAY_INTEGRATED_C3   // (tut)
+//#define MODULE_4WAY_INTEGRATED_C3     // (tut)
 //#define MODULE_4WAY_INTEGRATED_ESP01  // 
 
 void InitModule();
@@ -13,9 +13,14 @@ void InitModule();
 #define PROTOKOLL_VERSION       "1.21"
 
 // JL-Battery-Sensor hinten (tut)
+// ESP32-C3 Mini Plus (RGB)
 // 3 AMP-Sensors (ACS712)
 // 1 AMP-Sensor  (ACS756)
 // 1 VOLT-Sensor (VoltageDevider 5)
+// Pin 3:   Voltage mit 5/1 Devider
+// Pin 5/6: ADS1115 (0x48)
+// Pin 8:   LED (RGB)
+// Pin 9:   Pairing Button
 
 #ifdef MODULE_JL_BATTERY_SENSOR
     #define PROZ_ESP32_C3       1
@@ -46,8 +51,15 @@ void InitModule();
     #define BOARD_ANALOG_MAX    1023
 #endif
 
-// fertiges 4-Kanal mit ESP-C3-Upgrade
-// 4 Switches
+// fertiges 4-Kanal (30A) mit ESP-C3-Upgrade
+// ESP32-C3 Mini
+// Pin 4:   Pairing Button
+// Pin 5:   Switch(0) - 30A
+// Pin 6:   Switch(1) - 30A
+// Pin 7:   Switch(2) - 30A
+// Pin 8:   LED
+// Pin 10:  Switch(3) - 30A
+
 #ifdef MODULE_4WAY_INTEGRATED_C3
     #define PROZ_ESP32_C3       1
     #define PAIRING_BUTTON      4 
