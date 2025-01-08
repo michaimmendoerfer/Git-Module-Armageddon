@@ -374,7 +374,7 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings, int Pos=-
                     //doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
                 
                     #ifdef ADC_USED
-                        TempVal  = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
+                        TempVal  = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 0));
                         TempVolt = ADCBoard.computeVolts(TempVal); 
                         TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
                         delay(10);
@@ -398,7 +398,7 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings, int Pos=-
                 case SENS_TYPE_VOLT:
                     dtostrf(Module.GetPeriphVin(SNr), 0, 0, buf);
                     doc[ArrVin[SNr]] = buf;
-                    doc["V-Div"] = Module.GetVoltageDevider();
+                    doc["V-Div"] = VOLTAGE_DEVIDER;
 			        doc[ArrRaw[SNr]] = analogRead(Module.GetPeriphIOPort(SNr));
                     break;
 	        }                                 
@@ -822,7 +822,7 @@ void VoltageCalibration(int SNr, float V)
         if (DEBUG_LEVEL > 0) Serial.printf("TempRead nach filter = %.2f\n\r", TempRead);
         if (DEBUG_LEVEL > 0) Serial.printf("Eich-soll Volt: %.2f\n\r", V);
        
-        NewVin = TempRead / V * Module.GetVoltageDevider();
+        NewVin = TempRead / V * VOLTAGE_DEVIDER;
         Module.SetPeriphVin(SNr, NewVin);        
         if (DEBUG_LEVEL > 0) Serial.printf("NewVin = %.2f\n\r", Module.GetPeriphVin(SNr));
         
@@ -913,10 +913,10 @@ float ReadVolt(int SNr)
 
     float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
     //float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * Module.GetVoltageDevider();
-    float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * Module.GetVoltageDevider();
+    float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER;
 
     if (DEBUG_LEVEL > 2) {
-        Serial.printf("(V) Raw: %.1f / Vin:%.2f * V-Devider:%d--> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), Module.GetVoltageDevider(), TempVolt);
+        Serial.printf("(V) Raw: %.1f / Vin:%.2f * V-Devider:%d--> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), VOLTAGE_DEVIDER, TempVolt);
     } 
     return TempVolt;
 }
@@ -1086,7 +1086,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 AddStatus("VoltCalib beginnt");
                 NewVoltage = (float) doc["NewVoltage"];
 
-                VoltageCalibration(Module.GetVoltageMon(), NewVoltage) ;
+                VoltageCalibration(VOLTAGE_DEVIDER, NewVoltage) ;
                 
                 break;
             case SEND_CMD_SWITCH_TOGGLE:
