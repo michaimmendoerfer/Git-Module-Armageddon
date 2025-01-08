@@ -77,10 +77,11 @@ uint32_t WaitForContact = WAIT_AFTER_SLEEP;
 
 #pragma region Globals
 
-char *ArrNullwert[MAX_PERIPHERALS] = {"NW0", "NW1", "NW2", "NW3", "NW4", "NW5", "NW6", "NW7", "NW8"};
-char *ArrRaw[MAX_PERIPHERALS] = {"Raw0", "Raw1", "Raw2", "Raw3", "Raw4", "Raw5", "Raw6", "Raw7", "Raw8"};
-char *ArrVperAmp[MAX_PERIPHERALS] = {"VpA0", "VpA1", "VpA2", "VpA3", "VpA4", "VpA5", "VpA6", "VpA7", "VpA8"};
-char *ArrVin[MAX_PERIPHERALS] = {"Vin0", "Vin1", "Vin2", "Vin3", "Vin4", "Vin5", "Vin6", "Vin7", "Vin8"};
+const char *ArrNullwert[MAX_PERIPHERALS] = {"NW0",  "NW1",  "NW2",  "NW3",  "NW4",  "NW5",  "NW6",  "NW7",  "NW8"};
+const char *ArrRaw[MAX_PERIPHERALS]      = {"Raw0", "Raw1", "Raw2", "Raw3", "Raw4", "Raw5", "Raw6", "Raw7", "Raw8"};
+const char *ArrRawVolt[MAX_PERIPHERALS]  = {"RaV0", "RaV1", "RaV2", "RaV3", "RaV4", "RaV5", "RaV6", "RaV7", "RaV8"};
+const char *ArrVperAmp[MAX_PERIPHERALS]  = {"VpA0", "VpA1", "VpA2", "VpA3", "VpA4", "VpA5", "VpA6", "VpA7", "VpA8"};
+const char *ArrVin[MAX_PERIPHERALS]      = {"Vin0", "Vin1", "Vin2", "Vin3", "Vin4", "Vin5", "Vin6", "Vin7", "Vin8"};
 
 struct struct_Status {
   String    Msg;
@@ -124,9 +125,9 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
 void   InitSCL();
 void   InitMRD();
 
-float  ReadAmp (int A);
-float  ReadVolt(int V);
-void   SendMessage(bool, bool, bool);
+float  ReadAmp (int SNr);
+float  ReadVolt(int SNr);
+void   SendMessage(bool, bool, bool, int);
 void   SendPairingRequest();
 
 void   UpdateSwitches();
@@ -250,22 +251,31 @@ void setup()
     #endif
 }
 #pragma region Send-Things
-
-void SendMessage (bool SendValues, bool SendStatus, bool SendSettings) 
+void SendMessage (bool SendValues, bool SendStatus, bool SendSettings, int Pos=-1) 
 {
     //sendet NAME0:Value0, NAME1:Value1... Status:(bitwise)int
+
     TSLed = millis();
 
     JsonDocument doc; String jsondata; 
     char buf[100]; 
     float TempValue = 0;
+    int SNrStart = 0;
+    int SNrMax = MAX_PERIPHERALS;
 
-    doc["Node"] = Module.GetName();   
+    doc["Node"] = Module.GetName(); 
+
+    if ((Pos >= 0) and (Pos < MAX_PERIPHERALS))
+    {
+        SNrStart = Pos;
+        SNrMax   = Pos+1;
+        doc["Order"] = SEND_CMD_RETURN_STATE; 
+    }  
 	
     if (SendValues)
     {
 	    SetMessageLED(2);
-        for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
+        for (int SNr=SNrStart; SNr<SNrMax ; SNr++) 
 	    {
             if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
             {
@@ -323,13 +333,12 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
 
     if (SendStatus)
     {
-	    // sendet auf Broadcast: "addme", T0:Type, N0:Name, T1:Type, N1:Name...
         SetMessageLED(3);
         doc["Type"]    = Module.GetType();
         doc["Version"] = Module.GetVersion();
         doc["Order"]   = SEND_CMD_STATUS;
         
-        for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) 
+        for (int SNr=SNrStart ; SNr<SNrMax; SNr++) 
         {
             if (!Module.isPeriphEmpty(SNr)) 
             {
@@ -349,8 +358,12 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
 
     if (SendSettings)
     {
-	    SetMessageLED(4);
-        for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
+	    float TempVal      = 0;
+        float TempVolt     = 0;
+        float TempAmp      = 0;
+        SetMessageLED(4);
+
+        for (int SNr=SNrStart; SNr<SNrMax ; SNr++) 
 	    {
 	        switch (Module.GetPeriphType(SNr)) 
 	        {
@@ -359,16 +372,28 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings)
                     break;
                 case SENS_TYPE_AMP:
                     //doc[Module.GetPeriphName(SNr)] = ReadAmp(SNr);
+                
+                    #ifdef ADC_USED
+                        TempVal  = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
+                        TempVolt = ADCBoard.computeVolts(TempVal); 
+                        TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
+                        delay(10);
+                    #else
+                        TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
+                        TempVolt = BOARD_VOLTAGE/BOARD_ANALOG_MAX*TempVal;
+                        TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * Module.GetVoltageDevider();// 1.5 wegen Voltage-Devider
+                        delay(10);
+                    #endif
+                    
                     dtostrf(Module.GetPeriphNullwert(SNr), 0, 3, buf);
                     doc[ArrNullwert[SNr]] = buf;
                     dtostrf(Module.GetPeriphVperAmp(SNr), 0, 3, buf);
                     doc[ArrVperAmp[SNr]]  = buf;
+                    dtostrf(TempVal, 0, 0, buf);
+                    doc[ArrRaw[SNr]]     = buf;
+                    dtostrf(TempVolt, 0, 3, buf);
+                    doc[ArrRawVolt[SNr]] = buf;
                     
-                    #ifdef ADC_USED
-                        doc[ArrRaw[SNr]] = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
-                    #else
-                        analogRead(Module.GetPeriphIOPort(SNr));
-                    #endif
                     break;
                 case SENS_TYPE_VOLT:
                     dtostrf(Module.GetPeriphVin(SNr), 0, 0, buf);
@@ -501,7 +526,7 @@ void SendConfirm(const uint8_t * mac, uint32_t TSConfirm)
 
     serializeJson(doc, jsondata); 
 
-    if (DEBUG_LEVEL > 2) Serial.printf("%d: Sending Confirm (%d) to: %s ", millis(), TSConfirm, FindPeerByMAC(mac)->GetName()); 
+    if (DEBUG_LEVEL > 2) Serial.printf("%lu: Sending Confirm (%lu) to: %s ", millis(), TSConfirm, FindPeerByMAC(mac)->GetName()); 
             
     if (esp_now_send((u8 *) mac, (uint8_t *) jsondata.c_str(), 200) == 0) 
     {
@@ -654,7 +679,7 @@ void GoToSleep()
     if (DEBUG_LEVEL > 1) 
     {
         Serial.printf("Going to sleep at: %lu....................................................................................\n\r", millis());
-        Serial.printf("LastContact    at: %u", Module.GetLastContact()); 
+        Serial.printf("LastContact    at: %lu", Module.GetLastContact()); 
     }
     
     #ifdef ESP32
@@ -899,223 +924,227 @@ float ReadVolt(int SNr)
 #pragma region ESP-Things
 void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)  
 {  
-  char* buff = (char*) incomingData;        //char buffer
-  JsonDocument doc;
-  String jsondata;
-  int Pos = -1;
-  float  NewVperAmp  = 0;
-  float  NewVin      = 0;
-  float  NewVoltage  = 0;
-  float  NewNullwert = 0;
-  String NewName     = "";
+    char* buff = (char*) incomingData;        //char buffer
+    JsonDocument doc;
+    String jsondata;
+    int Pos = -1;
+    float  NewVperAmp  = 0;
+    float  NewVin      = 0;
+    float  NewVoltage  = 0;
+    float  NewNullwert = 0;
+    String NewName     = "";
 
-  jsondata = String(buff);                 
-  if (DEBUG_LEVEL > 2) { Serial.printf("%d: Recieved from: ", millis()); PrintMAC(mac); }
-  
-  DeserializationError error = deserializeJson(doc, jsondata);
-  
-  if (!error) {
-      String TempName = doc["Node"];
-      if (DEBUG_LEVEL > 2) Serial.printf("(%s) - %s\n\r", TempName.c_str(), jsondata.c_str());    
-      
-      uint32_t TempTSConfirm = (uint32_t) doc["TSConfirm"];
-      if (TempTSConfirm) SendConfirm(mac, TempTSConfirm);
-      
-      switch ((int) doc["Order"]) 
-      {
-        case SEND_CMD_YOU_ARE_PAIRED:
-            if (doc["Peer"] == Module.GetName())
-            {
-                if (esp_now_is_peer_exist((u8 *) mac)) 
-                { 
-                    if (DEBUG_LEVEL > 0) { PrintMAC(mac); Serial.println(" already exists..."); }
-                    Module.SetPairMode(false);
-                }
-                else 
+    jsondata = String(buff);                 
+    if (DEBUG_LEVEL > 2) { Serial.printf("%lu: Recieved from: ", millis()); PrintMAC(mac); }
+    
+    DeserializationError error = deserializeJson(doc, jsondata);
+    
+    if (!error) {
+        String TempName = doc["Node"];
+        if (DEBUG_LEVEL > 2) Serial.printf("(%s) - %s\n\r", TempName.c_str(), jsondata.c_str());    
+
+        uint32_t TempTSConfirm = (uint32_t) doc["TSConfirm"];
+        if (TempTSConfirm) SendConfirm(mac, TempTSConfirm);
+
+        switch ((int) doc["Order"]) 
+        {
+            case SEND_CMD_YOU_ARE_PAIRED:
+                if (doc["Peer"] == Module.GetName())
                 {
-                    PeerClass *Peer = new PeerClass;
-                    Peer->Setup(doc["Node"], (int) doc["Type"], "xxx", mac, false, false, false, false);
-                    Peer->SetLastContact(millis());
-                    WaitForContact = WAIT_AFTER_SLEEP; 
-                    PeerList.add(Peer);
-
-                    SavePeers();
-                    RegisterPeers();
-                    
-                    if (DEBUG_LEVEL > 1) 
-                    {
-                        Serial.printf("New Peer added: %s (Type:%d), MAC:", Peer->GetName(), Peer->GetType());
-                        PrintMAC(Peer->GetBroadcastAddress());
-                        Serial.println("\n\rSaving Peers after received new one...");
-                        ReportAll();
+                    if (esp_now_is_peer_exist((u8 *) mac)) 
+                    { 
+                        if (DEBUG_LEVEL > 0) { PrintMAC(mac); Serial.println(" already exists..."); }
+                        Module.SetPairMode(false);
                     }
-                    Module.SetPairMode(false);
+                    else 
+                    {
+                        PeerClass *Peer = new PeerClass;
+                        Peer->Setup(doc["Node"], (int) doc["Type"], "xxx", mac, false, false, false, false);
+                        Peer->SetLastContact(millis());
+                        WaitForContact = WAIT_AFTER_SLEEP; 
+                        PeerList.add(Peer);
+
+                        SavePeers();
+                        RegisterPeers();
+                        
+                        if (DEBUG_LEVEL > 1) 
+                        {
+                            Serial.printf("New Peer added: %s (Type:%d), MAC:", Peer->GetName(), Peer->GetType());
+                            PrintMAC(Peer->GetBroadcastAddress());
+                            Serial.println("\n\rSaving Peers after received new one...");
+                            ReportAll();
+                        }
+                        Module.SetPairMode(false);
+                    }
                 }
-            }
-            break;
-        case SEND_CMD_STAY_ALIVE: 
-            Module.SetLastContact(millis());
-            WaitForContact = WAIT_ALIVE; 
-            if (DEBUG_LEVEL > 2) Serial.printf("LastContact: %6ld\n\r", Module.GetLastContact());
-            break;
-        case SEND_CMD_SLEEPMODE_ON:
-            AddStatus("Sleep: on");  
-            SetSleepMode(true);  
-            SendMessage(true, false, false); 
-            break;
-        case SEND_CMD_SLEEPMODE_OFF:
-            AddStatus("Sleep: off"); 
-            SetSleepMode(false); 
-            SendMessage(true, false, false); 
-            break;
-        case SEND_CMD_SLEEPMODE_TOGGLE:
-            if (Module.GetSleepMode()) 
-            { 
-                AddStatus("Sleep: off");   
-                SetSleepMode(false); 
-                SendMessage(true, false, false); 
-            }
-            else 
-            { 
-                AddStatus("Sleep: on");    
+                break;
+            case SEND_CMD_STAY_ALIVE: 
+                Module.SetLastContact(millis());
+                WaitForContact = WAIT_ALIVE; 
+                if (DEBUG_LEVEL > 2) Serial.printf("LastContact: %6lu\n\r", Module.GetLastContact());
+                break;
+            case SEND_CMD_SLEEPMODE_ON:
+                AddStatus("Sleep: on");  
                 SetSleepMode(true);  
                 SendMessage(true, false, false); 
-            }
-            break;
-        case SEND_CMD_DEBUGMODE_ON:
-            AddStatus("DebugMode: on");  
-            SetDebugMode(true);  
-            SaveModule();
-            SendMessage(true, false, false); 
-            break;
-        case SEND_CMD_DEBUGMODE_OFF:
-            AddStatus("DebugMode: off"); 
-            SetDebugMode(false); 
-            SaveModule();
-            SendMessage(true, false, false); 
-            break;
-        case SEND_CMD_DEBUGMODE_TOGGLE:
-            if (Module.GetDebugMode()) 
-            {   
-                AddStatus("DebugMode: off");   
-                SetDebugMode(false); 
+                break;
+            case SEND_CMD_SLEEPMODE_OFF:
+                AddStatus("Sleep: off"); 
+                SetSleepMode(false); 
                 SendMessage(true, false, false); 
-            }
-            else 
-            { 
-                AddStatus("DebugMode: on");    
+                break;
+            case SEND_CMD_SLEEPMODE_TOGGLE:
+                if (Module.GetSleepMode()) 
+                { 
+                    AddStatus("Sleep: off");   
+                    SetSleepMode(false); 
+                    SendMessage(true, false, false); 
+                }
+                else 
+                { 
+                    AddStatus("Sleep: on");    
+                    SetSleepMode(true);  
+                    SendMessage(true, false, false); 
+                }
+                break;
+            case SEND_CMD_DEBUGMODE_ON:
+                AddStatus("DebugMode: on");  
                 SetDebugMode(true);  
-                SendMessage(true, false, false); 
-            }
-            break;
-        case SEND_CMD_DEMOMODE_ON:
-            AddStatus("Demo: on");   
-            SetDemoMode(true);   
-            SendMessage(true, false, false); 
-            break;
-        case SEND_CMD_DEMOMODE_OFF:
-            AddStatus("Demo: off");  
-            SetDemoMode(false);  
-            SendMessage(true, false, false); 
-            break;
-        case SEND_CMD_DEMOMODE_TOGGLE:
-            if (Module.GetDemoMode()) 
-            { 
-                AddStatus("DemoMode: off"); 
-                SetDemoMode(false); 
-                SendMessage(true, false, false); 
-            }
-            else 
-            { 
-                AddStatus("DemoMode: on");  
-                SetDemoMode(true);  
-                SendMessage(true, false, false); 
-            }
-            break;
-        case SEND_CMD_RESET:
-            AddStatus("Clear all"); 
-            #ifdef ESP32
-                ClearPeers(); ClearInit(); nvs_flash_erase(); nvs_flash_init();
-            #elif defined(ESP8266)
-                ClearPeers(); ClearInit();
-            #endif
-            ESP.restart();
-            break;
-        case SEND_CMD_RESTART:
-            ESP.restart(); 
-            break;
-        case SEND_CMD_PAIRMODE_ON:
-            Module.SetPairMode(true);
-            TSPair = millis();    
-            AddStatus("Pairing beginnt"); 
-            SendMessage(true, false, false); 
-            #ifdef MODULE_TERMINATOR_PRO
-              smartdisplay_led_set_rgb(1,0,0);
-            #endif
-            break;
-        case SEND_CMD_CURRENT_CALIB:
-            AddStatus("Eichen beginnt"); 
-            CurrentCalibration();
-            break;
-        case SEND_CMD_VOLTAGE_CALIB:
-            AddStatus("VoltCalib beginnt");
-            NewVoltage = (float) doc["NewVoltage"];
-
-            VoltageCalibration(Module.GetVoltageMon(), NewVoltage) ;
-            
-            break;
-        case SEND_CMD_SWITCH_TOGGLE:
-            Pos = doc["Pos"];
-            if (Module.isPeriphEmpty(Pos) == false) ToggleSwitch(Pos);
-            break;
-        case SEND_CMD_UPDATE_NAME:
-            Pos = (int) doc["Pos"];
-            NewName = doc["NewName"].as<String>();
-
-            if (NewName != "") 
-            {
-                if (Pos == 99) Module.SetName(NewName.c_str());
-                else           Module.SetPeriphName(Pos, NewName.c_str());
-            }
-            
-            SaveModule();
-            NameChanged = true;
-            //SendNameChange(Pos);
-            break;
-        case SEND_CMD_UPDATE_VIN:
-            NewVin = (float) doc["Value"];
-            Pos = (int) doc["Pos"];
-
-            if (NewVin > 0)
-            {
-                Module.SetPeriphVin(Pos, NewVin);
                 SaveModule();
-            }
-            break;
-        case SEND_CMD_UPDATE_VPERAMP:
-            Pos = (int) doc["Pos"];
-            NewVperAmp = (float) doc["Value"];
-
-            if (NewVperAmp > 0)
-            {
-                Module.SetPeriphVperAmp(Pos, NewVperAmp);
+                SendMessage(true, false, false); 
+                break;
+            case SEND_CMD_DEBUGMODE_OFF:
+                AddStatus("DebugMode: off"); 
+                SetDebugMode(false); 
                 SaveModule();
-                Serial.printf("Updated VperAmp at Pos:%d to %.3f\n\r", Pos, NewVperAmp);
-            }
-            break;
-        case SEND_CMD_UPDATE_NULLWERT:
-            Pos = (int) doc["Pos"];
-            NewNullwert = (float) doc["Value"];
+                SendMessage(true, false, false); 
+                break;
+            case SEND_CMD_DEBUGMODE_TOGGLE:
+                if (Module.GetDebugMode()) 
+                {   
+                    AddStatus("DebugMode: off");   
+                    SetDebugMode(false); 
+                    SendMessage(true, false, false); 
+                }
+                else 
+                { 
+                    AddStatus("DebugMode: on");    
+                    SetDebugMode(true);  
+                    SendMessage(true, false, false); 
+                }
+                break;
+            case SEND_CMD_DEMOMODE_ON:
+                AddStatus("Demo: on");   
+                SetDemoMode(true);   
+                SendMessage(true, false, false); 
+                break;
+            case SEND_CMD_DEMOMODE_OFF:
+                AddStatus("Demo: off");  
+                SetDemoMode(false);  
+                SendMessage(true, false, false); 
+                break;
+            case SEND_CMD_DEMOMODE_TOGGLE:
+                if (Module.GetDemoMode()) 
+                { 
+                    AddStatus("DemoMode: off"); 
+                    SetDemoMode(false); 
+                    SendMessage(true, false, false); 
+                }
+                else 
+                { 
+                    AddStatus("DemoMode: on");  
+                    SetDemoMode(true);  
+                    SendMessage(true, false, false); 
+                }
+                break;
+            case SEND_CMD_RESET:
+                AddStatus("Clear all"); 
+                #ifdef ESP32
+                    ClearPeers(); ClearInit(); nvs_flash_erase(); nvs_flash_init();
+                #elif defined(ESP8266)
+                    ClearPeers(); ClearInit();
+                #endif
+                ESP.restart();
+                break;
+            case SEND_CMD_RESTART:
+                ESP.restart(); 
+                break;
+            case SEND_CMD_PAIRMODE_ON:
+                Module.SetPairMode(true);
+                TSPair = millis();    
+                AddStatus("Pairing beginnt"); 
+                SendMessage(true, false, false); 
+                #ifdef MODULE_TERMINATOR_PRO
+                smartdisplay_led_set_rgb(1,0,0);
+                #endif
+                break;
+            case SEND_CMD_CURRENT_CALIB:
+                AddStatus("Eichen beginnt"); 
+                CurrentCalibration();
+                break;
+            case SEND_CMD_VOLTAGE_CALIB:
+                AddStatus("VoltCalib beginnt");
+                NewVoltage = (float) doc["NewVoltage"];
 
-            if (NewNullwert > 0)
-            {
-                Module.SetPeriphNullwert(Pos, NewNullwert);
+                VoltageCalibration(Module.GetVoltageMon(), NewVoltage) ;
+                
+                break;
+            case SEND_CMD_SWITCH_TOGGLE:
+                Pos = doc["Pos"];
+                if (Module.isPeriphEmpty(Pos) == false) ToggleSwitch(Pos);
+                break;
+            case SEND_CMD_UPDATE_NAME:
+                Pos = (int) doc["Pos"];
+                NewName = doc["NewName"].as<String>();
+
+                if (NewName != "") 
+                {
+                    if (Pos == 99) Module.SetName(NewName.c_str());
+                    else           Module.SetPeriphName(Pos, NewName.c_str());
+                }
+                
                 SaveModule();
-                Serial.printf("Updated Nullwert at Pos:%d to %.3f\n\r", Pos, NewNullwert);
-            }
-            break;
-      }
-    } // end (!error)
+                NameChanged = true;
+                //SendNameChange(Pos);
+                break;
+            case SEND_CMD_UPDATE_VIN:
+                NewVin = (float) doc["Value"];
+                Pos = (int) doc["Pos"];
+
+                if (NewVin > 0)
+                {
+                    Module.SetPeriphVin(Pos, NewVin);
+                    SaveModule();
+                }
+                break;
+            case SEND_CMD_UPDATE_VPERAMP:
+                Pos = (int) doc["Pos"];
+                NewVperAmp = (float) doc["Value"];
+
+                if (NewVperAmp > 0)
+                {
+                    Module.SetPeriphVperAmp(Pos, NewVperAmp);
+                    SaveModule();
+                    Serial.printf("Updated VperAmp at Pos:%d to %.3f\n\r", Pos, NewVperAmp);
+                }
+                break;
+            case SEND_CMD_UPDATE_NULLWERT:
+                Pos = (int) doc["Pos"];
+                NewNullwert = (float) doc["Value"];
+
+                if (NewNullwert > 0)
+                {
+                    Module.SetPeriphNullwert(Pos, NewNullwert);
+                    SaveModule();
+                    Serial.printf("Updated Nullwert at Pos:%d to %.3f\n\r", Pos, NewNullwert);
+                }
+                break;
+            case SEND_CMD_SEND_STATE:
+                Pos = (int) doc["Pos"];
+                SendMessage(true, false, true, Pos);
+                break;
+        } // end (!error)
+    }
     else // error
     { 
           if (DEBUG_LEVEL > 0) 
@@ -1199,7 +1228,7 @@ void loop()
 
     if ((Module.GetSleepMode()) and (!Module.GetPairMode()) and (actTime+100 - Module.GetLastContact() > WaitForContact))       
     {
-        Serial.printf("actTime:%d, LastContact:%d - (actTime - Module.GetLastContact()) = %d, WaitForContact = %d, - Try to sleep...........................................................\n\r", actTime, Module.GetLastContact(), actTime - Module.GetLastContact(), WaitForContact);
+        Serial.printf("actTime:%lu, LastContact:%lu - (actTime - Module.GetLastContact()) = %lu, WaitForContact = %lu, - Try to sleep...........................................................\n\r", actTime, Module.GetLastContact(), actTime - Module.GetLastContact(), WaitForContact);
         Module.SetLastContact(millis());
         GoToSleep();
     }
