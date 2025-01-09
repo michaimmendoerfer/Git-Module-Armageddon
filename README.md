@@ -15,7 +15,7 @@ Order      = SEND_CMD_STATUS
   Periph0  = "Type;Name;Value0;Value1;Value2;Value3"
   Periph1  = "Type;Name;Value0;Value1;Value2;Value3"
 
-SEND_CONFIRM
+SEND_CONFIRM (if received message contains a TSConfirm-Timestamp (i.e. Toggle-Command)
 Node       = "NodeName;Uptime;Status"
 Order      = SEND_CMD_CONFIRM
 TSConfirm  = TSConfirm                              
