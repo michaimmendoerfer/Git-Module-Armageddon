@@ -8,7 +8,6 @@ Order      = SEND_CMD_PAIR_ME
   Periph0  = "Type;Name"                                Type: SENS_TYPE_SWITCH, SENS_TYPE_AMP, SENS_TYPE_LT_AMP...
   Periph1  = "Type;Name"
 
-
 SEND_CMD_STATUS (1/s)
 Node       = "NodeName;Uptime;Status"
 Order      = SEND_CMD_STATUS
@@ -18,4 +17,6 @@ Order      = SEND_CMD_STATUS
 SEND_CONFIRM (if received message contains a TSConfirm-Timestamp (i.e. Toggle-Command)
 Node       = "NodeName;Uptime;Status"
 Order      = SEND_CMD_CONFIRM
-TSConfirm  = TSConfirm                              
+TSConfirm  = TSConfirm 
+
+
