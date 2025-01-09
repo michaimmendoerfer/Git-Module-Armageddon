@@ -277,7 +277,7 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings, int Pos=-
 	    SetMessageLED(2);
         for (int SNr=SNrStart; SNr<SNrMax ; SNr++) 
 	    {
-            if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
+            if ((Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) or ((Module.GetPeriphType(SNr) == SENS_TYPE_LT))
             {
                 dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
                 doc[Module.GetPeriphName(SNr)] = buf;
@@ -328,6 +328,13 @@ void SendMessage (bool SendValues, bool SendStatus, bool SendSettings, int Pos=-
                 dtostrf(Module.GetPeriphValue(SNr), 0, 2, buf);
                 doc[Module.GetPeriphName(SNr)] = buf;
             }
+	else if ((Module.GetPeriphType(SNr) == SENS_TYPE_SW_AMP) or (Module.GetPeriphType(SNr) == SENS_TYPE_LT_AMP))
+	{
+		dtostrf(Module.GetPeriphValue(SNr), 0, 0, buf);
+                doc[Module.GetPeriphName(SNr)] = buf;
+	}
+	
+		    
 	    }
     }
 
