@@ -131,6 +131,7 @@ float  ReadVolt(int SNr);
 void   SendStatus(int);
 void   SendPairingRequest();
 
+void   CheckRelayState();
 void   UpdateSwitches();
 
 void   SetDemoMode (bool Mode);
@@ -209,6 +210,8 @@ void setup()
             if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
         preferences.end();
     }
+    //noch status erfassen
+    CheckRelayState();
     UpdateSwitches();
 
     WiFi.mode(WIFI_STA);
@@ -259,15 +262,14 @@ void SendStatus (int Pos=-1)
 
     JsonDocument doc; String jsondata; 
     char buf[200]; 
-    float TempValue = 0;
-	
+    
     int Status = 0;
     if (Module.GetDebugMode())   bitSet(Status, 0);
     if (Module.GetSleepMode())   bitSet(Status, 1);
     if (Module.GetDemoMode())    bitSet(Status, 2);
     if (Module.GetPairMode())    bitSet(Status, 3);    
     
-    snprintf(buf, sizeof(buf), "%s;%ul;%d", Module.GetName(), millis(), Status);
+    snprintf(buf, sizeof(buf), "%s;%lu;%d", Module.GetName(), millis(), Status);
     doc["Node"]  = buf;
     
     int SNrStart = 0;
@@ -334,7 +336,7 @@ void SendPairingRequest()
     if (Module.GetDemoMode())    bitSet(Status, 2);
     if (Module.GetPairMode())    bitSet(Status, 3);    
     
-    snprintf(buf, sizeof(buf), "%s;%ul;%d", Module.GetName(), millis(), Status);
+    snprintf(buf, sizeof(buf), "%s;%lu;%d", Module.GetName(), millis(), Status);
     doc["Node"]    = buf;
     doc["Type"]    = Module.GetType();
     doc["Version"] = Module.GetVersion();
@@ -367,9 +369,15 @@ void SendConfirm(const uint8_t * mac, uint32_t TSConfirm)
     
     JsonDocument doc; String jsondata; 
     char buf[100];
+    int Status = 0;
+    if (Module.GetDebugMode())   bitSet(Status, 0);
+    if (Module.GetSleepMode())   bitSet(Status, 1);
+    if (Module.GetDemoMode())    bitSet(Status, 2);
+    if (Module.GetPairMode())    bitSet(Status, 3);   
 
-    snprintf(buf, sizeof(buf), "%s;%ul;%d", Module.GetName(), millis(), Status);
+    snprintf(buf, sizeof(buf), "%s;%lu;%d", Module.GetName(), millis(), Status);
     doc["Node"]        = buf;
+    doc["Order"]       = SEND_CMD_CONFIRM;
     doc["TSConfirm"]   = TSConfirm;
 
     serializeJson(doc, jsondata); 
@@ -433,43 +441,92 @@ void AddStatus(String Msg)
 }
 void ToggleSwitch(int SNr)
 {
-    int Value = Module.GetPeriphValue(SNr);
+    int Value = Module.GetPeriphValue(SNr, 0);
     
-    Module.SetPeriphOldValue(SNr, Value);
+    Module.SetPeriphOldValue(SNr, Value, 0);
     
     if (Value == 0) Value = 1;
     else Value = 0;
 
-    Module.SetPeriphValue(SNr, Value);
+    Module.SetPeriphValue(SNr, Value, 0);
     
     UpdateSwitches();
 }
+void CheckRelayState()
+{
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
+    {
+        int _Type = Module.GetPeriphType(SNr);
+    
+        if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
+        {
+            if (ReadVolt(SNr) > 5) Module.SetPeriphValue(SNr, 1, 0);
+            else Module.SetPeriphValue(SNr, 0, 0);
+        }
+        else if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
+        {
+            Module.SetPeriphValue(SNr, 0, 0);
+        }
+    }
+}
 void UpdateSwitches() 
 {
-  for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
-  {
-      if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) 
-      {
-          uint8_t Value = (uint8_t)Module.GetPeriphValue(SNr);
-          if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f",SNr, (float)Value);
-          
-          if (Module.GetRelayType() == RELAY_REVERSED) 
-          {
-              if (Value == 0) Value = 1;
-              else Value = 0;
-          }
-          
-          #ifdef PORT_USED
-              IOBoard.digitalWrite(SNr, Value);
-          #else
-              //noch latching machen
-              digitalWrite(Module.GetPeriphIOPort(SNr), Value);
-          #endif
-
-          if (DEBUG_LEVEL > 2) Serial.printf("Setze %s (Port:%d) auf %d", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr), Serial.print(Value));
-      }
-  }
-  SendStatus();
+    uint8_t Value = 0;
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
+    {
+        int _Type = Module.GetPeriphType(SNr);
+        
+        if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
+        {
+            Value = (uint8_t)Module.GetPeriphValue(SNr, 0);
+            if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f",SNr, (float)Value);
+            
+            if (Module.GetRelayType() == RELAY_REVERSED) 
+            {
+                if (Value == 0) Value = 1;
+                else Value = 0;
+            }
+            
+            #ifdef PORT_USED
+                IOBoard.digitalWrite(SNr, Value);
+            #else
+                digitalWrite(Module.GetPeriphIOPort(SNr, 0), Value);
+            #endif
+        }
+        else if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
+        {
+            Value = (uint8_t)Module.GetPeriphValue(SNr, 0);
+            if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f",SNr, (float)Value);
+            
+            if (Value == 0)
+            {
+                #ifdef PORT_USED
+                    IOBoard.digitalWrite(SNr*2+1, 1);
+                    delay(100);
+                    IOBoard.digitalWrite(SNr*2+1, 0);
+                #else
+                    //noch latching machen
+                    digitalWrite(Module.GetPeriphIOPort(SNr, 1), 1);
+                    delay(100);
+                    digitalWrite(Module.GetPeriphIOPort(SNr, 1), 0);
+                #endif
+            }
+            else
+            {
+                #ifdef PORT_USED
+                    IOBoard.digitalWrite(SNr*2, 1);
+                    delay(100);
+                    IOBoard.digitalWrite(SNr*2, 0);
+                #else
+                    digitalWrite(Module.GetPeriphIOPort(SNr, 0), 1);
+                    delay(100);
+                    digitalWrite(Module.GetPeriphIOPort(SNr, 0), 0);
+                #endif 
+            }
+        }
+        if (DEBUG_LEVEL > 2) Serial.printf("Setze %s (Port:%d) auf %d\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), Value);
+    }
+    SendStatus();
 }
 void PrintMAC(const uint8_t * mac_addr)
 {
@@ -624,7 +681,7 @@ void VoltageCalibration(int SNr, float V)
 {
     char Buf[100] = {}; 
   
-    if (DEBUG_LEVEL > 1) Serial.printf("Volt-Messung kalibrieren... Port: %d, Type:%d", Module.GetPeriphIOPort(SNr), Module.GetPeriphType(SNr));
+    if (DEBUG_LEVEL > 1) Serial.printf("Volt-Messung kalibrieren... Port: %d, Type:%d", Module.GetPeriphIOPort(SNr, 2), Module.GetPeriphType(SNr));
     
     if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) {
         float TempRead = 0;
@@ -632,7 +689,7 @@ void VoltageCalibration(int SNr, float V)
 
         for (int i=0; i<20; i++) 
         {
-            TempRead += (float)analogRead(Module.GetPeriphIOPort(SNr));
+            TempRead += (float)analogRead(Module.GetPeriphIOPort(SNr, 2));
             delay(10);
         }
         TempRead = (float) TempRead / 20;
@@ -659,38 +716,40 @@ void CurrentCalibration()
     char Buf[100] = {};
     
     for(int SNr=0; SNr<MAX_PERIPHERALS; SNr++) {
-      if (Module.GetPeriphType(SNr) == SENS_TYPE_AMP) {
-        float TempVolt = 0;
-        
-        #ifdef ADC_USED
-            //for (int i=0; i<20; i++) 
-            {
-                TempVolt += ADCBoard.computeVolts(ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr)));
-                delay(10);
-            }
-            //TempVolt /= 20;
-        #else
-            int TempVal = 0;
-            for (int i=0; i<20; i++) 
-            {
-                TempVal += analogRead(Module.GetPeriphIOPort(SNr));
-                delay(10);
-            }
-            TempVal /= 20;
+        int _Type = Module.GetPeriphType(SNr);
+        if ((_Type == SENS_TYPE_AMP) or (_Type == SENS_TYPE_SW_AMP) or (_Type == SENS_TYPE_LT_AMP)) 
+        {
+            float TempVolt = 0;
             
-            TempVolt = BOARD_VOLTAGE / BOARD_ANALOG_MAX * TempVal; // 1.5???  
-        #endif
+            #ifdef ADC_USED
+                //for (int i=0; i<20; i++) 
+                {
+                    TempVolt += ADCBoard.computeVolts(ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 3)));
+                    delay(10);
+                }
+                //TempVolt /= 20;
+            #else
+                int TempVal = 0;
+                for (int i=0; i<20; i++) 
+                {
+                    TempVal += analogRead(Module.GetPeriphIOPort(SNr, 3));
+                    delay(10);
+                }
+                TempVal /= 20;
+                
+                TempVolt = BOARD_VOLTAGE / BOARD_ANALOG_MAX * TempVal; // 1.5???  
+            #endif
 
-        if (DEBUG_LEVEL > 2) { 
-          Serial.print("TempVolt: "); Serial.println(TempVolt);
+            if (DEBUG_LEVEL > 2) { 
+            Serial.print("TempVolt: "); Serial.println(TempVolt);
+            }
+            Module.SetPeriphNullwert(SNr, TempVolt);
+
+            if (DEBUG_LEVEL > 1)  snprintf(Buf, sizeof(Buf), "Eichen fertig: [%d] %s (Type: %d): Gemessene Spannung bei Null: %.2fV", 
+                                        SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), TempVolt);
+
+            AddStatus(Buf);
         }
-        Module.SetPeriphNullwert(SNr, TempVolt);
-
-        if (DEBUG_LEVEL > 1)  snprintf(Buf, sizeof(Buf), "Eichen fertig: [%d] %s (Type: %d): Gemessene Spannung bei Null: %.2fV", 
-                                       SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), TempVolt);
-
-        AddStatus(Buf);
-      }
     }
     //SendCommand(SEND_CMD_CONFIRM_CURRENT);
     SaveModule();
@@ -702,14 +761,14 @@ float ReadAmp (int SNr)
     float TempAmp      = 0;
   
     #ifdef ADC_USED
-        TempVal  = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr));
+        TempVal  = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 3));
         TempVolt = ADCBoard.computeVolts(TempVal); 
         TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
         delay(10);
     #else
-        TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
+        TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 3));
         TempVolt = BOARD_VOLTAGE/BOARD_ANALOG_MAX*TempVal;
-        TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * Module.GetVoltageDevider();// 1.5 wegen Voltage-Devider
+        TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * VOLTAGE_DEVIDER;// 1.5 wegen Voltage-Devider
         delay(10);
     #endif
   
@@ -729,7 +788,7 @@ float ReadVolt(int SNr)
     
     //Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
 
-    float TempVal  = analogRead(Module.GetPeriphIOPort(SNr));
+    float TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
     //float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * Module.GetVoltageDevider();
     float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER;
 
@@ -804,76 +863,74 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             case SEND_CMD_SLEEPMODE_ON:
                 AddStatus("Sleep: on");  
                 SetSleepMode(true);  
-                SendMessage(true, false, false); 
+                SendStatus();
                 break;
             case SEND_CMD_SLEEPMODE_OFF:
                 AddStatus("Sleep: off"); 
                 SetSleepMode(false); 
-                SendMessage(true, false, false); 
+                SendStatus();
                 break;
             case SEND_CMD_SLEEPMODE_TOGGLE:
                 if (Module.GetSleepMode()) 
                 { 
                     AddStatus("Sleep: off");   
                     SetSleepMode(false); 
-                    SendMessage(true, false, false); 
+                    SendStatus();
                 }
                 else 
                 { 
                     AddStatus("Sleep: on");    
                     SetSleepMode(true);  
-                    SendMessage(true, false, false); 
+                    SendStatus();
                 }
                 break;
             case SEND_CMD_DEBUGMODE_ON:
                 AddStatus("DebugMode: on");  
                 SetDebugMode(true);  
                 SaveModule();
-                SendMessage(true, false, false); 
+                SendStatus();
                 break;
             case SEND_CMD_DEBUGMODE_OFF:
                 AddStatus("DebugMode: off"); 
                 SetDebugMode(false); 
                 SaveModule();
-                SendMessage(true, false, false); 
+                SendStatus();
                 break;
             case SEND_CMD_DEBUGMODE_TOGGLE:
                 if (Module.GetDebugMode()) 
                 {   
                     AddStatus("DebugMode: off");   
-                    SetDebugMode(false); 
-                    SendMessage(true, false, false); 
+                    SetDebugMode(false);  
                 }
                 else 
                 { 
                     AddStatus("DebugMode: on");    
                     SetDebugMode(true);  
-                    SendMessage(true, false, false); 
                 }
+                SendStatus();
                 break;
             case SEND_CMD_DEMOMODE_ON:
                 AddStatus("Demo: on");   
                 SetDemoMode(true);   
-                SendMessage(true, false, false); 
+                SendStatus();
                 break;
             case SEND_CMD_DEMOMODE_OFF:
                 AddStatus("Demo: off");  
                 SetDemoMode(false);  
-                SendMessage(true, false, false); 
+                SendStatus();
                 break;
             case SEND_CMD_DEMOMODE_TOGGLE:
                 if (Module.GetDemoMode()) 
                 { 
                     AddStatus("DemoMode: off"); 
-                    SetDemoMode(false); 
-                    SendMessage(true, false, false); 
+                    SetDemoMode(false);
                 }
                 else 
                 { 
                     AddStatus("DemoMode: on");  
                     SetDemoMode(true);  
-                    SendMessage(true, false, false); 
                 }
+                SendStatus();
                 break;
             case SEND_CMD_RESET:
                 AddStatus("Clear all"); 
@@ -891,7 +948,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 Module.SetPairMode(true);
                 TSPair = millis();    
                 AddStatus("Pairing beginnt"); 
-                SendMessage(true, false, false); 
+                SendStatus();
                 #ifdef MODULE_TERMINATOR_PRO
                 smartdisplay_led_set_rgb(1,0,0);
                 #endif
@@ -959,7 +1016,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 break;
             case SEND_CMD_SEND_STATE:
                 Pos = (int) doc["Pos"];
-                SendMessage(true, false, true, Pos);
+                SendStatus(Pos);
                 break;
         } // end (!error)
     }

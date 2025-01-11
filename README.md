@@ -14,9 +14,16 @@ Order      = SEND_CMD_STATUS
   Periph0  = "Type;Name;Value0;Value1;Value2;Value3"
   Periph1  = "Type;Name;Value0;Value1;Value2;Value3"
 
-SEND_CONFIRM (if received message contains a TSConfirm-Timestamp (i.e. Toggle-Command)
+SEND_CONFIRM (if received message contains a TSConfirm-Timestamp (i.e. Toggle-Command))
 Node       = "NodeName;Uptime;Status"
 Order      = SEND_CMD_CONFIRM
 TSConfirm  = TSConfirm 
 
 
+JSON Receive-Structure 
+
+SEND_CMD_SWITCH_TOGGLE
+From        = Peer from which order was sent
+Order       = SEND_CMD_SWITCH_TOGGLE
+PeriphName  = name of switch
+Pos         = pos of switch 
