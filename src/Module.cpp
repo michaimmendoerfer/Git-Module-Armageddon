@@ -22,7 +22,19 @@ void InitModule()
         Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    0,0,0,0,            2.5005,  0.066,  0,    0);
         Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,   VOLTAGE_PIN,0,0,0,   0,      0,      Vin,   0);  // 8266: 310 = 4095/3.3v
     #endif
+    
 
+    #ifdef MODULE_4WAY_ESP32_MONSTER   
+        #define SWITCHES_PER_SCREEN 4
+        //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
+        Module.Setup(MODULE_NAME, SWITCH_4_WAY, MODULE_VERSION, NULL,     false, true,  false, false);
+        //                      Name     Type             ADS  IO           NULL     VpA      Vin  PeerID  
+        Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_COMBO,   1,  13,16,17,33, 0,       0.040,    0,    0);
+        Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_COMBO,   1,  18,19,21,34, 0,       0.040,    0,    0);
+        Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_COMBO,   1,  22,23,25,36, 0,       0.040,    0,    0);
+        Module.PeriphSetup(3, "Sw 4 ",  SENS_TYPE_COMBO,   1,  36,37,32,39, 0,       0.040,    0,    0);
+        Module.PeriphSetup(8, "V-Sens", SENS_TYPE_VOLT,    0,  0,0,33,0,    0,       0,      200,    0); 
+    #endif
     #ifdef MODULE_TERMINATOR_PRO   
         #define SWITCHES_PER_SCREEN 4
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 

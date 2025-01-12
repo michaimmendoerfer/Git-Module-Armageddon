@@ -1,7 +1,8 @@
 #ifndef MODULE_H
 #define MODULE_H
 
-#define MODULE_JL_BATTERY_SENSOR      // (tut)
+//#define MODULE_JL_BATTERY_SENSOR      // (tut)
+#define MODULE_4WAY_ESP32_MONSTER
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
 //#define MODULE_4WAY_INTEGRATED_8266   // (tut)
 //#define MODULE_4WAY_INTEGRATED_C3     // (tut)
@@ -34,6 +35,21 @@ void InitModule();
     #define VOLTAGE_PIN         3
     #define VOLTAGE_DEVIDER     5
     #define MODULE_NAME         "JL_BAT"
+    #define BOARD_VOLTAGE       3.3
+    #define BOARD_ANALOG_MAX    4095
+#endif
+
+// 4-Kanal mit ESP32 mit Latching 30A, AMP/V-Sensor
+// 4 Switches
+#ifdef MODULE_4WAY_ESP32_MONSTER
+    #define PROZ_ESP32          1
+    #define PAIRING_BUTTON      9
+    #define LED_PIN             LED_BUILTIN
+    #define LED_OFF             0
+    #define LED_ON              1
+    #define VOLTAGE_PIN         3
+    #define VOLTAGE_DEVIDER     5
+    #define MODULE_NAME         "Mons_1"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
