@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 1; 
+const int DEBUG_LEVEL = 3; 
 const int _LED_SIGNAL = 1;
 #define WAIT_ALIVE       15000
 #define WAIT_AFTER_SLEEP  3000
@@ -150,10 +150,13 @@ void   LEDBlink(int Color, int n, uint8_t ms);
 
 void setup()
 {
-    //#ifdef ARDUINO_USB_CDC_ON_BOOT
-    //    delay(3000);
-    //#endif
-    
+    #ifdef ARDUINO_USB_CDC_ON_BOOT
+        delay(3000);
+    #endif
+    Serial.println("Setup-Start");
+    #ifdef LED_PIN
+        pinMode(LED_PIN, OUTPUT);
+    #endif
     esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
 
     switch (wakeup_reason) {
@@ -168,17 +171,13 @@ void setup()
     }
 
     #ifdef ESP32
-        Serial.begin(460800);
+        Serial.begin(115200);
     #elif defined(ESP8266)
         Serial.begin(74880);
     #endif
 
     //delay(1000);
     //while (!Serial);
-
-    #ifdef LED_PIN
-        pinMode(LED_PIN, OUTPUT);
-    #endif
 
     InitSCL();
 
@@ -287,15 +286,19 @@ void SendStatus (int Pos=-1)
 
     for (int SNr=SNrStart; SNr<SNrMax ; SNr++) 
     {   
-        snprintf(buf, sizeof(buf), "%d;%s;%.3f;%.3f;%.3f;%.3f", 
-            Module.GetType(), 
-            Module.GetName(), 
+        if (!Module.isPeriphEmpty(SNr))
+        {
+            //besser machen
+            snprintf(buf, sizeof(buf), "%d;%s;%.2f;%.2f;%.2f;%.2f", 
+            Module.GetPeriphType(SNr), 
+            Module.GetPeriphName(SNr), 
             Module.GetPeriphValue(SNr, 0),
             Module.GetPeriphValue(SNr, 1),
             Module.GetPeriphValue(SNr, 2),
             Module.GetPeriphValue(SNr, 3));
                         
-        doc[ArrPeriph[SNr]] = buf;
+            doc[ArrPeriph[SNr]] = buf;
+        }
 	}
 	
 	serializeJson(doc, jsondata);  
@@ -345,12 +348,9 @@ void SendPairingRequest()
     for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) {
         if (!Module.isPeriphEmpty(SNr)) 
         {
-            for (int SNr=0; SNr<MAX_PERIPHERALS ; SNr++) 
-            {   
-                snprintf(buf, sizeof(buf), "%d;%s", Module.GetType(), Module.GetName());
-                doc[ArrPeriph[SNr]] = buf;
-	        }
-        }
+            snprintf(buf, sizeof(buf), "%d;%s", Module.GetPeriphType(SNr), Module.GetPeriphName(SNr));
+            doc[ArrPeriph[SNr]] = buf;
+	    }
     }
          
     serializeJson(doc, jsondata);  
@@ -496,35 +496,44 @@ void UpdateSwitches()
         else if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
         {
             Value = (uint8_t)Module.GetPeriphValue(SNr, 0);
-            if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f",SNr, (float)Value);
+            if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f\n\r",SNr, (float)Value);
             
             if (Value == 0)
             {
                 #ifdef PORT_USED
                     IOBoard.digitalWrite(SNr*2+1, 1);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d an\n\r", Module.GetPeriphIOI2C(SNr*2+1, 1), Module.GetPeriphIOPort(SNr, 1));
                     delay(100);
                     IOBoard.digitalWrite(SNr*2+1, 0);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d aus\n\r", Module.GetPeriphIOI2C(SNr*2+1, 1), Module.GetPeriphIOPort(SNr, 1));
+                    
                 #else
-                    //noch latching machen
                     digitalWrite(Module.GetPeriphIOPort(SNr, 1), 1);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d an\n\r", Module.GetPeriphIOPort(SNr, 1));
                     delay(100);
                     digitalWrite(Module.GetPeriphIOPort(SNr, 1), 0);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d aus\n\r", Module.GetPeriphIOPort(SNr, 1));
+                    
                 #endif
             }
             else
             {
                 #ifdef PORT_USED
                     IOBoard.digitalWrite(SNr*2, 1);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d an\n\r", Module.GetPeriphIOI2C(SNr*2, 1), Module.GetPeriphIOPort(SNr, 1));
                     delay(100);
                     IOBoard.digitalWrite(SNr*2, 0);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d aus\n\r", Module.GetPeriphIOI2C(SNr*2, 1), Module.GetPeriphIOPort(SNr, 1));
                 #else
                     digitalWrite(Module.GetPeriphIOPort(SNr, 0), 1);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d an\n\r", Module.GetPeriphIOPort(SNr, 0));
                     delay(100);
                     digitalWrite(Module.GetPeriphIOPort(SNr, 0), 0);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d aus\n\r", Module.GetPeriphIOPort(SNr, 0));
                 #endif 
             }
         }
-        if (DEBUG_LEVEL > 2) Serial.printf("Setze %s (Port:%d) auf %d\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), Value);
+        //if (DEBUG_LEVEL > 2) Serial.printf("Setze %s (Port:%d) auf %d\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), Value);
     }
     SendStatus();
 }

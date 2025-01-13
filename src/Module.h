@@ -44,10 +44,12 @@ void InitModule();
 #ifdef MODULE_4WAY_ESP32_MONSTER
     #define PROZ_ESP32          1
     #define PAIRING_BUTTON      9
-    #define LED_PIN             LED_BUILTIN
+    #define SDA_PIN             6
+    #define SCL_PIN             7
+    #define I2C_ADC             0x48
+    #define LED_PIN             2
     #define LED_OFF             0
     #define LED_ON              1
-    #define VOLTAGE_PIN         3
     #define VOLTAGE_DEVIDER     5
     #define MODULE_NAME         "Mons_1"
     #define BOARD_VOLTAGE       3.3
