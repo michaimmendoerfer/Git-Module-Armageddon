@@ -128,7 +128,7 @@ void   InitMRD();
 
 float  ReadAmp (int SNr);
 float  ReadVolt(int SNr);
-void   SendStatus(int);
+void   SendStatus (int Pos=-1);
 void   SendPairingRequest();
 
 void   CheckRelayState();
@@ -254,7 +254,7 @@ void setup()
     #endif
 }
 #pragma region Send-Things
-void SendStatus (int Pos=-1) 
+void SendStatus (int Pos) 
 {
     TSLed = millis();
     SetMessageLED(2);
@@ -439,17 +439,19 @@ void AddStatus(String Msg)
   Status[0].TSMsg = millis();
   */
 }
-void ToggleSwitch(int SNr)
+void ToggleSwitch(int SNr, int State=2)
 {
     int Value = Module.GetPeriphValue(SNr, 0);
     
     Module.SetPeriphOldValue(SNr, Value, 0);
     
-    if (Value == 0) Value = 1;
-    else Value = 0;
-
+    switch (State)
+    {
+        case 0: Value = 0; break;
+        case 1: Value = 1; break;
+        case 2: Value = Value ? 0 : 1; break;
+    }
     Module.SetPeriphValue(SNr, Value, 0);
-    
     UpdateSwitches();
 }
 void CheckRelayState()
@@ -497,7 +499,7 @@ void UpdateSwitches()
         {
             Value = (uint8_t)Module.GetPeriphValue(SNr, 0);
             if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f\n\r",SNr, (float)Value);
-            
+            // auf Veränderung prüfen
             if (Value == 0)
             {
                 #ifdef PORT_USED
@@ -508,11 +510,11 @@ void UpdateSwitches()
                     if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d aus\n\r", Module.GetPeriphIOI2C(SNr*2+1, 1), Module.GetPeriphIOPort(SNr, 1));
                     
                 #else
-                    digitalWrite(Module.GetPeriphIOPort(SNr, 1), 1);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d an\n\r", Module.GetPeriphIOPort(SNr, 1));
+                    digitalWrite(Module.GetPeriphIOPort(SNr, 0), 1);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d an\n\r", Module.GetPeriphIOPort(SNr, 0));
                     delay(100);
-                    digitalWrite(Module.GetPeriphIOPort(SNr, 1), 0);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d aus\n\r", Module.GetPeriphIOPort(SNr, 1));
+                    digitalWrite(Module.GetPeriphIOPort(SNr, 0), 0);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d aus\n\r", Module.GetPeriphIOPort(SNr, 0));
                     
                 #endif
             }
@@ -525,11 +527,11 @@ void UpdateSwitches()
                     IOBoard.digitalWrite(SNr*2, 0);
                     if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d aus\n\r", Module.GetPeriphIOI2C(SNr*2, 1), Module.GetPeriphIOPort(SNr, 1));
                 #else
-                    digitalWrite(Module.GetPeriphIOPort(SNr, 0), 1);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d an\n\r", Module.GetPeriphIOPort(SNr, 0));
+                    digitalWrite(Module.GetPeriphIOPort(SNr, 1), 1);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d an\n\r", Module.GetPeriphIOPort(SNr, 1));
                     delay(100);
-                    digitalWrite(Module.GetPeriphIOPort(SNr, 0), 0);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d aus\n\r", Module.GetPeriphIOPort(SNr, 0));
+                    digitalWrite(Module.GetPeriphIOPort(SNr, 1), 0);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d aus\n\r", Module.GetPeriphIOPort(SNr, 1));
                 #endif 
             }
         }
@@ -829,9 +831,8 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
         String TempName = doc["Node"];
         if (DEBUG_LEVEL > 2) Serial.printf("(%s) - %s\n\r", TempName.c_str(), jsondata.c_str());    
 
-        uint32_t TempTSConfirm = (uint32_t) doc["TSConfirm"];
-        if (TempTSConfirm) SendConfirm(mac, TempTSConfirm);
-
+        if (doc["TSConfirm"].is<JsonVariant>()) SendConfirm(mac, (uint32_t)doc["TSConfirm"]);
+        
         switch ((int) doc["Order"]) 
         {
             case SEND_CMD_YOU_ARE_PAIRED:
@@ -974,11 +975,11 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 
                 break;
             case SEND_CMD_SWITCH_TOGGLE:
-                Pos = doc["Pos"];
+                Pos = doc["PeriphPos"];
                 if (Module.isPeriphEmpty(Pos) == false) ToggleSwitch(Pos);
                 break;
             case SEND_CMD_UPDATE_NAME:
-                Pos = (int) doc["Pos"];
+                Pos = (int) doc["PeriphPos"];
                 NewName = doc["NewName"].as<String>();
 
                 if (NewName != "") 
@@ -993,7 +994,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 break;
             case SEND_CMD_UPDATE_VIN:
                 NewVin = (float) doc["Value"];
-                Pos = (int) doc["Pos"];
+                Pos = (int) doc["PeriphPos"];
 
                 if (NewVin > 0)
                 {
@@ -1002,7 +1003,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 }
                 break;
             case SEND_CMD_UPDATE_VPERAMP:
-                Pos = (int) doc["Pos"];
+                Pos = (int) doc["PeriphPos"];
                 NewVperAmp = (float) doc["Value"];
 
                 if (NewVperAmp > 0)
@@ -1013,7 +1014,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 }
                 break;
             case SEND_CMD_UPDATE_NULLWERT:
-                Pos = (int) doc["Pos"];
+                Pos = (int) doc["PeriphPos"];
                 NewNullwert = (float) doc["Value"];
 
                 if (NewNullwert > 0)
@@ -1024,7 +1025,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 }
                 break;
             case SEND_CMD_SEND_STATE:
-                Pos = (int) doc["Pos"];
+                Pos = (int) doc["PeriphPos"];
                 SendStatus(Pos);
                 break;
         } // end (!error)

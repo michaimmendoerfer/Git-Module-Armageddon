@@ -22,8 +22,28 @@ TSConfirm  = TSConfirm
 
 JSON Receive-Structure 
 
+SEND_CMD_SWITCH_ON
+From        = Peer from which order was sent
+Order       = SEND_CMD_SWITCH_ON
+PeriphName  = name of switch
+Pos         = pos of switch 
+
+SEND_CMD_SWITCH_OFF
+From        = Peer from which order was sent
+Order       = SEND_CMD_SWITCH_OFF
+PeriphName  = name of switch
+Pos         = pos of switch 
+
 SEND_CMD_SWITCH_TOGGLE
 From        = Peer from which order was sent
 Order       = SEND_CMD_SWITCH_TOGGLE
 PeriphName  = name of switch
 Pos         = pos of switch 
+
+SEND_CMD_CURRENT_CALIB
+From        = Peer from which order was sent
+Order       = SEND_CMD_CURRENT_CALIB
+
+SEND_CMD_VOLTAGE_CALIB
+From        = Peer from which order was sent
+Order       = SEND_CMD_VOLTAGE_CALIB
