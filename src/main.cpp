@@ -176,9 +176,6 @@ void setup()
         Serial.begin(74880);
     #endif
 
-    //delay(1000);
-    //while (!Serial);
-
     InitSCL();
 
     if (DEBUG_LEVEL > 0)                        // Show free entries
@@ -289,7 +286,7 @@ void SendStatus (int Pos)
         if (!Module.isPeriphEmpty(SNr))
         {
             //besser machen
-            snprintf(buf, sizeof(buf), "%d;%s;%.2f;%.2f;%.2f;%.2f", 
+            snprintf(buf, sizeof(buf), "%d;%s;%.0f;%.0f;%.2f;%.2f", 
             Module.GetPeriphType(SNr), 
             Module.GetPeriphName(SNr), 
             Module.GetPeriphValue(SNr, 0),
@@ -502,12 +499,13 @@ void UpdateSwitches()
             // auf Veränderung prüfen
             if (Value == 0)
             {
+                //tut noch nicht
                 #ifdef PORT_USED
-                    IOBoard.digitalWrite(SNr*2+1, 1);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d an\n\r", Module.GetPeriphIOI2C(SNr*2+1, 1), Module.GetPeriphIOPort(SNr, 1));
+                    IOBoard.digitalWrite(SNr*2, 1);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d an\n\r", Module.GetPeriphIOI2C(SNr*2, 1), Module.GetPeriphIOPort(SNr, 0));
                     delay(100);
-                    IOBoard.digitalWrite(SNr*2+1, 0);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d aus\n\r", Module.GetPeriphIOI2C(SNr*2+1, 1), Module.GetPeriphIOPort(SNr, 1));
+                    IOBoard.digitalWrite(SNr*2, 0);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d aus\n\r", Module.GetPeriphIOI2C(SNr*2, 1), Module.GetPeriphIOPort(SNr, 0));
                     
                 #else
                     digitalWrite(Module.GetPeriphIOPort(SNr, 0), 1);
@@ -521,11 +519,11 @@ void UpdateSwitches()
             else
             {
                 #ifdef PORT_USED
-                    IOBoard.digitalWrite(SNr*2, 1);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d an\n\r", Module.GetPeriphIOI2C(SNr*2, 1), Module.GetPeriphIOPort(SNr, 1));
+                    IOBoard.digitalWrite(SNr*2+1, 1);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d an\n\r", Module.GetPeriphIOI2C(SNr*2+1, 1), Module.GetPeriphIOPort(SNr, 1));
                     delay(100);
-                    IOBoard.digitalWrite(SNr*2, 0);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d aus\n\r", Module.GetPeriphIOI2C(SNr*2, 1), Module.GetPeriphIOPort(SNr, 1));
+                    IOBoard.digitalWrite(SNr*2+1, 0);
+                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d aus\n\r", Module.GetPeriphIOI2C(SNr*2+1, 1), Module.GetPeriphIOPort(SNr, 1));
                 #else
                     digitalWrite(Module.GetPeriphIOPort(SNr, 1), 1);
                     if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d an\n\r", Module.GetPeriphIOPort(SNr, 1));
@@ -1106,8 +1104,9 @@ void loop()
     }
 
     #ifdef PAIRING_BUTTON                                                       // check for Pairing/Reset Button
-        int BB = !digitalRead(PAIRING_BUTTON);
-        if (BB == 1) {
+        int BB1 = !digitalRead(PAIRING_BUTTON);
+        int BB2 = !digitalRead(0);
+        if ((BB1 == 1) or (BB2 == 1)) {
             TSPair = actTime;
             Module.SetPairMode(true);
             SetMessageLED(1);
