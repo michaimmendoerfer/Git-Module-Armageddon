@@ -454,6 +454,22 @@ void ToggleSwitch(int SNr, int State=2)
     Module.SetPeriphValue(SNr, Value, 0);
     UpdateSwitches();
 }
+bool isRelayOn(int SNr)
+{
+	int _Type = Module.GetPeriphType(SNr);
+	if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
+        {
+            if (ReadVolt(SNr) > 5) return true;
+        }
+        else if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
+        {
+            	#ifdef PORT_USED
+		    return IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
+		#else
+		    return digitalRead(Module.GetPeriphIOPort(SNr, 0));
+		#endif
+        }
+}
 void CheckRelayState()
 {
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
@@ -467,7 +483,11 @@ void CheckRelayState()
         }
         else if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
         {
-            Module.SetPeriphValue(SNr, 0, 0);
+            #ifdef PORT_USED
+                    return IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
+                #else
+                    return digitalRead(Module.GetPeriphIOPort(SNr, 0));
+                #endif
         }
     }
 }
