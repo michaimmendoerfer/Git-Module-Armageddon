@@ -451,26 +451,67 @@ void ToggleSwitch(int SNr, int State=2)
     Module.SetPeriphValue(SNr, Value, 0);
     UpdateSwitches();
 }
-void CheckRelayState()
+bool GetRelayState(int SNr)
 {
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
-    {
-        int _Type = Module.GetPeriphType(SNr);
-    
-        if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
+	int _Type = Module.GetPeriphType(SNr);
+	if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
         {
-            if (ReadVolt(SNr) > 5) Module.SetPeriphValue(SNr, 1, 0);
-            else Module.SetPeriphValue(SNr, 0, 0);
+            	if (ReadVolt(SNr) > 5) return true;
         }
         else if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
         {
-            Module.SetPeriphValue(SNr, 0, 0);
+		int RawState = 0;
+		
+            	#ifdef PORT_USED
+		    RawState = IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
+		#else
+		    RawState = digitalRead(Module.GetPeriphIOPort(SNr, 0));
+		#endif
+
+		if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED) return true;
+		if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL)   return true;
         }
-    }
+	return false;
+}
+void SetRelayState(int SNr, bool State)
+{
+	int _Type = Module.GetPeriphType(SNr);
+	
+        if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
+        {
+		if (Module.GetRelayType() == RELAY_REVERSED) 
+		{           
+	        	#ifdef PORT_USED
+	                	if (Module.GetRelayType() == RELAY_NORMAL) 
+					IOBoard.digitalWrite(SNr, State);
+				else 
+					IOBoard.digitalWrite(SNr, !State);
+	            	#else
+	                	if (Module.GetRelayType() == RELAY_NORMAL) 
+					digitalWrite(Module.GetPeriphIOPort(SNr, 0), State);
+				else
+					digitalWrite(Module.GetPeriphIOPort(SNr, 0), !State);
+	            	#endif
+		}
+        }
+	
+}
+void CheckRelayState()
+{
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) Module.SetPeriphValue(SNr, 0, GetRelayState(SNr));
 }
 void UpdateSwitches() 
 {
-    uint8_t Value = 0;
+	for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
+	{
+		if (Module.GetPeriphValue(SNr, 0) != RelayState(SNr))
+		{
+			
+		
+    
+	    
+	    
+	    uint8_t Value = 0;
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
     {
         int _Type = Module.GetPeriphType(SNr);
