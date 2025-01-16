@@ -454,42 +454,31 @@ void ToggleSwitch(int SNr, int State=2)
     Module.SetPeriphValue(SNr, Value, 0);
     UpdateSwitches();
 }
-bool isRelayOn(int SNr)
+bool RelayState(int SNr)
 {
 	int _Type = Module.GetPeriphType(SNr);
 	if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
         {
-            if (ReadVolt(SNr) > 5) return true;
+            	if (ReadVolt(SNr) > 5) return true;
         }
         else if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
         {
+		int RawState = 0;
+		
             	#ifdef PORT_USED
-		    return IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
+		    RawState = IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
 		#else
-		    return digitalRead(Module.GetPeriphIOPort(SNr, 0));
+		    RawState = digitalRead(Module.GetPeriphIOPort(SNr, 0));
 		#endif
+
+		if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED) return true;
+		if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL)   return true;
         }
+	return false;
 }
 void CheckRelayState()
 {
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
-    {
-        int _Type = Module.GetPeriphType(SNr);
-    
-        if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
-        {
-            if (ReadVolt(SNr) > 5) Module.SetPeriphValue(SNr, 1, 0);
-            else Module.SetPeriphValue(SNr, 0, 0);
-        }
-        else if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
-        {
-            #ifdef PORT_USED
-                    return IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
-                #else
-                    return digitalRead(Module.GetPeriphIOPort(SNr, 0));
-                #endif
-        }
-    }
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) Module.SetPeriphValue(SNr, 0, RelayState(SNr));
 }
 void UpdateSwitches() 
 {
