@@ -468,8 +468,8 @@ bool GetRelayState(int SNr)
 		    RawState = digitalRead(Module.GetPeriphIOPort(SNr, 0));
 		#endif
 
-		if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED) return true;
-		if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL)   return true;
+		if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED)) return true;
+		if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL))   return true;
         }
 	return false;
 }
@@ -477,24 +477,23 @@ void SetRelayState(int SNr, bool State)
 {
 	int _Type = Module.GetPeriphType(SNr);
 	
-        if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
-        {
-		if (Module.GetRelayType() == RELAY_REVERSED) 
-		{           
-	        	#ifdef PORT_USED
-	                	if (Module.GetRelayType() == RELAY_NORMAL) 
-					IOBoard.digitalWrite(SNr, State);
-				else 
-					IOBoard.digitalWrite(SNr, !State);
-	            	#else
-	                	if (Module.GetRelayType() == RELAY_NORMAL) 
-					digitalWrite(Module.GetPeriphIOPort(SNr, 0), State);
-				else
-					digitalWrite(Module.GetPeriphIOPort(SNr, 0), !State);
-	            	#endif
-		}
+    if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
+    {
+        if (Module.GetRelayType() == RELAY_REVERSED) 
+        {           
+            #ifdef PORT_USED
+                    if (Module.GetRelayType() == RELAY_NORMAL) 
+                IOBoard.digitalWrite(SNr, State);
+            else 
+                IOBoard.digitalWrite(SNr, !State);
+                #else
+                    if (Module.GetRelayType() == RELAY_NORMAL) 
+                digitalWrite(Module.GetPeriphIOPort(SNr, 0), State);
+            else
+                digitalWrite(Module.GetPeriphIOPort(SNr, 0), !State);
+                #endif
         }
-	
+    }
 }
 void CheckRelayState()
 {
@@ -504,76 +503,8 @@ void UpdateSwitches()
 {
 	for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
 	{
-		if (Module.GetPeriphValue(SNr, 0) != RelayState(SNr))
-		{
-			
-		
-    
-	    
-	    
-	    uint8_t Value = 0;
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
-    {
-        int _Type = Module.GetPeriphType(SNr);
-        
-        if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
-        {
-            Value = (uint8_t)Module.GetPeriphValue(SNr, 0);
-            if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f",SNr, (float)Value);
-            
-            if (Module.GetRelayType() == RELAY_REVERSED) 
-            {
-                if (Value == 0) Value = 1;
-                else Value = 0;
-            }
-            
-            #ifdef PORT_USED
-                IOBoard.digitalWrite(SNr, Value);
-            #else
-                digitalWrite(Module.GetPeriphIOPort(SNr, 0), Value);
-            #endif
-        }
-        else if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
-        {
-            Value = (uint8_t)Module.GetPeriphValue(SNr, 0);
-            if (DEBUG_LEVEL > 1) Serial.printf("Value %d = %f\n\r",SNr, (float)Value);
-            // auf Veränderung prüfen
-            if (Value == 0)
-            {
-                //tut noch nicht
-                #ifdef PORT_USED
-                    IOBoard.digitalWrite(SNr*2, 1);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d an\n\r", Module.GetPeriphIOI2C(SNr*2, 1), Module.GetPeriphIOPort(SNr, 0));
-                    delay(100);
-                    IOBoard.digitalWrite(SNr*2, 0);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d aus\n\r", Module.GetPeriphIOI2C(SNr*2, 1), Module.GetPeriphIOPort(SNr, 0));
-                    
-                #else
-                    digitalWrite(Module.GetPeriphIOPort(SNr, 0), 1);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d an\n\r", Module.GetPeriphIOPort(SNr, 0));
-                    delay(100);
-                    digitalWrite(Module.GetPeriphIOPort(SNr, 0), 0);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d aus\n\r", Module.GetPeriphIOPort(SNr, 0));
-                    
-                #endif
-            }
-            else
-            {
-                #ifdef PORT_USED
-                    IOBoard.digitalWrite(SNr*2+1, 1);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d an\n\r", Module.GetPeriphIOI2C(SNr*2+1, 1), Module.GetPeriphIOPort(SNr, 1));
-                    delay(100);
-                    IOBoard.digitalWrite(SNr*2+1, 0);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte %02x-Port %d aus\n\r", Module.GetPeriphIOI2C(SNr*2+1, 1), Module.GetPeriphIOPort(SNr, 1));
-                #else
-                    digitalWrite(Module.GetPeriphIOPort(SNr, 1), 1);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d an\n\r", Module.GetPeriphIOPort(SNr, 1));
-                    delay(100);
-                    digitalWrite(Module.GetPeriphIOPort(SNr, 1), 0);
-                    if (DEBUG_LEVEL > 1) Serial.printf("Schalte Port %d aus\n\r", Module.GetPeriphIOPort(SNr, 1));
-                #endif 
-            }
-        }
+		if ((Module.GetPeriphType(SNr)) and (Module.GetPeriphValue(SNr, 0) != GetRelayState(SNr)))
+            SetRelayState(SNr, Module.GetPeriphValue(SNr, 0));
         //if (DEBUG_LEVEL > 2) Serial.printf("Setze %s (Port:%d) auf %d\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), Value);
     }
     SendStatus();
