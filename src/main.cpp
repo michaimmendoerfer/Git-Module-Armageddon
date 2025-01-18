@@ -131,7 +131,9 @@ float  ReadVolt(int SNr);
 void   SendStatus (int Pos=-1);
 void   SendPairingRequest();
 
-void   CheckRelayState();
+bool   GetRelayState(int SNr);
+void   SetRelayState(int SNr, bool State);
+
 void   UpdateSwitches();
 
 void   SetDemoMode (bool Mode);
@@ -157,6 +159,11 @@ void setup()
     #ifdef LED_PIN
         pinMode(LED_PIN, OUTPUT);
     #endif
+    #ifdef PAIRING_BUTTON
+        pinMode(PAIRING_BUTTON, INPUT_PULLUP);
+    #endif
+        pinMode(0, INPUT_PULLUP);
+    
     esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
 
     switch (wakeup_reason) {
@@ -206,8 +213,8 @@ void setup()
             if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
         preferences.end();
     }
-    //noch status erfassen
-    CheckRelayState();
+    
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) Module.SetPeriphValue(SNr, 0, GetRelayState(SNr));
     UpdateSwitches();
 
     WiFi.mode(WIFI_STA);
@@ -462,7 +469,7 @@ bool GetRelayState(int SNr)
         {
 		int RawState = 0;
 		
-            	#ifdef PORT_USED
+        #ifdef PORT_USED
 		    RawState = IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
 		#else
 		    RawState = digitalRead(Module.GetPeriphIOPort(SNr, 0));
@@ -494,10 +501,6 @@ void SetRelayState(int SNr, bool State)
                 #endif
         }
     }
-}
-void CheckRelayState()
-{
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) Module.SetPeriphValue(SNr, 0, GetRelayState(SNr));
 }
 void UpdateSwitches() 
 {
