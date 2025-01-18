@@ -29,7 +29,7 @@ void InitModule()
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
         Module.Setup(MODULE_NAME, SWITCH_2_WAY, MODULE_VERSION, NULL,     false, true,  false, false);
         //                      Name     Type             ADS  IO                NULL     VpA      Vin  PeerID  
-        Module.PeriphSetup(0, "Sw 0",   SENS_TYPE_LT_AMP,  0,  27, 26, 16, 17,   0,       0.040,    0,    0);
+        Module.PeriphSetup(0, "Sw 0",   SENS_TYPE_LT_AMP,  0,  27, 26, 33, 17,   0,       0.040,  1144,    0);
         Module.PeriphSetup(1, "Sw 1",   SENS_TYPE_LT_AMP,  0,  25, 33, 18, 19,   0,       0.040,    0,    0);
         Module.PeriphSetup(2, "VMon",   SENS_TYPE_VOLT,    0,  00, 00, 36, 00,   0,       0,       200,   0);
 
@@ -99,6 +99,7 @@ void InitModule()
     // Set pinModes
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
     { 
+        
         if (Module.isPeriphSwitch(SNr)) 
         {
             #ifdef PORT_USED
@@ -106,10 +107,12 @@ void InitModule()
                 #else
                     if (Module.GetPeriphIOPort(SNr, 0) >= 0) pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT); 
                     if (Module.GetPeriphIOPort(SNr, 1) >= 0) pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT); 
+                    // noch checken
+                    if (Module.GetPeriphIOPort(SNr, 2) >=0) pinMode(Module.GetPeriphIOPort(SNr, 2), INPUT_PULLDOWN );
                     
                 #endif
         }
-        else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) 
+        else if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT)
         {
             pinMode(Module.GetPeriphIOPort(SNr, 2), INPUT );
         }

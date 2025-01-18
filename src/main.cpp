@@ -214,7 +214,7 @@ void setup()
         preferences.end();
     }
     
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) Module.SetPeriphValue(SNr, 0, GetRelayState(SNr));
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) Module.SetPeriphValue(SNr, GetRelayState(SNr), 0);
     UpdateSwitches();
 
     WiFi.mode(WIFI_STA);
@@ -256,6 +256,7 @@ void setup()
     #ifdef MODULE_HAS_DISPLAY
       ui_init();
     #endif
+    
 }
 #pragma region Send-Things
 void SendStatus (int Pos) 
@@ -292,7 +293,7 @@ void SendStatus (int Pos)
     {   
         if (!Module.isPeriphEmpty(SNr))
         {
-            //besser machen
+            Module.SetPeriphValue(SNr, GetRelayState(SNr), 0);
             snprintf(buf, sizeof(buf), "%d;%s;%.0f;%.0f;%.2f;%.2f", 
             Module.GetPeriphType(SNr), 
             Module.GetPeriphName(SNr), 
@@ -302,6 +303,12 @@ void SendStatus (int Pos)
             Module.GetPeriphValue(SNr, 3));
                         
             doc[ArrPeriph[SNr]] = buf;
+
+            /*if (GetRelayState(SNr) == 1) 
+                Serial.printf("Relay:%d ist an  - Volt: %.2f\n\r", SNr, ReadVolt(SNr));
+            else    
+                Serial.printf("Relay:%d ist aus - Volt: %.2f\n\r", SNr, ReadVolt(SNr));
+            */   
         }
 	}
 	
@@ -446,7 +453,7 @@ void AddStatus(String Msg)
 void ToggleSwitch(int SNr, int State=2)
 {
     int Value = Module.GetPeriphValue(SNr, 0);
-    
+Serial.printf("Value vor switch:%d\n\r", Value);
     Module.SetPeriphOldValue(SNr, Value, 0);
     
     switch (State)
@@ -456,6 +463,7 @@ void ToggleSwitch(int SNr, int State=2)
         case 2: Value = Value ? 0 : 1; break;
     }
     Module.SetPeriphValue(SNr, Value, 0);
+    Serial.printf("Value vor switch:%d\n\r", Value);
     UpdateSwitches();
 }
 bool GetRelayState(int SNr)
@@ -486,29 +494,48 @@ void SetRelayState(int SNr, bool State)
 	
     if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
     {
-        if (Module.GetRelayType() == RELAY_REVERSED) 
-        {           
-            #ifdef PORT_USED
-                    if (Module.GetRelayType() == RELAY_NORMAL) 
-                IOBoard.digitalWrite(SNr, State);
+        #ifdef PORT_USED
+            if (Module.GetRelayType() == RELAY_NORMAL) 
+                IOBoard.digitalWrite(Module.GetPeriphIOPort(SNr, 0), State);
             else 
-                IOBoard.digitalWrite(SNr, !State);
-                #else
-                    if (Module.GetRelayType() == RELAY_NORMAL) 
+                IOBoard.digitalWrite(Module.GetPeriphIOPort(SNr, 0), !State);
+        #else
+            if (Module.GetRelayType() == RELAY_NORMAL) 
                 digitalWrite(Module.GetPeriphIOPort(SNr, 0), State);
             else
                 digitalWrite(Module.GetPeriphIOPort(SNr, 0), !State);
-                #endif
-        }
+        #endif
     }
+    if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
+    {
+        int _Port;
+        if (State == false) _Port = Module.GetPeriphIOPort(SNr, 0);
+        else _Port = Module.GetPeriphIOPort(SNr, 1);
+
+        #ifdef PORT_USED
+            IOBoard.digitalWrite(_Port, 1);
+            delay(100);
+            IOBoard.digitalWrite(_Port, 0);
+        #else
+            digitalWrite(_Port, 1);
+            Serial.printf("Setze _Port:%d auf on\n\r", _Port);
+            delay(1000);
+            digitalWrite(_Port, 0);
+            Serial.printf("Setze _Port:%d auf off\n\r", _Port);
+        #endif
+    }
+    
 }
 void UpdateSwitches() 
 {
 	for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
 	{
-		if ((Module.GetPeriphType(SNr)) and (Module.GetPeriphValue(SNr, 0) != GetRelayState(SNr)))
-            SetRelayState(SNr, Module.GetPeriphValue(SNr, 0));
-        //if (DEBUG_LEVEL > 2) Serial.printf("Setze %s (Port:%d) auf %d\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), Value);
+		if ((Module.GetPeriphType(SNr) > 0) and (Module.GetPeriphValue(SNr, 0) != GetRelayState(SNr)))
+        {
+            if (Module.GetPeriphValue(SNr, 0) == 0) SetRelayState(SNr, 0);
+            else SetRelayState(SNr,1);
+            Serial.printf("Setze %s (Port:%d) auf %d\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), Module.GetPeriphValue(SNr, 0));
+        }
     }
     SendStatus();
 }
