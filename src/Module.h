@@ -50,7 +50,7 @@ void InitModule();
     #define LED_PIN             2
     #define LED_OFF             0
     #define LED_ON              1
-    #define VOLTAGE_DEVIDER     5
+    #define VOLTAGE_DEVIDER     4.5454
     #define MODULE_NAME         "Mons_1"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095

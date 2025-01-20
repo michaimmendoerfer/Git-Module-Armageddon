@@ -7,9 +7,7 @@ extern MyLinkedList<PeriphClass*> SensorList;
 extern MyLinkedList<PeriphClass*> PeriphList;
 
 void InitModule()
-{
-    float Vin = BOARD_ANALOG_MAX/BOARD_VOLTAGE;
-        
+{   
     #ifdef MODULE_JL_BATTERY_SENSOR           
         #define SWITCHES_PER_SCREEN 4
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
@@ -29,9 +27,9 @@ void InitModule()
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
         Module.Setup(MODULE_NAME, SWITCH_2_WAY, MODULE_VERSION, NULL,     false, true,  false, false);
         //                      Name     Type             ADS  IO                NULL     VpA      Vin  PeerID  
-        Module.PeriphSetup(0, "Sw 0",   SENS_TYPE_LT_AMP,  0,  27, 26, 33, 17,   0,       0.040,  1144,    0);
-        Module.PeriphSetup(1, "Sw 1",   SENS_TYPE_LT_AMP,  0,  25, 33, 18, 19,   0,       0.040,    0,    0);
-        Module.PeriphSetup(2, "VMon",   SENS_TYPE_VOLT,    0,  00, 00, 36, 00,   0,       0,       200,   0);
+        Module.PeriphSetup(0, "Sw 0",   SENS_TYPE_LT_AMP,  0,  27, 26, 33, 34,   0,       0.040,  1241,   0);
+        Module.PeriphSetup(1, "Sw 1",   SENS_TYPE_LT_AMP,  0,  16, 17, 35, 39,   0,       0.040,  1241,    0); //39=vn
+        Module.PeriphSetup(2, "VMon",   SENS_TYPE_VOLT,    0,  00, 00, 32, 00,   0,       0,      1241,   0);
 
         
         /*
