@@ -1,6 +1,8 @@
 #ifndef MODULE_H
 #define MODULE_H
 
+#include <Jeepify.h>
+
 //#define MODULE_JL_BATTERY_SENSOR      // (tut)
 #define MODULE_4WAY_ESP32_MONSTER
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
@@ -25,7 +27,7 @@ void InitModule();
 
 #ifdef MODULE_JL_BATTERY_SENSOR
     #define PROZ_ESP32_C3       1
-    #define ADC_USED            1
+    #define ADC_USED            0x48
     #define PAIRING_BUTTON      9
     #define RGBLED_PIN          8
     #define LED_OFF             0
@@ -43,10 +45,10 @@ void InitModule();
 // 4 Switches
 #ifdef MODULE_4WAY_ESP32_MONSTER
     #define PROZ_ESP32          1
-    #define PAIRING_BUTTON      9
-    #define SDA_PIN             6
-    #define SCL_PIN             7
-    #define I2C_ADC             0x48
+    #define PAIRING_BUTTON      0
+//  #define SDA_PIN             6
+//  #define SCL_PIN             7
+//  #define ADC_USED            0x48
     #define LED_PIN             2
     #define LED_OFF             0
     #define LED_ON              1
@@ -110,5 +112,11 @@ void InitModule();
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
+
+extern const char *ArrNullwert[MAX_PERIPHERALS];
+extern const char *ArrRawVolt [MAX_PERIPHERALS];
+extern const char *ArrVperAmp [MAX_PERIPHERALS];
+extern const char *ArrVin     [MAX_PERIPHERALS];
+extern const char *ArrPeriph  [MAX_PERIPHERALS];
 
 #endif

@@ -45,27 +45,16 @@ uint32_t WaitForContact = WAIT_AFTER_SLEEP;
     #ifdef ADC_USED
         #include <Adafruit_ADS1X15.h>
         Adafruit_ADS1115 ADCBoard;
-        #define ADC_ADDRESS  0x48
     #endif
     #ifdef PORT_USED
     #include "PCF8575.h"
-        PCF8575 IOBoard(PORT_ADDRESS, SDA_PIN, SCL_PIN);
-        #define PORT_ADDRESS 0x20
+        PCF8575 IOBoard(PORT_USED, SDA_PIN, SCL_PIN);
     #endif
 #endif
 
-#ifdef ESP32
-    #include <esp_now.h>
-    #include <WiFi.h>
-    #include <nvs_flash.h>
-    #define u8 unsigned char
-#elif defined(ESP8266)
-    #include <ESP8266WiFi.h>
-    #include <espnow.h>
-	#define BOARD_VOLTAGE 3.3
-	#define BOARD_ANALOG_MAX 1023
-#endif 
-
+#include <esp_now.h>
+#include <WiFi.h>
+#include <nvs_flash.h>
 #include <LinkedList.h>
 #include "Jeepify.h"
 #include "PeerClass.h"
@@ -76,13 +65,6 @@ uint32_t WaitForContact = WAIT_AFTER_SLEEP;
 #pragma endregion Includes
 
 #pragma region Globals
-
-const char *ArrNullwert[MAX_PERIPHERALS] = {"NW0",  "NW1",  "NW2",  "NW3",  "NW4",  "NW5",  "NW6",  "NW7",  "NW8"};
-const char *ArrRaw[MAX_PERIPHERALS]      = {"Raw0", "Raw1", "Raw2", "Raw3", "Raw4", "Raw5", "Raw6", "Raw7", "Raw8"};
-const char *ArrRawVolt[MAX_PERIPHERALS]  = {"RaV0", "RaV1", "RaV2", "RaV3", "RaV4", "RaV5", "RaV6", "RaV7", "RaV8"};
-const char *ArrVperAmp[MAX_PERIPHERALS]  = {"VpA0", "VpA1", "VpA2", "VpA3", "VpA4", "VpA5", "VpA6", "VpA7", "VpA8"};
-const char *ArrVin[MAX_PERIPHERALS]      = {"Vin0", "Vin1", "Vin2", "Vin3", "Vin4", "Vin5", "Vin6", "Vin7", "Vin8"};
-const char *ArrPeriph[MAX_PERIPHERALS]   = {"Per0", "Per1", "Per2", "Per3", "Per4", "Per5", "Per6", "Per6", "Per7"};
 
 struct struct_Status {
   String    Msg;
@@ -155,14 +137,6 @@ void setup()
     #ifdef ARDUINO_USB_CDC_ON_BOOT
         delay(3000);
     #endif
-    Serial.println("Setup-Start");
-    #ifdef LED_PIN
-        pinMode(LED_PIN, OUTPUT);
-    #endif
-    #ifdef PAIRING_BUTTON
-        pinMode(PAIRING_BUTTON, INPUT_PULLUP);
-    #endif
-        pinMode(0, INPUT_PULLUP);
     
     esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
 
@@ -294,24 +268,19 @@ void SendStatus (int Pos)
         if (!Module.isPeriphEmpty(SNr))
         {
             Module.SetPeriphValue(SNr, GetRelayState(SNr), 0);
-            Module.SetPeriphValue(SNr, ReadVolt(SNr), 2);
-            Module.SetPeriphValue(SNr, ReadAmp(SNr), 3);
+            Module.SetPeriphValue(SNr, ReadVolt(SNr),      2);
+            Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
             
             snprintf(buf, sizeof(buf), "%d;%s;%.0f;%.0f;%.2f;%.2f", 
             Module.GetPeriphType(SNr), 
             Module.GetPeriphName(SNr), 
             Module.GetPeriphValue(SNr, 0),
+            //eigentlich nicht nötig
             Module.GetPeriphValue(SNr, 1),
             Module.GetPeriphValue(SNr, 2),
             Module.GetPeriphValue(SNr, 3));
                         
             doc[ArrPeriph[SNr]] = buf;
-
-            /*if (GetRelayState(SNr) == 1) 
-                Serial.printf("Relay:%d ist an  - Volt: %.2f\n\r", SNr, ReadVolt(SNr));
-            else    
-                Serial.printf("Relay:%d ist aus - Volt: %.2f\n\r", SNr, ReadVolt(SNr));
-            */   
         }
 	}
 	
@@ -398,7 +367,7 @@ void SendConfirm(const uint8_t * mac, uint32_t TSConfirm)
 
     if (DEBUG_LEVEL > 2) Serial.printf("%lu: Sending Confirm (%lu) to: %s ", millis(), TSConfirm, FindPeerByMAC(mac)->GetName()); 
             
-    if (esp_now_send((u8 *) mac, (uint8_t *) jsondata.c_str(), 200) == 0) 
+    if (esp_now_send((unsigned char *) mac, (uint8_t *) jsondata.c_str(), 200) == 0) 
     {
             if (DEBUG_LEVEL > 2) Serial.println("ESP_OK");  //Sending "jsondata" 
     } 
@@ -770,6 +739,8 @@ void CurrentCalibration()
 }
 float ReadAmp (int SNr) 
 {
+    if (Module.GetPeriphIOPort(SNr,3) < 0) { if (DEBUG_LEVEL > 0) Serial.println("no IOPort[3] specified !!!");  return 0; }
+
     float TempVal      = 0;
     float TempVolt     = 0;
     float TempAmp      = 0;
@@ -798,8 +769,9 @@ float ReadAmp (int SNr)
 }
 float ReadVolt(int SNr) 
 {
-    if (!Module.GetPeriphVin(SNr)) { if (DEBUG_LEVEL > 0) Serial.println("Vin must not be zero !!!"); return 0; }
-    
+    if (Module.GetPeriphVin(SNr)      == 0) { if (DEBUG_LEVEL > 0) Serial.println("Vin must not be zero !!!");    return 0; }
+    if (Module.GetPeriphIOPort(SNr, 2) < 0) { if (DEBUG_LEVEL > 0) Serial.println("no IOPort[2] specified !!!");  return 0; }
+
     //Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
 
     float TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
@@ -841,7 +813,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             case SEND_CMD_YOU_ARE_PAIRED:
                 if (doc["Peer"] == Module.GetName())
                 {
-                    if (esp_now_is_peer_exist((u8 *) mac)) 
+                    if (esp_now_is_peer_exist((unsigned char *) mac)) 
                     { 
                         if (DEBUG_LEVEL > 0) { PrintMAC(mac); Serial.println(" already exists..."); }
                         Module.SetPairMode(false);
@@ -1201,7 +1173,7 @@ void InitSCL()
     #endif
     #ifdef ADC_USED                             // init ADS
         ADCBoard.setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
-        if (!ADCBoard.begin(ADC_ADDRESS)) { 
+        if (!ADCBoard.begin(ADC_USED)) { 
           if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
           while (1);
         }
