@@ -269,6 +269,8 @@ void SendStatus (int Pos)
     {   
         if (!Module.isPeriphEmpty(SNr))
         {
+            Serial.printf("SendStatus(%d) - %s (Type %d):\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr));
+
             Module.SetPeriphValue(SNr, GetRelayState(SNr), 0);
             Module.SetPeriphValue(SNr, ReadVolt(SNr),      2);
             Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
@@ -283,6 +285,7 @@ void SendStatus (int Pos)
             Module.GetPeriphValue(SNr, 3));
                         
             doc[ArrPeriph[SNr]] = buf;
+            Serial.println(buf);
         }
 	}
 	
@@ -442,7 +445,9 @@ Serial.printf("Value vor switch:%d\n\r", Value);
 }
 bool GetRelayState(int SNr)
 {
-	int _Type = Module.GetPeriphType(SNr);
+	Serial.printf("GetRelayState(%d):\n\r", SNr);
+
+    int _Type = Module.GetPeriphType(SNr);
 	if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
         {
             	if (ReadVolt(SNr) > 5) return true;
@@ -453,14 +458,17 @@ bool GetRelayState(int SNr)
             
             #ifdef PORT_USED
                 RawState = IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
+                Serial.printf("Relay(%d)-State = %d (IOBoard.DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
             #else
                 RawState = digitalRead(Module.GetPeriphIOPort(SNr, 0));
+                Serial.printf("Relay(%d)-State = %d (DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
             #endif
-
-            if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED)) return true;
-            if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL))   return true;
+            
+            if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED)) { Serial.println("Relaystate Ende"); return true;}
+            if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL))   { Serial.println("Relaystate Ende"); return true;}
         }
-	return false;
+	Serial.println("Relaystate Ende");
+    return false;
 }
 void SetRelayState(int SNr, bool State)
 {
@@ -741,7 +749,7 @@ void CurrentCalibration()
 }
 float ReadAmp (int SNr) 
 {
-    if (Module.GetPeriphIOPort(SNr,3) < 0) { if (DEBUG_LEVEL > 0) Serial.println("no IOPort[3] specified !!!");  return 0; }
+    if (Module.GetPeriphIOPort(SNr,3) < 0) { if (DEBUG_LEVEL > 0) Serial.printf("SNR=%d, no IOPort[3] specified !!!\n\r",SNr);  return 0; }
 
     float TempVal      = 0;
     float TempVolt     = 0;
@@ -754,13 +762,15 @@ float ReadAmp (int SNr)
         delay(10);
     #else
         TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 3));
+        Serial.printf("ReadAmp: SNr=%d - analogRead of port %d = %.0f", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal);
+
         TempVolt = BOARD_VOLTAGE/BOARD_ANALOG_MAX*TempVal;
         TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * VOLTAGE_DEVIDER;// 1.5 wegen Voltage-Devider
         delay(10);
     #endif
   
     if (DEBUG_LEVEL > 2) {
-        Serial.printf("(A): Raw:%.3f Null:%.4f --> %.4fV --> %.4fA", TempVal, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
+        Serial.printf("ReadAmp: SNr=%d, port=%d: Raw:%.3f Null:%.4f --> %.4fV --> %.4fA", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
     } 
     if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
     if (DEBUG_LEVEL > 2) {
@@ -771,8 +781,8 @@ float ReadAmp (int SNr)
 }
 float ReadVolt(int SNr) 
 {
-    if (Module.GetPeriphVin(SNr)      == 0) { if (DEBUG_LEVEL > 0) Serial.println("Vin must not be zero !!!");    return 0; }
-    if (Module.GetPeriphIOPort(SNr, 2) < 0) { if (DEBUG_LEVEL > 0) Serial.println("no IOPort[2] specified !!!");  return 0; }
+    if (Module.GetPeriphVin(SNr)      == 0) { if (DEBUG_LEVEL > 0) Serial.printf("SNr=%d - Vin must not be zero !!!", SNr);    return 0; }
+    if (Module.GetPeriphIOPort(SNr, 2) < 0) { if (DEBUG_LEVEL > 0) Serial.printf("SNr=%d - no IOPort[2] specified !!!", SNr);  return 0; }
 
     //Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
 
@@ -781,7 +791,7 @@ float ReadVolt(int SNr)
     float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER;
 
     if (DEBUG_LEVEL > 2) {
-        Serial.printf("(V) Raw: %.1f / Vin:%.2f * V-Devider:%.2f--> %.2fV\n\r", TempVal, Module.GetPeriphVin(SNr), VOLTAGE_DEVIDER, TempVolt);
+        Serial.printf("ReadVolt: SNr=%d, port=%d: Raw: %.1f / Vin:%.2f * V-Devider:%.2f--> %.2fV\n\r", SNr, Module.GetPeriphIOPort(SNr, 2), TempVal, Module.GetPeriphVin(SNr), VOLTAGE_DEVIDER, TempVolt);
     } 
     return TempVolt;
 }
