@@ -35,7 +35,7 @@ void InitModule()
         Module.Setup(MODULE_NAME, SWITCH_2_WAY, MODULE_VERSION, NULL,     false, true,  false, false);
         //                      Name     Type             I2C               IO                NULL     VpA      Vin  PeerID  
         Module.PeriphSetup(0, "Sw 0",   SENS_TYPE_LT_AMP,  -1, -1, -1, -1,  27, 26, 33, 34,   0,       0.040,  1241,   0);
-        Module.PeriphSetup(1, "Sw 1",   SENS_TYPE_LT_AMP,  -1, -1, -1, -1,  16, 17, 35, 39,   0,       0.040,  1241,   0); //39=vn
+        Module.PeriphSetup(1, "Sw 1",   SENS_TYPE_LT_AMP,  -1, -1, -1, -1,  16, 17, 25, 39,   0,       0.040,  1241,   0); //39=vn
         Module.PeriphSetup(2, "VMon",   SENS_TYPE_VOLT,    -1, -1, -1, -1,  -1, -1, 32, -1,   0,       0,      1241,   0);
     #endif
 
@@ -101,6 +101,7 @@ void InitModule()
         {
             #ifndef ADC_USED
                 pinMode(Module.GetPeriphIOPort(SNr,2), INPUT);
+                Serial.printf("setze %d auf INPUT", Module.GetPeriphIOPort(SNr,2));
             #endif
         }
 
