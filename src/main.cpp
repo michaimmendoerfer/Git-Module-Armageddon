@@ -674,7 +674,7 @@ void VoltageCalibration(int SNr, float V)
 {
     char Buf[100] = {}; 
   
-    if (DEBUG_LEVEL > 1) Serial.printf("Volt-Messung kalibrieren... Port: %d, Type:%d", Module.GetPeriphIOPort(SNr, 2), Module.GetPeriphType(SNr));
+    if (DEBUG_LEVEL > 1) Serial.printf("SNr %d: Volt-Messung kalibrieren... Port: %d, Type:%d", SNr, Module.GetPeriphIOPort(SNr, 2), Module.GetPeriphType(SNr));
     
     if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) {
         float TempRead = 0;
@@ -957,8 +957,8 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             case SEND_CMD_VOLTAGE_CALIB:
                 AddStatus("VoltCalib beginnt");
                 NewVoltage = (float) doc["NewVoltage"];
-
-                VoltageCalibration(VOLTAGE_DEVIDER, NewVoltage) ;
+                //besser machen
+                VoltageCalibration(2, NewVoltage) ;
                 
                 break;
             case SEND_CMD_SWITCH_TOGGLE:
