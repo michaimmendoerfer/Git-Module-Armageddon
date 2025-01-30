@@ -88,6 +88,7 @@ void InitModule();
     #define LED_OFF             LOW
     #define LED_ON              HIGH
     #define MODULE_NAME         "C3_4S"
+    #define VOLTAGE_DEVIDER     1.0
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif

@@ -1,11 +1,12 @@
 //#define KILL_NVS 1
 
 // DEBUG_LEVEL: 0 = nothing, 1 = only Errors, 2 = relevant changes, 3 = all
+#define DEBUG(...) if (Module.GetDebugMode()) Serial.printf(__VA_ARGS__)
 
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 3; 
+const int DEBUG_LEVEL = 0; 
 const int _LED_SIGNAL = 1;
 #define WAIT_ALIVE       15000
 #define WAIT_AFTER_SLEEP  3000
@@ -183,7 +184,7 @@ void setup()
     if (preferences.begin("JeepifyInit", true)) // import saved Module... if available
     {
         String SavedModule   = preferences.getString("Module", "");
-            if (DEBUG_LEVEL > 2) Serial.printf("Importiere Modul: %s", SavedModule.c_str());
+            DEBUG ("Importiere Modul: %s\n\r", SavedModule.c_str());
             char ToImport[250];
             strcpy(ToImport,SavedModule.c_str());
             if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
@@ -197,6 +198,8 @@ void setup()
     uint8_t MacTemp[6];
     WiFi.macAddress(MacTemp);
     Module.SetBroadcastAddress(MacTemp);
+
+    Module.SetDebugMode(false);
 
     if (esp_now_init() != 0) 
         if (DEBUG_LEVEL > 0) Serial.println("Error initializing ESP-NOW");
@@ -269,9 +272,13 @@ void SendStatus (int Pos)
     {   
         if (!Module.isPeriphEmpty(SNr))
         {
-            Serial.printf("SendStatus(%d) - %s (Type %d):\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr));
+            DEBUG ("SendStatus(%d) - %s (Type %d):\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr));
 
-            Module.SetPeriphValue(SNr, GetRelayState(SNr), 0);
+            if (GetRelayState(SNr)) Module.SetPeriphValue(SNr, 1, 0);
+            else Module.SetPeriphValue(SNr, 0, 0);
+            
+            DEBUG ("GetPeriphValue(%d, 0) = %d\n\r", SNr, Module.GetPeriphValue(SNr, 0));
+            
             Module.SetPeriphValue(SNr, ReadVolt(SNr),      2);
             Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
             
@@ -285,7 +292,6 @@ void SendStatus (int Pos)
             Module.GetPeriphValue(SNr, 3));
                         
             doc[ArrPeriph[SNr]] = buf;
-            Serial.println(buf);
         }
 	}
 	
@@ -297,7 +303,7 @@ void SendStatus (int Pos)
 
         if (Peer->GetType() >= MONITOR_ROUND)
         {
-            if (DEBUG_LEVEL > 2) Serial.printf("Sending to: %s ", Peer->GetName()); 
+           DEBUG ("Sending to: %s ", Peer->GetName()); 
             
             if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) 
             {
@@ -440,12 +446,12 @@ Serial.printf("Value vor switch:%d\n\r", Value);
         case 2: Value = Value ? 0 : 1; break;
     }
     Module.SetPeriphValue(SNr, Value, 0);
-    Serial.printf("Value vor switch:%d\n\r", Value);
+    DEBUG ("Value nach switch:%d\n\r", Module.GetPeriphValue(SNr, 0));
     UpdateSwitches();
 }
 bool GetRelayState(int SNr)
 {
-	Serial.printf("GetRelayState(%d):\n\r", SNr);
+	DEBUG ("GetRelayState(%d):\n\r", SNr);
 
     int _Type = Module.GetPeriphType(SNr);
 	if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
@@ -458,16 +464,16 @@ bool GetRelayState(int SNr)
             
             #ifdef PORT_USED
                 RawState = IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
-                Serial.printf("Relay(%d)-State = %d (IOBoard.DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
+                DEBUG ("Relay(%d)-State = %d (IOBoard.DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
             #else
                 RawState = digitalRead(Module.GetPeriphIOPort(SNr, 0));
-                Serial.printf("Relay(%d)-State = %d (DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
+                DEBUG ("Relay(%d)-State = %d (DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
             #endif
             
-            if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED)) { Serial.println("Relaystate Ende"); return true;}
-            if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL))   { Serial.println("Relaystate Ende"); return true;}
+            if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED)) { DEBUG ("Relaystate Ende"); return true;}
+            if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL))   { DEBUG ("Relaystate Ende"); return true;}
         }
-	Serial.println("Relaystate Ende");
+	DEBUG ("Relaystate Ende");
     return false;
 }
 void SetRelayState(int SNr, bool State)
@@ -500,23 +506,24 @@ void SetRelayState(int SNr, bool State)
             IOBoard.digitalWrite(_Port, 0);
         #else
             digitalWrite(_Port, 1);
-            Serial.printf("Setze _Port:%d auf on\n\r", _Port);
+            DEBUG ("Setze _Port:%d auf on\n\r", _Port);
             delay(1000);
             digitalWrite(_Port, 0);
-            Serial.printf("Setze _Port:%d auf off\n\r", _Port);
+            DEBUG("Setze _Port:%d auf off\n\r", _Port);
         #endif
     }
     
 }
 void UpdateSwitches() 
 {
-	for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
+	Serial.println("UpdateSwitches");
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
 	{
 		if ((Module.GetPeriphType(SNr) > 0) and (Module.GetPeriphValue(SNr, 0) != GetRelayState(SNr)))
         {
             if (Module.GetPeriphValue(SNr, 0) == 0) SetRelayState(SNr, 0);
-            else SetRelayState(SNr,1);
-            Serial.printf("Setze %s (Port:%d) auf %.0f\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), Module.GetPeriphValue(SNr, 0));
+            else SetRelayState(SNr, 1);
+            DEBUG ("Setze %s (Port:%d) auf %.0f\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), Module.GetPeriphValue(SNr, 0));
         }
     }
     SendStatus();
@@ -1094,7 +1101,7 @@ void loop()
 
     #ifdef PAIRING_BUTTON                                                       // check for Pairing/Reset Button
         int BB1 = !digitalRead(PAIRING_BUTTON);
-        int BB2 = !digitalRead(0);
+        int BB2 = 0;//!digitalRead(0);
         if ((BB1 == 1) or (BB2 == 1)) {
             TSPair = actTime;
             Module.SetPairMode(true);

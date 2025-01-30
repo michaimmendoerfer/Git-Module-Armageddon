@@ -55,10 +55,11 @@ void InitModule()
         //                      Name     Type             I2C               IO(0/1)        VOLT  AMP   NULL     VpA      Vin  PeerID  
         Module.Setup(MODULE_NAME, SWITCH_4_WAY, MODULE_VERSION,   NULL,     false, true, false, false);
         //                      Name     Type             I2C               IO(0/1)        VOLT  AMP   NULL     VpA      Vin  PeerID  
-        Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,   -1, -1, -1, -1,  5, -1,          33, 34,   0,       0.040,  1241,   0);
-        Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,   -1, -1, -1, -1,  6, -1,          33, 34,   0,       0.040,  1241,   0);
-        Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,   -1, -1, -1, -1,  7, -1,          33, 34,   0,       0.040,  1241,   0);
-        Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   -1, -1, -1, -1, 10, -1,          33, 34,   0,       0.040,  1241,   0);
+        Module.PeriphSetup(0, "Sw 1",   SENS_TYPE_SWITCH,   -1, -1, -1, -1,  5, -1,          -1, -1,    0,       0,       0,     0);
+        Module.PeriphSetup(1, "Sw 2",   SENS_TYPE_SWITCH,   -1, -1, -1, -1,  6, -1,          -1, -1,    0,       0,       0,     0);
+        Module.PeriphSetup(2, "Sw 3",   SENS_TYPE_SWITCH,   -1, -1, -1, -1,  7, -1,          -1, -1,    0,       0,       0,     0);
+        Module.PeriphSetup(3, "Sw 4",   SENS_TYPE_SWITCH,   -1, -1, -1, -1, 10, -1,          -1, -1,    0,       0,       0,     0);
+        Module.SetRelayType(RELAY_NORMAL);
     #endif
 
     // Register Periphs
