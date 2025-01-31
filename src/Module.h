@@ -3,11 +3,11 @@
 
 #include <Jeepify.h>
 
-//#define MODULE_JL_BATTERY_SENSOR      // (tut)
+#define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_4WAY_ESP32_MONSTER
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
 //#define MODULE_4WAY_INTEGRATED_8266   // (tut)
-#define MODULE_4WAY_INTEGRATED_C3     // (tut)
+//#define MODULE_4WAY_INTEGRATED_C3     // (tut)
 //#define MODULE_4WAY_INTEGRATED_ESP01  // 
 
 void InitModule();
@@ -26,7 +26,6 @@ void InitModule();
 // Pin 9:   Pairing Button
 
 #ifdef MODULE_JL_BATTERY_SENSOR
-    #define PROZ_ESP32_C3       1
     #define ADC_USED            0x48
     #define PAIRING_BUTTON      9
     #define RGBLED_PIN          8
@@ -44,8 +43,7 @@ void InitModule();
 // 4-Kanal mit ESP32 mit Latching 30A, AMP/V-Sensor
 // 4 Switches
 #ifdef MODULE_4WAY_ESP32_MONSTER
-    #define PROZ_ESP32          1
-    #define PAIRING_BUTTON      0
+   #define PAIRING_BUTTON      0
 //  #define SDA_PIN             6
 //  #define SCL_PIN             7
 //  #define ADC_USED            0x48

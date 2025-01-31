@@ -20,15 +20,14 @@ void InitModule()
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
         //Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false, 4,  RELAY_NORMAL, SDA_PIN,  SCL_PIN, VOLTAGE_DEVIDER);
         Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false);
-        //                      Name     Type            ADC   IO                   NULL     VpA   Vin  PeerID
-        Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    1,    3,0,0,0,            2.5410,  0.040,  0,    0);
-        Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    1,    2,0,0,0,            2.4954,  0.066,  0,    0);
-        Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    1,    1,0,0,0,            2.5005,  0.066,  0,    0);
-        Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    1,    0,0,0,0,            2.5005,  0.066,  0,    0);
-        Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   0,   VOLTAGE_PIN,0,0,0,   0,      0,      Vin,   0);  // 8266: 310 = 4095/3.3v
+        //                      Name     Type             I2C                    IO(0/1)    VOLT  AMP   NULL     VpA    Vin  PeerID  
+        Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      3,   2.5410,  0.040,  0,    0);
+        Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      2,   2.4954,  0.066,  0,    0);
+        Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      1,   2.5005,  0.066,  0,    0);
+        Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      0,   2.5005,  0.066,  0,    0);
+        Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   -1, -1, -1, -1,        -1, -1, VOLTAGE_PIN, -1,     0,    0,    1241, 0);  
     #endif
     
-
     #ifdef MODULE_4WAY_ESP32_MONSTER   
         #define SWITCHES_PER_SCREEN 4
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 

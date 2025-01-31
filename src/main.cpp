@@ -1,13 +1,16 @@
 //#define KILL_NVS 1
 
 // DEBUG_LEVEL: 0 = nothing, 1 = only Errors, 2 = relevant changes, 3 = all
-#define DEBUG(...) if (Module.GetDebugMode()) Serial.printf(__VA_ARGS__)
+#define DEBUG1(...) if ((Module.GetDebugMode()) and (DEBUG_LEVEL > 0)) Serial.printf(__VA_ARGS__)
+#define DEBUG2(...) if ((Module.GetDebugMode()) and (DEBUG_LEVEL > 1)) Serial.printf(__VA_ARGS__)
+#define DEBUG3(...) if ((Module.GetDebugMode()) and (DEBUG_LEVEL > 2)) Serial.printf(__VA_ARGS__)
 
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 0; 
+const int DEBUG_LEVEL = 3; 
 const int _LED_SIGNAL = 1;
+
 #define WAIT_ALIVE       15000
 #define WAIT_AFTER_SLEEP  3000
 
@@ -53,9 +56,16 @@ uint32_t WaitForContact = WAIT_AFTER_SLEEP;
     #endif
 #endif
 
-#include <esp_now.h>
-#include <WiFi.h>
-#include <nvs_flash.h>
+#ifdef ESP32
+    #include <esp_now.h>
+    #include <WiFi.h>
+    #include <nvs_flash.h>
+    #define u8 unsigned char
+#elif defined(ESP8266)
+    #include <ESP8266WiFi.h>
+    #include <espnow.h>
+#endif 
+
 #include <LinkedList.h>
 #include "Jeepify.h"
 #include "PeerClass.h"
@@ -184,7 +194,7 @@ void setup()
     if (preferences.begin("JeepifyInit", true)) // import saved Module... if available
     {
         String SavedModule   = preferences.getString("Module", "");
-            DEBUG ("Importiere Modul: %s\n\r", SavedModule.c_str());
+            DEBUG2 ("Importiere Modul: %s\n\r", SavedModule.c_str());
             char ToImport[250];
             strcpy(ToImport,SavedModule.c_str());
             if (strcmp(ToImport, "") != 0) Module.Import(ToImport);
@@ -199,10 +209,10 @@ void setup()
     WiFi.macAddress(MacTemp);
     Module.SetBroadcastAddress(MacTemp);
 
-    Module.SetDebugMode(false);
+    Module.SetDebugMode(true);
 
     if (esp_now_init() != 0) 
-        if (DEBUG_LEVEL > 0) Serial.println("Error initializing ESP-NOW");
+        DEBUG1 ("Error initializing ESP-NOW\n\r");
     #ifdef ESP8266
         esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
     #endif 
@@ -245,6 +255,7 @@ void SendStatus (int Pos)
 
     JsonDocument doc; String jsondata; 
     char buf[200]; 
+    char bufV[10];
     
     int Status = 0;
     if (Module.GetDebugMode())   bitSet(Status, 0);
@@ -268,16 +279,17 @@ void SendStatus (int Pos)
         doc["Order"] = SEND_CMD_STATUS;
     }
 
+    int PeriphsSent = 0;
     for (int SNr=SNrStart; SNr<SNrMax ; SNr++) 
     {   
         if (!Module.isPeriphEmpty(SNr))
         {
-            DEBUG ("SendStatus(%d) - %s (Type %d):\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr));
+            DEBUG3 ("SendStatus(%d) - %s (Type %d):\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr));
 
             if (GetRelayState(SNr)) Module.SetPeriphValue(SNr, 1, 0);
             else Module.SetPeriphValue(SNr, 0, 0);
             
-            DEBUG ("GetPeriphValue(%d, 0) = %d\n\r", SNr, Module.GetPeriphValue(SNr, 0));
+            DEBUG3 ("GetPeriphValue(%d, 0) = %d\n\r", SNr, Module.GetPeriphValue(SNr, 0));
             
             Module.SetPeriphValue(SNr, ReadVolt(SNr),      2);
             Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
@@ -286,12 +298,39 @@ void SendStatus (int Pos)
             Module.GetPeriphType(SNr), 
             Module.GetPeriphName(SNr), 
             Module.GetPeriphValue(SNr, 0),
-            //eigentlich nicht nötig
+            
             Module.GetPeriphValue(SNr, 1),
             Module.GetPeriphValue(SNr, 2),
             Module.GetPeriphValue(SNr, 3));
-                        
+                     
             doc[ArrPeriph[SNr]] = buf;
+            PeriphsSent++;
+
+            //send first 4 Periphs
+            if (PeriphsSent == 4)
+            {
+                serializeJson(doc, jsondata);  
+
+                for (int PNr=0; PNr<PeerList.size(); PNr++) 
+                {
+                    PeerClass *Peer = PeerList.get(PNr);
+
+                    if (Peer->GetType() >= MONITOR_ROUND)
+                    {
+                        DEBUG3 ("Sending to: %s ", Peer->GetName()); 
+                        if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) DEBUG3("ESP_OK\\r");  
+                        else DEBUG1 ("ESP_ERROR\n\r"); 
+                        DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
+                    }
+                }
+                doc.remove(ArrPeriph[0]);
+                doc.remove(ArrPeriph[1]);
+                doc.remove(ArrPeriph[2]);
+                doc.remove(ArrPeriph[3]);
+
+                PeriphsSent = 0;
+                delay(100);//?
+            }
         }
 	}
 	
@@ -303,18 +342,10 @@ void SendStatus (int Pos)
 
         if (Peer->GetType() >= MONITOR_ROUND)
         {
-           DEBUG ("Sending to: %s ", Peer->GetName()); 
-            
-            if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) 
-            {
-                    if (DEBUG_LEVEL > 2) Serial.println("ESP_OK");  //Sending "jsondata" 
-            } 
-            else 
-            {
-                    if (DEBUG_LEVEL > 0) Serial.println("ESP_ERROR"); 
-            }     
-            
-            if (DEBUG_LEVEL > 2) Serial.println(jsondata);
+            DEBUG3 ("Sending to: %s ", Peer->GetName()); 
+            if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) DEBUG3("ESP_OK\\r");  
+            else DEBUG1 ("ESP_ERROR\n\r"); 
+            DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
         }
     }
 }
@@ -351,7 +382,7 @@ void SendPairingRequest()
 
     esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  
     
-    if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s\n\r", jsondata.c_str()); 
+    DEBUG2 ("\nSending: %s\n\r", jsondata.c_str()); 
     
     //AddStatus("Send Pairing request...");                                     
 }
@@ -376,18 +407,18 @@ void SendConfirm(const uint8_t * mac, uint32_t TSConfirm)
 
     serializeJson(doc, jsondata); 
 
-    if (DEBUG_LEVEL > 2) Serial.printf("%lu: Sending Confirm (%lu) to: %s ", millis(), TSConfirm, FindPeerByMAC(mac)->GetName()); 
+    DEBUG2 ("%lu: Sending Confirm (%lu) to: %s ", millis(), TSConfirm, FindPeerByMAC(mac)->GetName()); 
             
     if (esp_now_send((unsigned char *) mac, (uint8_t *) jsondata.c_str(), 200) == 0) 
     {
-            if (DEBUG_LEVEL > 2) Serial.println("ESP_OK");  //Sending "jsondata" 
+            DEBUG3 ("ESP_OK\n\r");  //Sending "jsondata" 
     } 
     else 
     {
-            if (DEBUG_LEVEL > 0) Serial.println("ESP_ERROR"); 
+            DEBUG1 ("ESP_ERROR\n\r"); 
     }     
     
-    if (DEBUG_LEVEL > 2) Serial.println(jsondata);
+    DEBUG3 (jsondata.c_str());
     
     AddStatus("Send Confirm...");                                     
 }
@@ -446,12 +477,12 @@ Serial.printf("Value vor switch:%d\n\r", Value);
         case 2: Value = Value ? 0 : 1; break;
     }
     Module.SetPeriphValue(SNr, Value, 0);
-    DEBUG ("Value nach switch:%d\n\r", Module.GetPeriphValue(SNr, 0));
+    DEBUG3 ("Value nach switch:%d\n\r", Module.GetPeriphValue(SNr, 0));
     UpdateSwitches();
 }
 bool GetRelayState(int SNr)
 {
-	DEBUG ("GetRelayState(%d):\n\r", SNr);
+	DEBUG3 ("GetRelayState(%d):\n\r", SNr);
 
     int _Type = Module.GetPeriphType(SNr);
 	if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
@@ -464,16 +495,16 @@ bool GetRelayState(int SNr)
             
             #ifdef PORT_USED
                 RawState = IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
-                DEBUG ("Relay(%d)-State = %d (IOBoard.DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
+                DEBUG3 ("Relay(%d)-State = %d (IOBoard.DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
             #else
                 RawState = digitalRead(Module.GetPeriphIOPort(SNr, 0));
-                DEBUG ("Relay(%d)-State = %d (DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
+                DEBUG3 ("Relay(%d)-State = %d (DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
             #endif
             
-            if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED)) { DEBUG ("Relaystate Ende"); return true;}
-            if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL))   { DEBUG ("Relaystate Ende"); return true;}
+            if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED)) { DEBUG3 ("Relaystate Ende"); return true;}
+            if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL))   { DEBUG3 ("Relaystate Ende"); return true;}
         }
-	DEBUG ("Relaystate Ende");
+	DEBUG3 ("Relaystate Ende");
     return false;
 }
 void SetRelayState(int SNr, bool State)
@@ -506,10 +537,10 @@ void SetRelayState(int SNr, bool State)
             IOBoard.digitalWrite(_Port, 0);
         #else
             digitalWrite(_Port, 1);
-            DEBUG ("Setze _Port:%d auf on\n\r", _Port);
+            DEBUG2 ("Setze _Port:%d auf on\n\r", _Port);
             delay(1000);
             digitalWrite(_Port, 0);
-            DEBUG("Setze _Port:%d auf off\n\r", _Port);
+            DEBUG2 ("Setze _Port:%d auf off\n\r", _Port);
         #endif
     }
     
@@ -523,10 +554,10 @@ void UpdateSwitches()
         {
             if (Module.GetPeriphValue(SNr, 0) == 0) SetRelayState(SNr, 0);
             else SetRelayState(SNr, 1);
-            DEBUG ("Setze %s (Port:%d) auf %.0f\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), Module.GetPeriphValue(SNr, 0));
+            DEBUG3 ("Setze %s (Port:%d) auf %.0f\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), Module.GetPeriphValue(SNr, 0));
         }
     }
-    SendStatus();
+    SendStatus(0);
 }
 void PrintMAC(const uint8_t * mac_addr)
 {
@@ -548,14 +579,11 @@ void GoToSleep()
         
     esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
     delay(500);
-    if (DEBUG_LEVEL > 2) Serial.printf("\nSending: %s", jsondata.c_str());
+    DEBUG2 ("\nSending: %s\n\r", jsondata.c_str());
     AddStatus("Send Going to sleep......"); 
     
-    if (DEBUG_LEVEL > 1) 
-    {
-        Serial.printf("Going to sleep at: %lu....................................................................................\n\r", millis());
-        Serial.printf("LastContact    at: %lu", Module.GetLastContact()); 
-    }
+    DEBUG2 ("Going to sleep at: %lu....................................................................................\n\r", millis());
+    DEBUG2 ("LastContact    at: %lu\n\r", Module.GetLastContact()); 
     
     #ifdef ESP32
     //gpio_deep_sleep_hold_en();
@@ -575,7 +603,7 @@ void SaveModule()
         if (DEBUG_LEVEL > 2) 
         {
             Serial.printf("SaveModule(): putString = %d, writing: %s\n\r", PutStringReturn, ExportStringPeer.c_str());
-            if (DEBUG_LEVEL > 2) Serial.printf("Testread Module: %s", preferences.getString("Module", "").c_str());
+            DEBUG2 ("Testread Module: %s\n\r", preferences.getString("Module", "").c_str());
         }
     preferences.end();
 }
@@ -823,7 +851,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
     
     if (!error) {
         String TempName = doc["Node"];
-        if (DEBUG_LEVEL > 2) Serial.printf("(%s) - %s\n\r", TempName.c_str(), jsondata.c_str());    
+        DEBUG2 ("(%s) - %s\n\r", TempName.c_str(), jsondata.c_str());    
 
         if (doc["TSConfirm"].is<JsonVariant>()) SendConfirm(mac, (uint32_t)doc["TSConfirm"]);
         
@@ -862,7 +890,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             case SEND_CMD_STAY_ALIVE: 
                 Module.SetLastContact(millis());
                 WaitForContact = WAIT_ALIVE; 
-                if (DEBUG_LEVEL > 2) Serial.printf("LastContact: %6lu\n\r", Module.GetLastContact());
+                DEBUG2 ("LastContact: %6lu\n\r", Module.GetLastContact());
                 break;
             case SEND_CMD_SLEEPMODE_ON:
                 AddStatus("Sleep: on");  
@@ -1026,11 +1054,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
     }
     else // error
     { 
-          if (DEBUG_LEVEL > 0) 
-          {
-              Serial.print(F("deserializeJson() failed: "));  //Just in case of an ERROR of ArduinoJSon
-              Serial.println(error.f_str());
-          }
+          DEBUG1 ("deserializeJson() failed: %s\n\r"), error.f_str();
     }
 }
 #ifdef ESP32 
@@ -1094,7 +1118,7 @@ void loop()
 
     if ((Module.GetSleepMode()) and (!Module.GetPairMode()) and (actTime+100 - Module.GetLastContact() > WaitForContact))       
     {
-        Serial.printf("actTime:%lu, LastContact:%lu - (actTime - Module.GetLastContact()) = %lu, WaitForContact = %lu, - Try to sleep...........................................................\n\r", actTime, Module.GetLastContact(), actTime - Module.GetLastContact(), WaitForContact);
+        DEBUG1 ("actTime:%lu, LastContact:%lu - (actTime - Module.GetLastContact()) = %lu, WaitForContact = %lu, - Try to sleep...........................................................\n\r", actTime, Module.GetLastContact(), actTime - Module.GetLastContact(), WaitForContact);
         Module.SetLastContact(millis());
         GoToSleep();
     }
@@ -1113,7 +1137,7 @@ void loop()
             else 
             {
                 if ((actTime - TSButton) > 3000) {
-                    if (DEBUG_LEVEL > 1) Serial.println("Button pressed... Clearing Peers and Reset");
+                    DEBUG1 ("Button pressed... Clearing Peers and Reset");
                     AddStatus("Clearing Peers and Reset");
                     #ifdef ESP32
                       nvs_flash_erase(); nvs_flash_init();
@@ -1182,23 +1206,23 @@ void InitSCL()
     #ifdef PORT_USED                            // init IOBoard
 	      if (!IOBoard.begin())
           {
-                if (DEBUG_LEVEL > 0) Serial.println("IOBoard not found!");
+                DEBUG1 ("IOBoard not found!\n\r");
                 while (1);
           }
           else 
           {
-                if (DEBUG_LEVEL > 1) Serial.println("IOBoard initialised.");
+                DEBUG1 ("IOBoard initialised.\n\r");
           }
     #endif
     #ifdef ADC_USED                             // init ADS
         ADCBoard.setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
         if (!ADCBoard.begin(ADC_USED)) { 
-          if (DEBUG_LEVEL > 0) Serial.println("ADS not found!");
-          while (1);
+            DEBUG1 ("ADS not found!\n\r");
+            while (1);
         }
         else
         {
-            if (DEBUG_LEVEL > 1) Serial.println("ADS initialised.");
+            DEBUG2 ("ADS initialised.\n\r");
         }
     #endif
 }
@@ -1208,13 +1232,13 @@ void InitMRD()
         mrd = new MultiResetDetector(MRD_TIMEOUT, MRD_ADDRESS);
 
         if (mrd->detectMultiReset()) {
-          if (DEBUG_LEVEL > 0) Serial.println("Multi Reset Detected");
+          DEBUG1 ("Multi Reset Detected\n\r");
           digitalWrite(LED_BUILTIN, LED_ON);
           //ClearPeers(); ClearInit(); InitModule(); SaveModule(); delay(10000); ESP.restart();
           Module.SetPairMode(true); TSPair = millis();
         }
         else {
-          if (DEBUG_LEVEL > 0) Serial.println("No Multi Reset Detected");
+          DEBUG1 ("No Multi Reset Detected\n\r");
           digitalWrite(LED_BUILTIN, LED_OFF);
         }
     #endif
