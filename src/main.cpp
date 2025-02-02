@@ -209,6 +209,10 @@ void setup()
     WiFi.macAddress(MacTemp);
     Module.SetBroadcastAddress(MacTemp);
 
+    Serial.printf("TX power: %d\n\r", WiFi.getTxPower());
+    //WiFi.setTxPower(WIFI_POWER_19_5dBm);
+    //Serial.printf("TX power: %d\n\r", WiFi.getTxPower());
+    
     Module.SetDebugMode(true);
 
     if (esp_now_init() != 0) 
