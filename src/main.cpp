@@ -386,9 +386,7 @@ void SendPairingRequest()
 
     esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  
     
-    DEBUG2 ("\nSending: %s\n\r", jsondata.c_str()); 
-    
-    //AddStatus("Send Pairing request...");                                     
+    DEBUG2 ("\nSending: %s\n\r", jsondata.c_str());                               
 }
 
 void SendConfirm(const uint8_t * mac, uint32_t TSConfirm) 
