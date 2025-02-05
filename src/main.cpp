@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 3; 
+const int DEBUG_LEVEL = 1; 
 const int _LED_SIGNAL = 1;
 
 #define WAIT_ALIVE       15000
@@ -152,7 +152,7 @@ void setup()
         pinMode(LED_PIN, OUTPUT);
     #endif
     esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
-
+    
     switch (wakeup_reason) {
         case ESP_SLEEP_WAKEUP_TIMER:    
             WaitForContact = WAIT_AFTER_SLEEP; 
@@ -259,7 +259,6 @@ void SendStatus (int Pos)
 
     JsonDocument doc; String jsondata; 
     char buf[200]; 
-    char bufV[10];
     
     int Status = 0;
     if (Module.GetDebugMode())   bitSet(Status, 0);
@@ -322,8 +321,8 @@ void SendStatus (int Pos)
                     if (Peer->GetType() >= MONITOR_ROUND)
                     {
                         DEBUG3 ("Sending to: %s ", Peer->GetName()); 
-                        if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) DEBUG3("ESP_OK\\r");  
-                        else DEBUG1 ("ESP_ERROR\n\r"); 
+                        if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) DEBUG3("ESP_OK\n\r");  
+                        else DEBUG1 ("ESP_ERROR (SendStatus-1)\n\r"); 
                         DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
                     }
                 }
@@ -348,7 +347,7 @@ void SendStatus (int Pos)
         {
             DEBUG3 ("Sending to: %s ", Peer->GetName()); 
             if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) DEBUG3("ESP_OK\\r");  
-            else DEBUG1 ("ESP_ERROR\n\r"); 
+            else DEBUG1 ("ESP_ERROR (SendStatus-2)\n\r"); 
             DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
         }
     }
@@ -479,7 +478,7 @@ Serial.printf("Value vor switch:%d\n\r", Value);
         case 2: Value = Value ? 0 : 1; break;
     }
     Module.SetPeriphValue(SNr, Value, 0);
-    DEBUG3 ("Value nach switch:%d\n\r", Module.GetPeriphValue(SNr, 0));
+    DEBUG3 ("Value nach switch:%.0f\n\r", Module.GetPeriphValue(SNr, 0));
     UpdateSwitches();
 }
 bool GetRelayState(int SNr)
@@ -497,16 +496,16 @@ bool GetRelayState(int SNr)
             
             #ifdef PORT_USED
                 RawState = IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
-                DEBUG3 ("Relay(%d)-State = %d (IOBoard.DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
+                DEBUG3 ("Relay(%d)-State = %d (IOBoard.DigitalRead of port %d)\n\r", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
             #else
                 RawState = digitalRead(Module.GetPeriphIOPort(SNr, 0));
-                DEBUG3 ("Relay(%d)-State = %d (DigitalRead of port %d)", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
+                DEBUG3 ("Relay(%d)-State = %d (DigitalRead of port %d)\n\r", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
             #endif
             
-            if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED)) { DEBUG3 ("Relaystate Ende"); return true;}
-            if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL))   { DEBUG3 ("Relaystate Ende"); return true;}
+            if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED)) { DEBUG3 ("Relaystate Ende\n\r"); return true;}
+            if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL))   { DEBUG3 ("Relaystate Ende\n\r"); return true;}
         }
-	DEBUG3 ("Relaystate Ende");
+	DEBUG3 ("Relaystate Ende\n\r");
     return false;
 }
 void SetRelayState(int SNr, bool State)
@@ -711,7 +710,7 @@ void VoltageCalibration(int SNr, float V)
 {
     char Buf[100] = {}; 
   
-    if (DEBUG_LEVEL > 1) Serial.printf("SNr %d: Volt-Messung kalibrieren... Port: %d, Type:%d", SNr, Module.GetPeriphIOPort(SNr, 2), Module.GetPeriphType(SNr));
+    DEBUG1 ("SNr %d: Volt-Messung kalibrieren... Port: %d, Type:%d", SNr, Module.GetPeriphIOPort(SNr, 2), Module.GetPeriphType(SNr));
     
     if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT) {
         float TempRead = 0;
@@ -724,14 +723,14 @@ void VoltageCalibration(int SNr, float V)
         }
         TempRead = (float) TempRead / 20;
         
-        if (DEBUG_LEVEL > 0) Serial.printf("TempRead nach filter = %.2f\n\r", TempRead);
-        if (DEBUG_LEVEL > 0) Serial.printf("Eich-soll Volt: %.2f\n\r", V);
+        DEBUG3 ("TempRead nach filter = %.2f\n\r", TempRead);
+        DEBUG3 ("Eich-soll Volt: %.2f\n\r", V);
        
         NewVin = TempRead / V * VOLTAGE_DEVIDER;
         Module.SetPeriphVin(SNr, NewVin);        
-        if (DEBUG_LEVEL > 0) Serial.printf("NewVin = %.2f\n\r", Module.GetPeriphVin(SNr));
+        DEBUG3 ("NewVin = %.2f\n\r", Module.GetPeriphVin(SNr));
         
-        if (DEBUG_LEVEL > 2)  Serial.printf("S[%d].Vin = %.2f - volt after calibration: %.2fV", SNr, Module.GetPeriphVin(SNr), TempRead/Module.GetPeriphVin(SNr));
+        DEBUG1 ("S[%d].Vin = %.2f - volt after calibration: %.2fV", SNr, Module.GetPeriphVin(SNr), TempRead/Module.GetPeriphVin(SNr));
         if (DEBUG_LEVEL > 1)  
         {
             snprintf(Buf, sizeof(Buf), "[%d] %s (Type: %d): Spannung ist jetzt: %.2fV", SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), (float)TempRead/Module.GetPeriphVin(SNr));
@@ -781,12 +780,11 @@ void CurrentCalibration()
             AddStatus(Buf);
         }
     }
-    //SendCommand(SEND_CMD_CONFIRM_CURRENT);
     SaveModule();
 }
 float ReadAmp (int SNr) 
 {
-    if (Module.GetPeriphIOPort(SNr,3) < 0) { if (DEBUG_LEVEL > 0) Serial.printf("SNR=%d, no IOPort[3] specified !!!\n\r",SNr);  return 0; }
+    if (Module.GetPeriphIOPort(SNr,3) < 0) { DEBUG3 ("SNR=%d, no IOPort[3] specified !!!\n\r",SNr);  return 0; }
 
     float TempVal      = 0;
     float TempVolt     = 0;
@@ -799,37 +797,38 @@ float ReadAmp (int SNr)
         delay(10);
     #else
         TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 3));
-        Serial.printf("ReadAmp: SNr=%d - analogRead of port %d = %.0f", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal);
-
         TempVolt = BOARD_VOLTAGE/BOARD_ANALOG_MAX*TempVal;
         TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * VOLTAGE_DEVIDER;// 1.5 wegen Voltage-Devider
         delay(10);
     #endif
   
-    if (DEBUG_LEVEL > 2) {
-        Serial.printf("ReadAmp: SNr=%d, port=%d: Raw:%.3f Null:%.4f --> %.4fV --> %.4fA", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
-    } 
+    DEBUG3 ("ReadAmp: SNr=%d, port=%d: Raw:%.3f Null:%.4f --> %.4fV --> %.4fA", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
+
     if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
-    if (DEBUG_LEVEL > 2) {
-        Serial.printf(" --> %.2fA\n\r", TempAmp);
-    } 
+    DEBUG3 (" --> %.2fA\n\r", TempAmp);
     
     return (TempAmp); 
 }
 float ReadVolt(int SNr) 
 {
-    if (Module.GetPeriphVin(SNr)      == 0) { if (DEBUG_LEVEL > 0) Serial.printf("SNr=%d - Vin must not be zero !!!", SNr);    return 0; }
-    if (Module.GetPeriphIOPort(SNr, 2) < 0) { if (DEBUG_LEVEL > 0) Serial.printf("SNr=%d - no IOPort[2] specified !!!", SNr);  return 0; }
-
-    //Serial.printf("PeriphVin(%d) = %d", SNr, Module.GetPeriphVin(SNr));
-
-    float TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
-    //float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * Module.GetVoltageDevider();
-    float TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER;
-
-    if (DEBUG_LEVEL > 2) {
-        Serial.printf("ReadVolt: SNr=%d, port=%d: Raw: %.1f / Vin:%.2f * V-Devider:%.2f--> %.2fV\n\r", SNr, Module.GetPeriphIOPort(SNr, 2), TempVal, Module.GetPeriphVin(SNr), VOLTAGE_DEVIDER, TempVolt);
-    } 
+    if (Module.GetPeriphIOPort(SNr, 2) < 0) { DEBUG3 ("SNr=%d - no IOPort[2] - no volt-sensor!!!\n\r", SNr);  return 0; }
+    if (Module.GetPeriphVin(SNr)      == 0) { DEBUG3 ("SNr=%d - Vin must not be zero !!!\n\r", SNr);          return 0; }
+    
+    float TempVal;
+    float TempVolt;
+    
+    #ifdef ADC_USED
+        TempVal  = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 2));
+        TempVolt = ADCBoard.computeVolts(TempVal) * VOLTAGE_DEVIDER; 
+        delay(10);
+    #else
+        TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
+        TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER;
+        delay(10);
+    #endif
+  
+    DEBUG2 ("ReadVolt: SNr=%d, port=%d: Raw: %.1f / Vin:%.2f * V-Devider:%.2f--> %.2fV\n\r", SNr, Module.GetPeriphIOPort(SNr, 2), TempVal, Module.GetPeriphVin(SNr), VOLTAGE_DEVIDER, TempVolt);
+ 
     return TempVolt;
 }
 #pragma endregion Data-Things
@@ -1056,7 +1055,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
     }
     else // error
     { 
-          DEBUG1 ("deserializeJson() failed: %s\n\r"), error.f_str();
+          DEBUG1 ("deserializeJson() failed: %s\n\r"), error.c_str();
     }
 }
 #ifdef ESP32 

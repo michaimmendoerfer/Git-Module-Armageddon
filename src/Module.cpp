@@ -38,6 +38,15 @@ void InitModule()
         Module.PeriphSetup(2, "VMon",   SENS_TYPE_VOLT,    -1, -1, -1, -1,  -1, -1, VOLTAGE_PIN, -1,   0,       0,      1241,   0);
     #endif
 
+    #ifdef MODULE_4WAY_ESP32_BIGGY   
+        #define SWITCHES_PER_SCREEN 4
+        //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
+        Module.Setup(MODULE_NAME, SWITCH_2_WAY, MODULE_VERSION, NULL,     false, true,  false, false);
+        //                      Name     Type             I2C                                      IO(0/1)        VOLT  AMP   NULL     VpA      Vin  PeerID  
+        Module.PeriphSetup(0, "Sw 0",   SENS_TYPE_LT_AMP,  PORT_USED, PORT_USED, ADC_USED, -1,     0, 1,          0, -1,      0,       0.040,  1241,   0);
+        Module.PeriphSetup(1, "Sw 1",   SENS_TYPE_LT_AMP,  PORT_USED, PORT_USED, ADC_USED, -1,     2, 3,          1, -1,      0,       0.040,  1241,   0);
+    #endif
+
     #ifdef ESP8266_MODULE_4S_INTEGRATED       
         #define SWITCHES_PER_SCREEN 4
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon   RelayType      sda    scl  voltagedevier 

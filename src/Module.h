@@ -4,7 +4,8 @@
 #include <Jeepify.h>
 
 //#define MODULE_JL_BATTERY_SENSOR      // (tut)
-#define MODULE_4WAY_ESP32_MONSTER
+//#define MODULE_4WAY_ESP32_MONSTER
+#define MODULE_4WAY_ESP32_BIGGY
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
 //#define MODULE_4WAY_INTEGRATED_8266   // (tut)
 //#define MODULE_4WAY_INTEGRATED_C3     // (tut)
@@ -53,6 +54,30 @@ void InitModule();
     #define VOLTAGE_PIN         32
     #define VOLTAGE_DEVIDER     4.5454
     #define MODULE_NAME         "Mons_1"
+    #define BOARD_VOLTAGE       3.3
+    #define BOARD_ANALOG_MAX    4095
+#endif
+
+// x-Kanal mit ESP32 mit Latching 30A, AMP/V-Sensor
+// x Switches
+// ESP32-C3 Mini
+// Pin 0:   Pairing Button
+// Pin 8:   LED
+
+#ifdef MODULE_4WAY_ESP32_BIGGY
+   #define PAIRING_BUTTON       0
+//  #define SDA_PIN             6
+//  #define SCL_PIN             7
+    #define ADC_USED            0x48
+    #define PORT_USED           0x20
+    #define SDA_PIN             5
+    #define SCL_PIN             6
+    #define LED_PIN             2
+    #define LED_OFF             0
+    #define LED_ON              1
+    #define VOLTAGE_PIN         32
+    #define VOLTAGE_DEVIDER     4.5454
+    #define MODULE_NAME         "Biggy1"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
