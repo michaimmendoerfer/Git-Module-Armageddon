@@ -993,9 +993,14 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
             case SEND_CMD_VOLTAGE_CALIB:
                 AddStatus("VoltCalib beginnt");
                 NewVoltage = (float) doc["NewVoltage"];
-                //besser machen
-                VoltageCalibration(2, NewVoltage) ;
-                
+                for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++)
+                {
+                    if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT)
+                    { 
+                        VoltageCalibration(SNr, NewVoltage) ;
+                        break;
+                    }
+                }                 
                 break;
             case SEND_CMD_SWITCH_TOGGLE:
                 Pos = doc["PeriphPos"];
