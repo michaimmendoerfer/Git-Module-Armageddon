@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 1; 
+const int DEBUG_LEVEL = 3; 
 const int _LED_SIGNAL = 1;
 
 #define WAIT_ALIVE       15000
@@ -321,8 +321,14 @@ void SendStatus (int Pos)
                     if (Peer->GetType() >= MONITOR_ROUND)
                     {
                         DEBUG3 ("Sending to: %s ", Peer->GetName()); 
-                        if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) DEBUG3("ESP_OK\n\r");  
-                        else DEBUG1 ("ESP_ERROR (SendStatus-1)\n\r"); 
+                        if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) 
+                        {   
+                            DEBUG3("ESP_OK\n\r");  
+                        }
+                        else 
+                        {
+                            DEBUG1 ("%s: ESP_ERROR (SendStatus-1)\n\r", Peer->GetName()); 
+                        }
                         DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
                     }
                 }
@@ -346,9 +352,15 @@ void SendStatus (int Pos)
         if (Peer->GetType() >= MONITOR_ROUND)
         {
             DEBUG3 ("Sending to: %s ", Peer->GetName()); 
-            if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) DEBUG3("ESP_OK\\r");  
-            else DEBUG1 ("ESP_ERROR (SendStatus-2)\n\r"); 
-            DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
+            if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) 
+            {
+                DEBUG3("ESP_OK\\r");  
+            }
+            else 
+            {
+                DEBUG1 ("%s: ESP_ERROR (SendStatus-2)\n\r", Peer->GetName()); 
+            }
+                DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
         }
     }
 }
@@ -818,9 +830,20 @@ float ReadVolt(int SNr)
     float TempVolt;
     
     #ifdef ADC_USED
-        TempVal  = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 2));
-        TempVolt = ADCBoard.computeVolts(TempVal) * VOLTAGE_DEVIDER; 
-        delay(10);
+        if (Module.GetPeriphI2CPort(SNr, 2) > -1)
+        {
+            //use ADC
+            TempVal  = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 2));
+            TempVolt = ADCBoard.computeVolts(TempVal) * VOLTAGE_DEVIDER; 
+            delay(10);
+        }
+        else
+        {
+            //use port
+            TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
+            TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER;
+            delay(10);
+        }
     #else
         TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
         TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER;
