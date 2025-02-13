@@ -343,24 +343,27 @@ void SendStatus (int Pos)
         }
 	}
 	
-	serializeJson(doc, jsondata);  
-
-    for (int PNr=0; PNr<PeerList.size(); PNr++) 
+	if (PeriphsSent > 0)
     {
-        PeerClass *Peer = PeerList.get(PNr);
+        serializeJson(doc, jsondata);  
 
-        if (Peer->GetType() >= MONITOR_ROUND)
+        for (int PNr=0; PNr<PeerList.size(); PNr++) 
         {
-            DEBUG3 ("Sending to: %s ", Peer->GetName()); 
-            if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) 
+            PeerClass *Peer = PeerList.get(PNr);
+
+            if (Peer->GetType() >= MONITOR_ROUND)
             {
-                DEBUG3("ESP_OK\\r");  
+                DEBUG3 ("Sending to: %s ", Peer->GetName()); 
+                if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) 
+                {
+                    DEBUG3("ESP_OK\\r");  
+                }
+                else 
+                {
+                    DEBUG1 ("%s: ESP_ERROR (SendStatus-2)\n\r", Peer->GetName()); 
+                }
+                    DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
             }
-            else 
-            {
-                DEBUG1 ("%s: ESP_ERROR (SendStatus-2)\n\r", Peer->GetName()); 
-            }
-                DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
         }
     }
 }
