@@ -97,6 +97,8 @@ volatile uint32_t TSLed      = 0;
 volatile uint32_t TSStatus   = 0;
 volatile uint32_t TSSettings = 0;
 
+int lastPeriphSent = -1;
+
 bool NameChanged = false;
 
 Preferences preferences;
@@ -269,22 +271,15 @@ void SendStatus (int Pos)
     snprintf(buf, sizeof(buf), "%s;%lu;%d", Module.GetName(), millis(), Status);
     doc["Node"]  = buf;
     
-    int SNrStart = 0;
+    int SNrStart = lastPeriphSent+1;
     int SNrMax = MAX_PERIPHERALS;
-    if ((Pos >= 0) and (Pos < MAX_PERIPHERALS))
-    {
-        SNrStart = Pos;
-        SNrMax   = Pos+1;
-        doc["Order"] = SEND_CMD_RETURN_STATE; 
-    }  
-    else 
-    {
-        doc["Order"] = SEND_CMD_STATUS;
-    }
+
+    doc["Order"] = SEND_CMD_STATUS;
 
     int PeriphsSent = 0;
     for (int SNr=SNrStart; SNr<SNrMax ; SNr++) 
     {   
+        lastPeriphSent = SNr;
         if (!Module.isPeriphEmpty(SNr))
         {
             DEBUG3 ("SendStatus(%d) - %s (Type %d):\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr));
@@ -310,40 +305,11 @@ void SendStatus (int Pos)
             PeriphsSent++;
 
             //send first 4 Periphs
-            if (PeriphsSent == 4)
-            {
-                serializeJson(doc, jsondata);  
-
-                for (int PNr=0; PNr<PeerList.size(); PNr++) 
-                {
-                    PeerClass *Peer = PeerList.get(PNr);
-
-                    if (Peer->GetType() >= MONITOR_ROUND)
-                    {
-                        DEBUG3 ("Sending to: %s ", Peer->GetName()); 
-                        if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) 
-                        {   
-                            DEBUG3("ESP_OK\n\r");  
-                        }
-                        else 
-                        {
-                            DEBUG1 ("%s: ESP_ERROR (SendStatus-1)\n\r", Peer->GetName()); 
-                        }
-                        DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
-                    }
-                }
-                doc.remove(ArrPeriph[0]);
-                doc.remove(ArrPeriph[1]);
-                doc.remove(ArrPeriph[2]);
-                doc.remove(ArrPeriph[3]);
-
-                PeriphsSent = 0;
-                delay(100);//?
-            }
+            if (PeriphsSent == 4) break;
         }
-	}
-	
-	if (PeriphsSent > 0)
+    }
+    if (lastPeriphSent == MAX_PERIPHERALS-1) lastPeriphSent = -1;
+    if (PeriphsSent > 0)
     {
         serializeJson(doc, jsondata);  
 
@@ -1123,7 +1089,7 @@ void loop()
 {
     uint32_t actTime = millis();
     
-    if  ((actTime - TSSend ) > MSG_INTERVAL  )                                 // Send-interval (Message or Pairing-request)
+    if  ((actTime - TSSend ) > MSG_INTERVAL/2  )                                 // Send-interval (Message or Pairing-request)
     {
         TSSend = actTime;
         if (Module.GetPairMode()) SendPairingRequest();
