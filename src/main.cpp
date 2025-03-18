@@ -783,7 +783,7 @@ float ReadAmp (int SNr)
         delay(10);
     #endif
   
-    DEBUG3 ("ReadAmp: SNr=%d, port=%d: Raw:%.3f Null:%.4f --> %.4fV --> %.4fA", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
+    DEBUG3 ("ReadAmp: SNr=%d, port=%d: Raw:%.3f=%.3fV Null:%.4f --> %.4fV --> %.4fA", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal, TempVolt, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
 
     if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
     DEBUG3 (" --> %.2fA\n\r", TempAmp);

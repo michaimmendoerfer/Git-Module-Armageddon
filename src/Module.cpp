@@ -27,6 +27,19 @@ void InitModule()
         Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      0,   2.5005,  0.066,  0,    0);
         Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   -1, -1, -1, -1,        -1, -1, VOLTAGE_PIN, -1,     0,    0,    1241, 0);  
     #endif
+
+    #ifdef MODULE_SENSORDRAGON_V1_0           
+        #define SWITCHES_PER_SCREEN 4
+        //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
+        //Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false, 4,  RELAY_NORMAL, SDA_PIN,  SCL_PIN, VOLTAGE_DEVIDER);
+        Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false);
+        //                      Name     Type             I2C                    IO(0/1)    VOLT      AMP   NULL     VpA    Vin  PeerID  
+        Module.PeriphSetup(0, "PCB_S0",  SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      0,   1.635,  0.066,  0,    0);
+        Module.PeriphSetup(1, "PCB_S1",  SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      1,   1.635,  0.066,  0,    0);
+        Module.PeriphSetup(2, "PCB_S2",  SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      2,   1.635,  0.066,  0,    0);
+        Module.PeriphSetup(3, "PCB_S3",  SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      3,   1.635,  0.066,  0,    0);
+        Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT,   -1, -1, -1, -1,        -1, -1, VOLTAGE_PIN, -1,     0,    0,    1241,   0);  
+    #endif
     
     #ifdef MODULE_4WAY_ESP32_MONSTER   
         #define SWITCHES_PER_SCREEN 4

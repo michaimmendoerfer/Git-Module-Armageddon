@@ -3,7 +3,8 @@
 
 #include <Jeepify.h>
 
-#define MODULE_JL_BATTERY_SENSOR      // (tut)
+//#define MODULE_JL_BATTERY_SENSOR      // (tut)
+#define MODULE_SENSORDRAGON_V1_0
 //#define MODULE_4WAY_ESP32_MONSTER
 //#define MODULE_4WAY_ESP32_BIGGY
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
@@ -41,6 +42,31 @@ void InitModule();
     #define BOARD_ANALOG_MAX    4095
 #endif
 
+
+// blue PCB SensorDragon V1.0 
+// ESP32-C3 Mini Plus (RGB)
+// 4 AMP-Sensors (ACS712) 30A
+// 1 VOLT-Sensor (VoltageDevider 5)
+// Pin 10:    LED extern
+// Pin 6:     Pairing Button
+// Pin 7:     Voltage mit 5/1 Devider
+// Pin 21/20: SDA/SCL I2C
+// I2C 0x48:  ADS1115 
+#ifdef MODULE_SENSORDRAGON_V1_0
+    #define ADC_USED            0x48
+    #define PAIRING_BUTTON      6
+    #define LED_PIN             2
+    #define LED_OFF             0
+    #define LED_ON              1
+    #define SDA_PIN             21
+    #define SCL_PIN             20
+    #define VOLTAGE_PIN         7
+    #define VOLTAGE_DEVIDER     5
+    #define MODULE_NAME         "JL_PCB"
+    #define BOARD_VOLTAGE       3.3
+    #define BOARD_ANALOG_MAX    4095
+#endif
+
 // 4-Kanal mit ESP32 mit Latching 30A, AMP/V-Sensor
 // 4 Switches
 #ifdef MODULE_4WAY_ESP32_MONSTER
@@ -53,7 +79,7 @@ void InitModule();
     #define LED_ON              1
     #define VOLTAGE_PIN         32
     #define VOLTAGE_DEVIDER     4.5454
-    #define MODULE_NAME         "Mons_1"
+    #define MODULE_NAME         "Mons_2"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
