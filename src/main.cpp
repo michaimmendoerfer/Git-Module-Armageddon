@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 3; 
+const int DEBUG_LEVEL = 2; 
 const int _LED_SIGNAL = 1;
 
 #define WAIT_ALIVE       15000
@@ -287,7 +287,7 @@ void SendStatus (int Pos)
             if (GetRelayState(SNr)) Module.SetPeriphValue(SNr, 1, 0);
             else Module.SetPeriphValue(SNr, 0, 0);
             
-            DEBUG3 ("GetPeriphValue(%d, 0) = %d\n\r", SNr, Module.GetPeriphValue(SNr, 0));
+            DEBUG3 ("GetPeriphValue(%d, 0) = %.3f\n\r", SNr, Module.GetPeriphValue(SNr, 0));
             
             Module.SetPeriphValue(SNr, ReadVolt(SNr),      2);
             Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
@@ -1052,7 +1052,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
     }
     else // error
     { 
-          DEBUG1 ("deserializeJson() failed: %s\n\r"), error.c_str();
+          DEBUG1 ("deserializeJson failed: %s\n\r", error.c_str());
     }
 }
 #ifdef ESP32 

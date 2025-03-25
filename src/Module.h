@@ -44,24 +44,24 @@ void InitModule();
 
 
 // blue PCB SensorDragon V1.0 
-// ESP32-C3 Mini Plus (RGB)
+// ESP32-C3 Mini 
 // 4 AMP-Sensors (ACS712) 30A
-// 1 VOLT-Sensor (VoltageDevider 5)
+// 1 VOLT-Sensor (VoltageDevider 5.3)
 // Pin 10:    LED extern
 // Pin 6:     Pairing Button
-// Pin 7:     Voltage mit 5/1 Devider
+// Pin 2:     Voltage mit 5/1 Devider
 // Pin 21/20: SDA/SCL I2C
 // I2C 0x48:  ADS1115 
 #ifdef MODULE_SENSORDRAGON_V1_0
     #define ADC_USED            0x48
     #define PAIRING_BUTTON      6
-    #define LED_PIN             2
-    #define LED_OFF             0
-    #define LED_ON              1
+    #define LED_PIN             8
+    #define LED_OFF             LOW
+    #define LED_ON              HIGH
     #define SDA_PIN             21
     #define SCL_PIN             20
-    #define VOLTAGE_PIN         7
-    #define VOLTAGE_DEVIDER     5
+    #define VOLTAGE_PIN         2
+    #define VOLTAGE_DEVIDER     5.3
     #define MODULE_NAME         "JL_PCB"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
