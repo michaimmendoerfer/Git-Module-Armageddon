@@ -254,7 +254,7 @@ void setup()
     
 }
 #pragma region Send-Things
-void SendStatus (int Pos) 
+void SendStatusOld (int Pos) 
 {
     TSLed = millis();
     SetMessageLED(2);
@@ -313,6 +313,87 @@ void SendStatus (int Pos)
     {
         serializeJson(doc, jsondata);  
 
+        for (int PNr=0; PNr<PeerList.size(); PNr++) 
+        {
+            PeerClass *Peer = PeerList.get(PNr);
+
+            if (Peer->GetType() >= MONITOR_ROUND)
+            {
+                DEBUG3 ("Sending to: %s ", Peer->GetName()); 
+                if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) 
+                {
+                    DEBUG3("ESP_OK\\r");  
+                }
+                else 
+                {
+                    DEBUG1 ("%s: ESP_ERROR (SendStatus-2)\n\r", Peer->GetName()); 
+                }
+                    DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
+            }
+        }
+    }
+}
+
+void SendStatus (int Pos) 
+{
+    TSLed = millis();
+    SetMessageLED(2);
+
+    JsonDocument doc; 
+    String jsondata; 
+    
+    char buf[250]; 
+    
+    int Status = 0;
+    if (Module.GetDebugMode())   bitSet(Status, 0);
+    if (Module.GetSleepMode())   bitSet(Status, 1);
+    if (Module.GetDemoMode())    bitSet(Status, 2);
+    if (Module.GetPairMode())    bitSet(Status, 3);    
+    
+    snprintf(buf, sizeof(buf), "%s;%lu;%d", Module.GetName(), millis(), Status);
+    doc["Node"]  = buf;
+    
+    int SNrStart = lastPeriphSent+1;
+    int SNrMax = MAX_PERIPHERALS;
+
+    doc["Order"] = SEND_CMD_STATUS;
+
+    int PeriphsSent = 0;
+    for (int SNr=SNrStart; SNr<SNrMax ; SNr++) 
+    {   
+        lastPeriphSent = SNr;
+        if (!Module.isPeriphEmpty(SNr))
+        {
+            DEBUG3 ("SendStatus(%d) - %s (Type %d):\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr));
+
+            if (GetRelayState(SNr)) Module.SetPeriphValue(SNr, 1, 0);
+            else Module.SetPeriphValue(SNr, 0, 0);
+            
+            DEBUG3 ("GetPeriphValue(%d, 0) = %.3f\n\r", SNr, Module.GetPeriphValue(SNr, 0));
+            
+            Module.SetPeriphValue(SNr, ReadVolt(SNr),      2);
+            Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
+            
+            snprintf(buf, sizeof(buf), "%d;%s;%.0f;%.0f;%.2f;%.2f", 
+            Module.GetPeriphType(SNr), 
+            Module.GetPeriphName(SNr), 
+            Module.GetPeriphValue(SNr, 0),
+            
+            Module.GetPeriphValue(SNr, 1),
+            Module.GetPeriphValue(SNr, 2),
+            Module.GetPeriphValue(SNr, 3));
+                     
+            doc[ArrPeriph[SNr]] = buf;
+            PeriphsSent++;
+
+            //send first Periphs
+            jsondata = "";
+            if (serializeJson(doc, jsondata) > 200) break;
+        }
+    }
+    if (lastPeriphSent == MAX_PERIPHERALS-1) lastPeriphSent = -1;
+    if (PeriphsSent > 0)
+    {
         for (int PNr=0; PNr<PeerList.size(); PNr++) 
         {
             PeerClass *Peer = PeerList.get(PNr);
@@ -393,14 +474,14 @@ void SendConfirm(const uint8_t * mac, uint32_t TSConfirm)
             
     if (esp_now_send((unsigned char *) mac, (uint8_t *) jsondata.c_str(), 200) == 0) 
     {
-            DEBUG3 ("ESP_OK\n\r");  //Sending "jsondata" 
-    } 
+        DEBUG3 ("ESP_OK\n\r");  
+    }
     else 
     {
-            DEBUG1 ("ESP_ERROR\n\r"); 
+        DEBUG1 ("ESP_ERROR\n\r"); 
     }     
     
-    DEBUG3 (jsondata.c_str());
+    DEBUG3 ("%s", jsondata.c_str());
     
     AddStatus("Send Confirm...");                                     
 }
@@ -449,7 +530,8 @@ void AddStatus(String Msg)
 void ToggleSwitch(int SNr, int State=2)
 {
     int Value = Module.GetPeriphValue(SNr, 0);
-Serial.printf("Value vor switch:%d\n\r", Value);
+    
+    DEBUG3("Value vor switch:%d\n\r", Value);
     Module.SetPeriphOldValue(SNr, Value, 0);
     
     switch (State)
