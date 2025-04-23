@@ -42,17 +42,28 @@ uint32_t WaitForContact = WAIT_AFTER_SLEEP;
     MultiResetDetector* mrd;
 #endif
 
-#if defined(PORT_USED) || defined(ADC_USED)
+#if defined(PORT0) || defined(ADC0)
     #include <Wire.h>
     #include <Spi.h>
     #define I2C_FREQ 400000
-    #ifdef ADC_USED
+    #ifdef ADC0
         #include <Adafruit_ADS1X15.h>
-        Adafruit_ADS1115 ADCBoard;
+        Adafruit_ADS1115 ADCBoard[4];
     #endif
-    #ifdef PORT_USED
+    
+    #ifdef PORT0
     #include "PCF8575.h"
-        PCF8575 IOBoard(PORT_USED, SDA_PIN, SCL_PIN);
+        PCF8575 *IOBoard[4];
+        PCF8575 IOBoard0 (PORT0, SDA_PIN, SCL_PIN); 
+        #ifdef PORT1
+            PCF8575 IOBoard1 (PORT1, SDA_PIN, SCL_PIN); 
+        #endif
+        #ifdef PORT2
+            PCF8575 IOBoard2 (PORT2, SDA_PIN, SCL_PIN); 
+        #endif
+        #ifdef PORT3
+            PCF8575 IOBoard3 (PORT3, SDA_PIN, SCL_PIN); 
+        #endif
     #endif
 #endif
 
@@ -365,7 +376,6 @@ void SendStatus (int Pos)
         if (!Module.isPeriphEmpty(SNr))
         {
             DEBUG3 ("SendStatus(%d) - %s (Type %d):\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr));
-
             if (GetRelayState(SNr)) Module.SetPeriphValue(SNr, 1, 0);
             else Module.SetPeriphValue(SNr, 0, 0);
             
@@ -400,6 +410,7 @@ void SendStatus (int Pos)
 
             if (Peer->GetType() >= MONITOR_ROUND)
             {
+                DEBUG2 ("JSON: %s\n\r", jsondata.c_str());
                 DEBUG3 ("Sending to: %s ", Peer->GetName()); 
                 if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) 
                 {
@@ -557,13 +568,19 @@ bool GetRelayState(int SNr)
         {
             int RawState = 0;
             
-            #ifdef PORT_USED
-                RawState = IOBoard.digitalRead(Module.GetPeriphIOPort(SNr, 0));
-                DEBUG3 ("Relay(%d)-State = %d (IOBoard.DigitalRead of port %d)\n\r", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
-            #else
+            int PORT_Module = Module.GetPeriphI2CPort(SNr,2);
+            if (PORT_Module > -1)
+            {
+                #ifdef ADC0
+                    RawState = IOBoard[PORT_Module]->digitalRead(Module.GetPeriphIOPort(SNr, 0));
+                    DEBUG3 ("Relay(%d)-State = %d (IOBoard[PORT_Module]->DigitalRead of port %d)\n\r", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
+                #endif
+            }
+            else
+            {
                 RawState = digitalRead(Module.GetPeriphIOPort(SNr, 0));
                 DEBUG3 ("Relay(%d)-State = %d (DigitalRead of port %d)\n\r", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
-            #endif
+            }
             
             if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED)) { DEBUG3 ("Relaystate Ende\n\r"); return true;}
             if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL))   { DEBUG3 ("Relaystate Ende\n\r"); return true;}
@@ -574,20 +591,26 @@ bool GetRelayState(int SNr)
 void SetRelayState(int SNr, bool State)
 {
 	int _Type = Module.GetPeriphType(SNr);
-	
+	        
     if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
     {
-        #ifdef PORT_USED
-            if (Module.GetRelayType() == RELAY_NORMAL) 
-                IOBoard.digitalWrite(Module.GetPeriphIOPort(SNr, 0), State);
-            else 
-                IOBoard.digitalWrite(Module.GetPeriphIOPort(SNr, 0), !State);
-        #else
+        int PORT_Module = Module.GetPeriphI2CPort(SNr,0);
+        if (PORT_Module > -1)
+        {
+            #ifdef ADC0
+                if (Module.GetRelayType() == RELAY_NORMAL) 
+                    IOBoard[PORT_Module]->digitalWrite(Module.GetPeriphIOPort(SNr, 0), State);
+                else 
+                    IOBoard[PORT_Module]->digitalWrite(Module.GetPeriphIOPort(SNr, 0), !State);
+            #endif
+        }
+        else
+        {
             if (Module.GetRelayType() == RELAY_NORMAL) 
                 digitalWrite(Module.GetPeriphIOPort(SNr, 0), State);
             else
                 digitalWrite(Module.GetPeriphIOPort(SNr, 0), !State);
-        #endif
+        }
     }
     if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
     {
@@ -595,17 +618,23 @@ void SetRelayState(int SNr, bool State)
         if (State == false) _Port = Module.GetPeriphIOPort(SNr, 0);
         else _Port = Module.GetPeriphIOPort(SNr, 1);
 
-        #ifdef PORT_USED
-            IOBoard.digitalWrite(_Port, 1);
-            delay(100);
-            IOBoard.digitalWrite(_Port, 0);
-        #else
+        int PORT_Module = Module.GetPeriphI2CPort(SNr,2);
+        if (PORT_Module > -1)
+        {
+            #ifdef ADC0
+                IOBoard[PORT_Module]->digitalWrite(_Port, 1);
+                delay(100);
+                IOBoard[PORT_Module]->digitalWrite(_Port, 0);
+            #endif
+        }
+        else
+        {
             digitalWrite(_Port, 1);
             DEBUG2 ("Setze _Port:%d auf on\n\r", _Port);
             delay(1000);
             digitalWrite(_Port, 0);
             DEBUG2 ("Setze _Port:%d auf off\n\r", _Port);
-        #endif
+        }
     }
     
 }
@@ -789,7 +818,7 @@ void VoltageCalibration(int SNr, float V)
         DEBUG3 ("TempRead nach filter = %.2f\n\r", TempRead);
         DEBUG3 ("Eich-soll Volt: %.2f\n\r", V);
        
-        NewVin = TempRead / V * VOLTAGE_DEVIDER;
+        NewVin = TempRead / V * VOLTAGE_DEVIDER_V;
         Module.SetPeriphVin(SNr, NewVin);        
         DEBUG3 ("NewVin = %.2f\n\r", Module.GetPeriphVin(SNr));
         
@@ -813,14 +842,20 @@ void CurrentCalibration()
         {
             float TempVolt = 0;
             
-            #ifdef ADC_USED
-                //for (int i=0; i<20; i++) 
-                {
-                    TempVolt += ADCBoard.computeVolts(ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 3)));
-                    delay(10);
-                }
-                //TempVolt /= 20;
-            #else
+            int ADC_Module = Module.GetPeriphI2CPort(SNr, 3);
+            if (ADC_Module > -1)
+            {
+                #ifdef ADC0
+                    //for (int i=0; i<20; i++) 
+                    {
+                        TempVolt += ADCBoard[ADC_Module].computeVolts(ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 3)));
+                        delay(10);
+                    }
+                    //TempVolt /= 20;
+                #endif
+            }
+            else
+            {
                 int TempVal = 0;
                 for (int i=0; i<20; i++) 
                 {
@@ -829,8 +864,8 @@ void CurrentCalibration()
                 }
                 TempVal /= 20;
                 
-                TempVolt = BOARD_VOLTAGE / BOARD_ANALOG_MAX * TempVal; // 1.5???  
-            #endif
+                TempVolt = BOARD_VOLTAGE / BOARD_ANALOG_MAX * TempVal; // 1.5??? 
+            }
 
             if (DEBUG_LEVEL > 2) { 
             Serial.print("TempVolt: "); Serial.println(TempVolt);
@@ -852,18 +887,25 @@ float ReadAmp (int SNr)
     float TempVal      = 0;
     float TempVolt     = 0;
     float TempAmp      = 0;
-  
-    #ifdef ADC_USED
-        TempVal  = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 3));
-        TempVolt = ADCBoard.computeVolts(TempVal); 
-        TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
-        delay(10);
-    #else
+    
+    int ADC_Module = Module.GetPeriphI2CPort(SNr, 3);
+    if (ADC_Module > -1)
+    {
+        #ifdef ADC0
+            TempVal  = ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 3));
+            TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal); 
+            TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
+            delay(10);
+            DEBUG3 ("ReadAmp %d - %.3f\n\r", SNr, TempVolt);
+        #endif
+    }
+    else
+    {
         TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 3));
         TempVolt = BOARD_VOLTAGE/BOARD_ANALOG_MAX*TempVal;
-        TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * VOLTAGE_DEVIDER;// 1.5 wegen Voltage-Devider
+        TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * VOLTAGE_DEVIDER_A;
         delay(10);
-    #endif
+    }
   
     DEBUG3 ("ReadAmp: SNr=%d, port=%d: Raw:%.3f=%.3fV Null:%.4f --> %.4fV --> %.4fA", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal, TempVolt, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
 
@@ -880,28 +922,27 @@ float ReadVolt(int SNr)
     float TempVal;
     float TempVolt;
     
-    #ifdef ADC_USED
-        if (Module.GetPeriphI2CPort(SNr, 2) > -1)
-        {
+    int ADC_Module = Module.GetPeriphI2CPort(SNr, 2);
+    if (ADC_Module > -1)
+    {
+        #ifdef ADC0
             //use ADC
-            TempVal  = ADCBoard.readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 2));
-            TempVolt = ADCBoard.computeVolts(TempVal) * VOLTAGE_DEVIDER; 
+            TempVal  = ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 2));
+            TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal) * VOLTAGE_DEVIDER_V; 
             delay(10);
-        }
-        else
-        {
-            //use port
-            TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
-            TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER;
-            delay(10);
-        }
-    #else
+        #else
+            DEBUG1 ("Critical Config-Error ADC");
+        #endif
+    }
+    else
+    {
+        //use io
         TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
-        TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER;
+        TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER_V;
         delay(10);
-    #endif
+    }
   
-    DEBUG2 ("ReadVolt: SNr=%d, port=%d: Raw: %.1f / Vin:%.2f * V-Devider:%.2f--> %.2fV\n\r", SNr, Module.GetPeriphIOPort(SNr, 2), TempVal, Module.GetPeriphVin(SNr), VOLTAGE_DEVIDER, TempVolt);
+    DEBUG2 ("ReadVolt: SNr=%d, port=%d: Raw: %.1f / Vin:%.2f * V-Devider:%.2f--> %.2fV\n\r", SNr, Module.GetPeriphIOPort(SNr, 2), TempVal, Module.GetPeriphVin(SNr), VOLTAGE_DEVIDER_V, TempVolt);
  
     return TempVolt;
 }
@@ -1239,7 +1280,7 @@ void loop()
 
 void InitSCL()
 {
-    #if defined(PORT_USED) || defined(ADC_USED)
+    #if defined(PORT0) || defined(ADC0)
         byte error, address;
         int nDevices;
         Serial.println("Scanning...");
@@ -1282,27 +1323,97 @@ void InitSCL()
             delay(1000);
         }
     #endif
-
-    #ifdef PORT_USED                            // init IOBoard
-	      if (!IOBoard.begin())
+    
+    #ifdef PORT0                            // init IOBoard0
+	    IOBoard[0] = &IOBoard0;  
+        if (!IOBoard[0]->begin())
           {
-                DEBUG1 ("IOBoard not found!\n\r");
+                DEBUG1 ("IOBoard0 not found!\n\r");
                 while (1);
           }
           else 
           {
-                DEBUG1 ("IOBoard initialised.\n\r");
+                DEBUG1 ("IOBoard0 initialised.\n\r");
           }
     #endif
-    #ifdef ADC_USED                             // init ADS
-        ADCBoard.setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
-        if (!ADCBoard.begin(ADC_USED)) { 
-            DEBUG1 ("ADS not found!\n\r");
+    #ifdef PORT1                            // init IOBoard1
+        IOBoard[1] = &IOBoard1; 
+        if (!IOBoard[1]->begin())
+          {
+                DEBUG1 ("IOBoard1 not found!\n\r");
+                while (1);
+          }
+          else 
+          {
+                DEBUG1 ("IOBoard1 initialised.\n\r");
+          }
+    #endif
+    #ifdef PORT2                            // init IOBoard2
+        IOBoard[2] = &IOBoard2; 
+        if (!IOBoard[2]->begin())
+          {
+                DEBUG1 ("IOBoard2 not found!\n\r");
+                while (1);
+          }
+          else 
+          {
+                DEBUG1 ("IOBoard2 initialised.\n\r");
+          }
+    #endif
+    #ifdef PORT3                            // init IOBoard3
+        IOBoard[3] = &IOBoard3;   
+        if (!IOBoard[3]->begin())
+          {
+                DEBUG1 ("IOBoard3 not found!\n\r");
+                while (1);
+          }
+          else 
+          {
+                DEBUG1 ("IOBoard3 initialised.\n\r");
+          }
+    #endif
+    #ifdef ADC0                             // init ADS
+        ADCBoard[0].setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
+        if (!ADCBoard[0].begin(ADC0)) { 
+            DEBUG1 ("ADC0 not found!\n\r");
             while (1);
         }
         else
         {
-            DEBUG2 ("ADS initialised.\n\r");
+            DEBUG2 ("ADC0 initialised.\n\r");
+        }
+    #endif
+    #ifdef ADC1                             // init ADS
+        ADCBoard[1].setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
+        if (!ADCBoard[1].begin(ADC1)) { 
+            DEBUG1 ("ADC1 not found!\n\r");
+            while (1);
+        }
+        else
+        {
+            DEBUG2 ("ADC1 initialised.\n\r");
+        }
+    #endif
+    #ifdef ADC2                             // init ADS
+        ADCBoard[2].setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
+        if (!ADCBoard[2].begin(ADC2)) { 
+            DEBUG1 ("ADC2 not found!\n\r");
+            while (1);
+        }
+        else
+        {
+            DEBUG2 ("ADC2 initialised.\n\r");
+        }
+    #endif
+    #ifdef ADC3                            // init ADS
+        ADCBoard[3].setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V
+        if (!ADCBoard[3].begin(ADC3)) { 
+            DEBUG1 ("ADC3 not found!\n\r");
+            while (1);
+        }
+        else
+        {
+            DEBUG2 ("ADC3 initialised.\n\r");
         }
     #endif
 }

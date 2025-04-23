@@ -21,24 +21,50 @@ void InitModule()
         //Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false, 4,  RELAY_NORMAL, SDA_PIN,  SCL_PIN, VOLTAGE_DEVIDER);
         Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false);
         //                      Name     Type             I2C                    IO(0/1)    VOLT  AMP   NULL     VpA    Vin  PeerID  
-        Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      3,   2.5410,  0.040,  0,    0);
-        Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      2,   2.4954,  0.066,  0,    0);
-        Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      1,   2.5005,  0.066,  0,    0);
-        Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      0,   2.5005,  0.066,  0,    0);
+        Module.PeriphSetup(0, "Load",   SENS_TYPE_AMP,    -1, -1, -1, ADC1,  -1, -1,     -1,      3,   2.5410,  0.040,  0,    0);
+        Module.PeriphSetup(1, "Extern", SENS_TYPE_AMP,    -1, -1, -1, ADC1,  -1, -1,     -1,      2,   2.4954,  0.066,  0,    0);
+        Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    -1, -1, -1, ADC1,  -1, -1,     -1,      1,   2.5005,  0.066,  0,    0);
+        Module.PeriphSetup(3, "Intern", SENS_TYPE_AMP,    -1, -1, -1, ADC1,  -1, -1,     -1,      0,   2.5005,  0.066,  0,    0);
         Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   -1, -1, -1, -1,        -1, -1, VOLTAGE_PIN, -1,     0,    0,    1241, 0);  
     #endif
-
+    
     #ifdef MODULE_SENSORDRAGON_V1_0           
         #define VIN BOARD_ANALOG_MAX/BOARD_VOLTAGE
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
         //Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false, 4,  RELAY_NORMAL, SDA_PIN,  SCL_PIN, VOLTAGE_DEVIDER);
         Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false);
         //                      Name     Type             I2C                    IO(0/1)    VOLT      AMP   NULL     VpA    Vin  PeerID  
-        Module.PeriphSetup(0, "PCB_S0",  SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      0,   1.635,  0.066,  0,    0);
-        Module.PeriphSetup(1, "PCB_S1",  SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      1,   1.635,  0.066,  0,    0);
-        Module.PeriphSetup(2, "PCB_S2",  SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      2,   1.635,  0.066,  0,    0);
-        Module.PeriphSetup(3, "PCB_S3",  SENS_TYPE_AMP,    -1, -1, -1, ADC_USED,  -1, -1,     -1,      3,   1.635,  0.066,  0,    0);
+        Module.PeriphSetup(0, "PCB_S0",  SENS_TYPE_AMP,    -1, -1, -1, ADC1,  -1, -1,     -1,      0,   1.635,  0.066,  0,    0);
+        Module.PeriphSetup(1, "PCB_S1",  SENS_TYPE_AMP,    -1, -1, -1, ADC1,  -1, -1,     -1,      1,   1.635,  0.066,  0,    0);
+        Module.PeriphSetup(2, "PCB_S2",  SENS_TYPE_AMP,    -1, -1, -1, ADC1,  -1, -1,     -1,      2,   1.635,  0.066,  0,    0);
+        Module.PeriphSetup(3, "PCB_S3",  SENS_TYPE_AMP,    -1, -1, -1, ADC1,  -1, -1,     -1,      3,   1.635,  0.066,  0,    0);
         Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT,   -1, -1, -1, -1,        -1, -1, VOLTAGE_PIN, -1,     0,    0,    VIN,   0);  
+    #endif
+
+    #ifdef MODULE_SENSIBLEDRAGON_V1_2           
+        #define VIN BOARD_ANALOG_MAX/BOARD_VOLTAGE
+        //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
+        //Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false, 4,  RELAY_NORMAL, SDA_PIN,  SCL_PIN, VOLTAGE_DEVIDER);
+        Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false);
+        //                      Name     Type             I2C                    IO(0/1)    VOLT      AMP   NULL     VpA    Vin  PeerID  
+        Module.PeriphSetup(0, "PCB_S0",  SENS_TYPE_AMP,    -1, -1, -1, 0,  -1, -1,     -1,      0,   2.493,  0.066,  0,    0);
+        Module.PeriphSetup(1, "PCB_S1",  SENS_TYPE_AMP,    -1, -1, -1, 0,  -1, -1,     -1,      1,   2.478,  0.066,  0,    0);
+        Module.PeriphSetup(2, "PCB_S2",  SENS_TYPE_AMP,    -1, -1, -1, 0,  -1, -1,     -1,      2,   2.493,  0.066,  0,    0);
+        Module.PeriphSetup(3, "PCB_S3",  SENS_TYPE_AMP,    -1, -1, -1, 0,  -1, -1,     -1,      3,   2.505,  0.066,  0,    0);
+        Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT,   -1, -1, -1, -1,        -1, -1, VOLTAGE_PIN, -1,     0,    0,    VIN,   0);  
+    #endif
+
+    #ifdef MODULE_POWERDRAGON4_V1_0           
+        #define VIN BOARD_ANALOG_MAX/BOARD_VOLTAGE
+        //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
+        //Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,    false, true, false, false, 4,  RELAY_NORMAL, SDA_PIN,  SCL_PIN, VOLTAGE_DEVIDER);
+        Module.Setup(MODULE_NAME, SWITCH_4_WAY, MODULE_VERSION,     NULL,   false, true,  false, false);
+        //                      Name     Type             I2C                               IO(0/1)  VOLT    AMP   NULL     VpA    Vin  PeerID  
+        Module.PeriphSetup(0, "Rel0",  SENS_TYPE_LT_AMP,    PORT0, PORT0, ADC0, ADC0,  0, 1,     0,      1,   2.493,  0.040,  0,    0);
+        Module.PeriphSetup(1, "Rel1",  SENS_TYPE_LT_AMP,    PORT0, PORT0, ADC1, ADC1,  4, 5,     0,      1,   2.478,  0.040,  0,    0);
+        Module.PeriphSetup(2, "Rel2",  SENS_TYPE_LT_AMP,    PORT0, PORT0, ADC0, ADC0,  2, 3,     2,      3,   2.493,  0.040,  0,    0);
+        Module.PeriphSetup(3, "Rel3",  SENS_TYPE_LT_AMP,    PORT0, PORT0, ADC1, ADC1,  6, 7,     2,      3,   2.505,  0.040,  0,    0);
+        Module.PeriphSetup(4, "VMon",  SENS_TYPE_VOLT,       -1,  -1,  -1,  -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,   VIN,  0);  
     #endif
     
     #ifdef MODULE_4WAY_ESP32_MONSTER   
@@ -56,8 +82,8 @@ void InitModule()
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
         Module.Setup(MODULE_NAME, SWITCH_2_WAY, MODULE_VERSION, NULL,     false, true,  false, false);
         //                      Name     Type             I2C                                      IO(0/1)        VOLT  AMP   NULL     VpA      Vin  PeerID  
-        Module.PeriphSetup(0, "Sw 0",   SENS_TYPE_LT_AMP,  PORT_USED, PORT_USED, ADC_USED, -1,     0, 1,          0, -1,      0,       0.040,  1241,   0);
-        Module.PeriphSetup(1, "Sw 1",   SENS_TYPE_LT_AMP,  PORT_USED, PORT_USED, ADC_USED, -1,     2, 3,          1, -1,      0,       0.040,  1241,   0);
+        Module.PeriphSetup(0, "Sw 0",   SENS_TYPE_LT_AMP,  PORT0, PORT0, ADC1, -1,     0, 1,          0, -1,      0,       0.040,  1241,   0);
+        Module.PeriphSetup(1, "Sw 1",   SENS_TYPE_LT_AMP,  PORT0, PORT0, ADC1, -1,     2, 3,          1, -1,      0,       0.040,  1241,   0);
     #endif
 
     #ifdef ESP8266_MODULE_4S_INTEGRATED       
@@ -103,35 +129,45 @@ void InitModule()
     { 
         if (Module.GetPeriphIOPort(SNr, 0) >= 0) 
         {
-            #ifdef PORT_USED
-                if (Module.GetPeriphI2CPort(SNr, 0) >= 0) IOBoard.pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT);
-            #else
-                pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT);  // off(lt) oder on/off 
-            #endif
+            int PORT_Module = Module.GetPeriphI2CPort(SNr,0);
+            if (PORT_Module > -1)
+            {
+                #ifdef PORT0
+                    if (Module.GetPeriphI2CPort(SNr, 0) >= 0) IOBoard[PORT_Module]->pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT);
+                #else
+                    pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT);  // off(lt) oder on/off 
+                #endif
+            }
         }
 
         if (Module.GetPeriphIOPort(SNr, 1) >= 0) 
         {
-            #ifdef PORT_USED
-                if (Module.GetPeriphI2CPort(SNr, 1) >= 0) IOBoard.pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT);
-            #else
-                pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT);  // on(lt)
-            #endif
+            int PORT_Module = Module.GetPeriphI2CPort(SNr,1);
+            if (PORT_Module > -1)
+            {
+                #ifdef PORT0
+                    if (Module.GetPeriphI2CPort(SNr, 1) >= 0) IOBoard[PORT_Module]->pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT);
+                #else
+                    pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT);  // on(lt)
+                #endif
+            }
         }
 
-        if (Module.GetPeriphIOPort(SNr, 2) >= 0)     
+        if (Module.GetPeriphIOPort(SNr, 2) >= 0)   
         {
-            #ifndef ADC_USED
+            if (Module.GetPeriphI2CPort(SNr,2) == -1)
+            {
                 pinMode(Module.GetPeriphIOPort(SNr,2), INPUT);
-                Serial.printf("setze %d auf INPUT", Module.GetPeriphIOPort(SNr,2));
-            #endif
+                Serial.printf("setze %d auf INPUT\n\r", Module.GetPeriphIOPort(SNr,2));
+            }
         }
 
         if (Module.GetPeriphIOPort(SNr, 3) >= 0)     
         {
-            #ifndef ADC_USED
+            if (Module.GetPeriphI2CPort(SNr,3) == -1)
+            {
                 pinMode(Module.GetPeriphIOPort(SNr,3), INPUT);
-            #endif
+            }
         }
     }
     
