@@ -621,7 +621,7 @@ void SetRelayState(int SNr, bool State)
         int PORT_Module = Module.GetPeriphI2CPort(SNr,2);
         if (PORT_Module > -1)
         {
-            #ifdef ADC0
+            #ifdef PORT0
                 IOBoard[PORT_Module]->digitalWrite(_Port, 1);
                 delay(100);
                 IOBoard[PORT_Module]->digitalWrite(_Port, 0);
@@ -631,7 +631,7 @@ void SetRelayState(int SNr, bool State)
         {
             digitalWrite(_Port, 1);
             DEBUG2 ("Setze _Port:%d auf on\n\r", _Port);
-            delay(1000);
+            delay(100);
             digitalWrite(_Port, 0);
             DEBUG2 ("Setze _Port:%d auf off\n\r", _Port);
         }
