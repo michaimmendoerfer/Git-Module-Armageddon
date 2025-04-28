@@ -8,7 +8,8 @@
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 2; 
+const int DEBUG_LEVEL = 3
+; 
 const int _LED_SIGNAL = 1;
 
 #define WAIT_ALIVE       15000
@@ -50,19 +51,20 @@ uint32_t WaitForContact = WAIT_AFTER_SLEEP;
         #include <Adafruit_ADS1X15.h>
         Adafruit_ADS1115 ADCBoard[4];
     #endif
-    
+        
     #ifdef PORT0
-    #include "PCF8575.h"
+        #include "PCF8575.h"
         PCF8575 *IOBoard[4];
         PCF8575 IOBoard0 (PORT0, SDA_PIN, SCL_PIN); 
+        
         #ifdef PORT1
             PCF8575 IOBoard1 (PORT1, SDA_PIN, SCL_PIN); 
         #endif
         #ifdef PORT2
-            PCF8575 IOBoard2 (PORT2, SDA_PIN, SCL_PIN); 
+            PCF8575 IOBoard2 (PORT1, SDA_PIN, SCL_PIN); 
         #endif
         #ifdef PORT3
-            PCF8575 IOBoard3 (PORT3, SDA_PIN, SCL_PIN); 
+            PCF8575 IOBoard3 (PORT1, SDA_PIN, SCL_PIN); 
         #endif
     #endif
 #endif
@@ -375,11 +377,10 @@ void SendStatus (int Pos)
         lastPeriphSent = SNr;
         if (!Module.isPeriphEmpty(SNr))
         {
-            DEBUG3 ("SendStatus(%d) - %s (Type %d):\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr));
             if (GetRelayState(SNr)) Module.SetPeriphValue(SNr, 1, 0);
             else Module.SetPeriphValue(SNr, 0, 0);
             
-            DEBUG3 ("GetPeriphValue(%d, 0) = %.3f\n\r", SNr, Module.GetPeriphValue(SNr, 0));
+            DEBUG3 ("SendStatus(%d) - %s (Type %d): %.3f\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), Module.GetPeriphValue(SNr, 0));
             
             Module.SetPeriphValue(SNr, ReadVolt(SNr),      2);
             Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
@@ -557,8 +558,6 @@ void ToggleSwitch(int SNr, int State=2)
 }
 bool GetRelayState(int SNr)
 {
-	DEBUG3 ("GetRelayState(%d):\n\r", SNr);
-
     int _Type = Module.GetPeriphType(SNr);
 	if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
         {
@@ -585,7 +584,6 @@ bool GetRelayState(int SNr)
             if ((RawState == 0) and (Module.GetRelayType() == RELAY_REVERSED)) { DEBUG3 ("Relaystate Ende\n\r"); return true;}
             if ((RawState == 1) and (Module.GetRelayType() == RELAY_NORMAL))   { DEBUG3 ("Relaystate Ende\n\r"); return true;}
         }
-	DEBUG3 ("Relaystate Ende\n\r");
     return false;
 }
 void SetRelayState(int SNr, bool State)
@@ -623,7 +621,7 @@ void SetRelayState(int SNr, bool State)
         {
             #ifdef PORT0
                 IOBoard[PORT_Module]->digitalWrite(_Port, 1);
-                delay(100);
+                delay(500);
                 IOBoard[PORT_Module]->digitalWrite(_Port, 0);
             #endif
         }
@@ -631,7 +629,7 @@ void SetRelayState(int SNr, bool State)
         {
             digitalWrite(_Port, 1);
             DEBUG2 ("Setze _Port:%d auf on\n\r", _Port);
-            delay(100);
+            delay(500);
             digitalWrite(_Port, 0);
             DEBUG2 ("Setze _Port:%d auf off\n\r", _Port);
         }
@@ -643,7 +641,7 @@ void UpdateSwitches()
 	Serial.println("UpdateSwitches");
     for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
 	{
-		if ((Module.GetPeriphType(SNr) > 0) and (Module.GetPeriphValue(SNr, 0) != GetRelayState(SNr)))
+		if ((Module.GetPeriphType(SNr) > 0) and (Module.GetPeriphValue(SNr, 0) != GetRelayState(SNr))) //.isSwitch()???
         {
             if (Module.GetPeriphValue(SNr, 0) == 0) SetRelayState(SNr, 0);
             else SetRelayState(SNr, 1);
@@ -896,7 +894,7 @@ float ReadAmp (int SNr)
             TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal); 
             TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
             delay(10);
-            DEBUG3 ("ReadAmp %d - %.3f\n\r", SNr, TempVolt);
+            DEBUG3 ("ReadAmp %d - %.3f", SNr, TempVolt);
         #endif
     }
     else
@@ -907,7 +905,7 @@ float ReadAmp (int SNr)
         delay(10);
     }
   
-    DEBUG3 ("ReadAmp: SNr=%d, port=%d: Raw:%.3f=%.3fV Null:%.4f --> %.4fV --> %.4fA", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal, TempVolt, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
+    //DEBUG3 ("ReadAmp: SNr=%d, port=%d: Raw:%.3f=%.3fV Null:%.4f --> %.4fV --> %.4fA", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal, TempVolt, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
 
     if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
     DEBUG3 (" --> %.2fA\n\r", TempAmp);
@@ -917,7 +915,6 @@ float ReadAmp (int SNr)
 float ReadVolt(int SNr) 
 {
     if (Module.GetPeriphIOPort(SNr, 2) < 0) { DEBUG3 ("SNr=%d - no IOPort[2] - no volt-sensor!!!\n\r", SNr);  return 0; }
-    if (Module.GetPeriphVin(SNr)      == 0) { DEBUG3 ("SNr=%d - Vin must not be zero !!!\n\r", SNr);          return 0; }
     
     float TempVal;
     float TempVolt;
@@ -937,6 +934,7 @@ float ReadVolt(int SNr)
     else
     {
         //use io
+        if (Module.GetPeriphVin(SNr) == 0) { DEBUG3 ("SNr=%d - Vin must not be zero !!!\n\r", SNr); return 0; }
         TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
         TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER_V;
         delay(10);
@@ -1326,51 +1324,23 @@ void InitSCL()
     
     #ifdef PORT0                            // init IOBoard0
 	    IOBoard[0] = &IOBoard0;  
-        if (!IOBoard[0]->begin())
-          {
-                DEBUG1 ("IOBoard0 not found!\n\r");
-                while (1);
-          }
-          else 
-          {
-                DEBUG1 ("IOBoard0 initialised.\n\r");
-          }
+        for (int i=0; i<16; i++) IOBoard[0]->digitalWrite(i, 0);
+        DEBUG1 ("IOBoard0 initialised.\n\r");
     #endif
     #ifdef PORT1                            // init IOBoard1
         IOBoard[1] = &IOBoard1; 
-        if (!IOBoard[1]->begin())
-          {
-                DEBUG1 ("IOBoard1 not found!\n\r");
-                while (1);
-          }
-          else 
-          {
-                DEBUG1 ("IOBoard1 initialised.\n\r");
-          }
+        for (int i=0; i<16; i++) IOBoard[1]->digitalWrite(i, 0);
+        DEBUG1 ("IOBoard1 initialised.\n\r");
     #endif
     #ifdef PORT2                            // init IOBoard2
         IOBoard[2] = &IOBoard2; 
-        if (!IOBoard[2]->begin())
-          {
-                DEBUG1 ("IOBoard2 not found!\n\r");
-                while (1);
-          }
-          else 
-          {
-                DEBUG1 ("IOBoard2 initialised.\n\r");
-          }
+        for (int i=0; i<16; i++) IOBoard[2]->digitalWrite(i, 0);
+        DEBUG1 ("IOBoard2 not found!\n\r");
     #endif
     #ifdef PORT3                            // init IOBoard3
-        IOBoard[3] = &IOBoard3;   
-        if (!IOBoard[3]->begin())
-          {
-                DEBUG1 ("IOBoard3 not found!\n\r");
-                while (1);
-          }
-          else 
-          {
-                DEBUG1 ("IOBoard3 initialised.\n\r");
-          }
+        IOBoard[3] = &IOBoard3; 
+        for (int i=0; i<16; i++) IOBoard[3]->digitalWrite(i, 0); 
+        DEBUG1 ("IOBoard3 not found!\n\r");
     #endif
     #ifdef ADC0                             // init ADS
         ADCBoard[0].setGain(GAIN_TWOTHIRDS);   // 0.1875 mV/Bit .... +- 6,144V

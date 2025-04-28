@@ -77,8 +77,8 @@ void InitModule();
     #define ADC0                0x48
     #define ADC1                0x49
     #define PORT0               0x20
-    #define SDA_PIN             20
-    #define SCL_PIN             21
+    #define SDA_PIN             5
+    #define SCL_PIN             6
     #define LED_PIN             10
     #define LED_OFF             0
     #define LED_ON              1

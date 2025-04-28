@@ -60,11 +60,11 @@ void InitModule()
         //Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,    false, true, false, false, 4,  RELAY_NORMAL, SDA_PIN,  SCL_PIN, VOLTAGE_DEVIDER);
         Module.Setup(MODULE_NAME, SWITCH_4_WAY, MODULE_VERSION,     NULL,   false, true,  false, false);
         //                      Name     Type             I2C                               IO(0/1)  VOLT    AMP   NULL     VpA    Vin  PeerID  
-        Module.PeriphSetup(0, "Rel0",  SENS_TYPE_LT_AMP,    PORT0, PORT0, ADC0, ADC0,  0, 1,     0,      1,   2.493,  0.040,  0,    0);
-        Module.PeriphSetup(1, "Rel1",  SENS_TYPE_LT_AMP,    PORT0, PORT0, ADC1, ADC1,  4, 5,     0,      1,   2.478,  0.040,  0,    0);
-        Module.PeriphSetup(2, "Rel2",  SENS_TYPE_LT_AMP,    PORT0, PORT0, ADC0, ADC0,  2, 3,     2,      3,   2.493,  0.040,  0,    0);
-        Module.PeriphSetup(3, "Rel3",  SENS_TYPE_LT_AMP,    PORT0, PORT0, ADC1, ADC1,  6, 7,     2,      3,   2.505,  0.040,  0,    0);
-        Module.PeriphSetup(4, "VMon",  SENS_TYPE_VOLT,       -1,  -1,  -1,  -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,   VIN,  0);  
+        Module.PeriphSetup(0, "Rel0",  SENS_TYPE_LT_AMP,    0, 0, 0, 0,  0, 1,     0,      1,   2.493,  0.040,  0,    0);
+        Module.PeriphSetup(1, "Rel1",  SENS_TYPE_LT_AMP,    0, 0, 1, 1,  4, 5,     0,      1,   2.478,  0.040,  0,    0);
+        Module.PeriphSetup(2, "Rel2",  SENS_TYPE_LT_AMP,    0, 0, 0, 0,  2, 3,     2,      3,   2.493,  0.040,  0,    0);
+        Module.PeriphSetup(3, "Rel3",  SENS_TYPE_LT_AMP,    0, 0, 1, 1,  6, 7,     2,      3,   2.505,  0.040,  0,    0);
+        Module.PeriphSetup(4, "VMon",  SENS_TYPE_VOLT,      -1,  -1,  -1,  -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,   VIN,  0);  
     #endif
     
     #ifdef MODULE_4WAY_ESP32_MONSTER   
