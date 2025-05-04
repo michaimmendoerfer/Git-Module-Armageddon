@@ -5,8 +5,8 @@
 
 //#define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_SENSORDRAGON_V1_0
-//#define MODULE_SENSIBLEDRAGON_V1_2
-#define MODULE_POWERDRAGON4_V1_0
+#define MODULE_SENSIBLEDRAGON_V1_2
+//#define MODULE_POWERDRAGON4_V1_0
 //#define MODULE_4WAY_ESP32_MONSTER
 //#define MODULE_4WAY_ESP32_BIGGY
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
@@ -65,9 +65,9 @@ void InitModule();
     #define SDA_PIN             20
     #define SCL_PIN             21
     #define VOLTAGE_PIN         1
-    #define VOLTAGE_DEVIDER_V   4.58333
+    #define VOLTAGE_DEVIDER_V   (18+4.7)/4.7
     #define VOLTAGE_DEVIDER_A   1.0
-    #define MODULE_NAME         "SD_1"
+    #define MODULE_NAME         "JL_POW"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
@@ -83,7 +83,7 @@ void InitModule();
     #define LED_OFF             0
     #define LED_ON              1
     #define VOLTAGE_PIN         1
-    #define VOLTAGE_DEVIDER_V   4.58333
+    #define VOLTAGE_DEVIDER_V   (51000+14700)/14700
     #define VOLTAGE_DEVIDER_A   1.0
     #define MODULE_NAME         "PD_1"
     #define BOARD_VOLTAGE       3.3

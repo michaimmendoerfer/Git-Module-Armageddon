@@ -570,7 +570,7 @@ bool GetRelayState(int SNr)
             int PORT_Module = Module.GetPeriphI2CPort(SNr,2);
             if (PORT_Module > -1)
             {
-                #ifdef ADC0
+                #if defined(PORT0) && defined(ADC0)
                     RawState = IOBoard[PORT_Module]->digitalRead(Module.GetPeriphIOPort(SNr, 0));
                     DEBUG3 ("Relay(%d)-State = %d (IOBoard[PORT_Module]->DigitalRead of port %d)\n\r", SNr, RawState, Module.GetPeriphIOPort(SNr, 0));
                 #endif
@@ -595,7 +595,7 @@ void SetRelayState(int SNr, bool State)
         int PORT_Module = Module.GetPeriphI2CPort(SNr,0);
         if (PORT_Module > -1)
         {
-            #ifdef ADC0
+            #ifdef PORT0
                 if (Module.GetRelayType() == RELAY_NORMAL) 
                     IOBoard[PORT_Module]->digitalWrite(Module.GetPeriphIOPort(SNr, 0), State);
                 else 
