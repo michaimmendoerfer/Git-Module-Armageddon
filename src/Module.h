@@ -59,7 +59,7 @@ void InitModule();
     #define ADC0                0x48
     #define PAIRING_BUTTON      0
     #define LED_PIN             10
-    //#define RGBLED_PIN          8
+    #define RGBLED_PIN          8
     #define LED_OFF             0
     #define LED_ON              1
     #define SDA_PIN             20
@@ -67,7 +67,7 @@ void InitModule();
     #define VOLTAGE_PIN         1
     #define VOLTAGE_DEVIDER_V   (18+4.7)/4.7
     #define VOLTAGE_DEVIDER_A   1.0
-    #define MODULE_NAME         "JL_POW"
+    #define MODULE_NAME         "JLP1.2"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif

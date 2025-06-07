@@ -47,11 +47,11 @@ void InitModule()
         //Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false, 4,  RELAY_NORMAL, SDA_PIN,  SCL_PIN, VOLTAGE_DEVIDER);
         Module.Setup(MODULE_NAME, BATTERY_SENSOR, MODULE_VERSION, NULL,     false, true, false, false);
         //                      Name     Type              I2C              IO(0/1)   VOLT      AMP   NULL     VpA    Vin  PeerID  
-        Module.PeriphSetup(0, "Load",  SENS_TYPE_AMP,    -1, -1, -1,  0, -1, -1,     -1,       0,   2.493,  0.066,  0,    0);
-        Module.PeriphSetup(1, "Extern",  SENS_TYPE_AMP,    -1, -1, -1,  0, -1, -1,     -1,       1,   2.478,  0.066,  0,    0);
-        Module.PeriphSetup(2, "Solar",  SENS_TYPE_AMP,    -1, -1, -1,  0, -1, -1,     -1,       2,   2.493,  0.066,  0,    0);
-        Module.PeriphSetup(3, "Intern",  SENS_TYPE_AMP,    -1, -1, -1,  0, -1, -1,     -1,       3,   2.505,  0.066,  0,    0);
-        Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT,   -1, -1, -1, -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,     VIN,   0);  
+        Module.PeriphSetup(0, "Load",    SENS_TYPE_AMP,   -1, -1, -1,  0, -1, -1,       -1,     3,   2.493,  0.066,  0,    0);
+        Module.PeriphSetup(1, "Extern",  SENS_TYPE_AMP,   -1, -1, -1,  0, -1, -1,       -1,     2,   2.478,  0.066,  0,    0);
+        Module.PeriphSetup(2, "Solar",   SENS_TYPE_AMP,   -1, -1, -1,  0, -1, -1,       -1,     0,   2.493,  0.066,  0,    0);
+        Module.PeriphSetup(3, "Intern",  SENS_TYPE_AMP,   -1, -1, -1,  0, -1, -1,       -1,     1,   2.505,  0.066,  0,    0);
+        Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT,  -1, -1, -1, -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,     VIN,   0);  
     #endif
 
     #ifdef MODULE_POWERDRAGON4_V1_0           
@@ -177,5 +177,10 @@ void InitModule()
     #ifdef LED_PIN
         pinMode(LED_PIN, OUTPUT);
     #endif
+    
+    #ifdef RGBLED_PIN
+        pinMode(RGBLED_PIN, OUTPUT);
+    #endif
+
     
 }

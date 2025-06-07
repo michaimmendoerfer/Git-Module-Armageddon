@@ -8,8 +8,7 @@
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 3
-; 
+const int DEBUG_LEVEL = 3; 
 const int _LED_SIGNAL = 1;
 
 #define WAIT_ALIVE       15000
@@ -95,6 +94,9 @@ struct struct_Status {
   uint32_t  TSMsg;
 };
 
+float PowerLog_Ah[MAX_PERIPHERALS];
+float PowerLog_Cap;
+
 PeerClass Module;
 MyLinkedList<PeriphClass*> SwitchList = MyLinkedList<PeriphClass*>();
 MyLinkedList<PeriphClass*> SensorList = MyLinkedList<PeriphClass*>();
@@ -109,6 +111,7 @@ volatile uint32_t TSPair     = 0;
 volatile uint32_t TSLed      = 0;
 volatile uint32_t TSStatus   = 0;
 volatile uint32_t TSSettings = 0;
+volatile uint32_t TSLog      = 0;
 
 int lastPeriphSent = -1;
 
@@ -138,6 +141,7 @@ float  ReadAmp (int SNr);
 float  ReadVolt(int SNr);
 void   SendStatus (int Pos=-1);
 void   SendPairingRequest();
+void   LogPower(int Intervall);
 
 bool   GetRelayState(int SNr);
 void   SetRelayState(int SNr, bool State);
@@ -160,9 +164,12 @@ void   LEDBlink(int Color, int n, uint8_t ms);
 
 void setup()
 {
-    #ifdef ARDUINO_USB_CDC_ON_BOOT
-        delay(3000);
-    #endif
+    if (DEBUG_LEVEL > 0)
+    {
+        #ifdef ARDUINO_USB_CDC_ON_BOOT
+            delay(3000);
+        #endif
+    }
     #ifdef LED_PIN
         pinMode(LED_PIN, OUTPUT);
     #endif
@@ -179,11 +186,14 @@ void setup()
             break;
     }
 
-    #ifdef ESP32
-        Serial.begin(115200);
-    #elif defined(ESP8266)
-        Serial.begin(74880);
-    #endif
+    if (DEBUG_LEVEL > 0)
+    {
+        #ifdef ESP32
+            Serial.begin(115200);
+        #elif defined(ESP8266)
+            Serial.begin(74880);
+        #endif
+    }
 
     InitSCL();
 
@@ -224,7 +234,7 @@ void setup()
     WiFi.macAddress(MacTemp);
     Module.SetBroadcastAddress(MacTemp);
 
-    Serial.printf("TX power: %d\n\r", WiFi.getTxPower());
+    //Serial.printf("TX power: %d\n\r", WiFi.getTxPower());
     //WiFi.setTxPower(WIFI_POWER_19_5dBm);
     //Serial.printf("TX power: %d\n\r", WiFi.getTxPower());
     
@@ -349,7 +359,6 @@ void SendStatusOld (int Pos)
 
 void SendStatus (int Pos) 
 {
-    TSLed = millis();
     SetMessageLED(2);
 
     JsonDocument doc; 
@@ -638,8 +647,7 @@ void SetRelayState(int SNr, bool State)
 }
 void UpdateSwitches() 
 {
-	Serial.println("UpdateSwitches");
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
+	for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
 	{
 		if ((Module.GetPeriphType(SNr) > 0) and (Module.GetPeriphValue(SNr, 0) != GetRelayState(SNr))) //.isSwitch()???
         {
@@ -655,7 +663,7 @@ void PrintMAC(const uint8_t * mac_addr)
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-  Serial.print(macStr);
+  if (DEBUG_LEVEL > 0) Serial.print(macStr);
 }
 void GoToSleep() 
 {
@@ -730,55 +738,70 @@ void SetMessageLED(int Color)
             case 0: 
                 #ifdef MODULE_TERMINATOR_PRO
                     smartdisplay_led_set_rgb(0, 0, 0);
-                #elif RGBLED_PIN
-                    pixels.clear();
-                    pixels.show();
                 #else
-                    digitalWrite(LED_PIN, LED_OFF);
+                    #ifdef RGBLED_PIN
+                        pixels.clear();
+                        pixels.show();
+                    #endif
+                    #ifdef LED_PIN
+                        digitalWrite(LED_PIN, LED_OFF);
+                    #endif
                 #endif
                 break;
             case 1:
                 #ifdef MODULE_TERMINATOR_PRO
                     smartdisplay_led_set_rgb(1, 0, 0);
-                #elif RGBLED_PIN
-                    pixels.clear();
-                    pixels.setPixelColor(0, pixels.Color (255,0,0));
-                    pixels.show();
                 #else
-                    digitalWrite(LED_PIN, LED_ON);
+                    #ifdef RGBLED_PIN
+                        pixels.clear();
+                        pixels.setPixelColor(0, pixels.Color (255,0,0));
+                        pixels.show();
+                    #endif
+                    #ifdef LED_PIN
+                        digitalWrite(LED_PIN, LED_ON);
+                    #endif
                 #endif
                 break;
             case 2:
                 #ifdef MODULE_TERMINATOR_PRO
                     smartdisplay_led_set_rgb(0, 1, 0);
-                #elif RGBLED_PIN
-                    pixels.clear();
-                    pixels.setPixelColor(0, pixels.Color (0,255,0));
-                    pixels.show();
-                #else
-                    digitalWrite(LED_PIN, LED_ON);
+                #else   
+                    #ifdef RGBLED_PIN
+                        pixels.clear();
+                        pixels.setPixelColor(0, pixels.Color (0,255,0));
+                        pixels.show();
+                    #endif
+                    #ifdef LED_PIN
+                        digitalWrite(LED_PIN, LED_ON);
+                    #endif
                 #endif
                 break;
             case 3:
                 #ifdef MODULE_TERMINATOR_PRO
                     smartdisplay_led_set_rgb(0, 0, 1);
-                #elif RGBLED_PIN
-                    pixels.clear();
-                    pixels.setPixelColor(0, pixels.Color (0,0,255));
-                    pixels.show();
                 #else
-                    digitalWrite(LED_PIN, LED_ON);
+                    #ifdef RGBLED_PIN
+                        pixels.clear();
+                        pixels.setPixelColor(0, pixels.Color (0,0,255));
+                        pixels.show();
+                    #endif
+                    #ifdef LED_PIN
+                        digitalWrite(LED_PIN, LED_ON);
+                    #endif
                 #endif
                 break;
             case 4:
                 #ifdef MODULE_TERMINATOR_PRO
                     smartdisplay_led_set_rgb(1, 0, 1);
-                #elif RGBLED_PIN
-                    pixels.clear();
-                    pixels.setPixelColor(0, pixels.Color (255,0,255));
-                    pixels.show();
                 #else
-                    digitalWrite(LED_PIN, LED_ON);
+                    #ifdef RGBLED_PIN
+                        pixels.clear();
+                        pixels.setPixelColor(0, pixels.Color (255,0,255));
+                        pixels.show();
+                    #endif
+                    #ifdef LED_PIN
+                        digitalWrite(LED_PIN, LED_ON);
+                    #endif
                 #endif
                 break;  
         }
@@ -796,6 +819,16 @@ void LEDBlink(int Color, int n, uint8_t ms)
 }
 #pragma endregion System-Things
 #pragma region Data-Things
+void LogPower(int Intervall)
+{
+    for(int SNr=0; SNr<MAX_PERIPHERALS; SNr++) {
+        int _Type = Module.GetPeriphType(SNr);
+        if ((_Type == SENS_TYPE_AMP) or (_Type == SENS_TYPE_SW_AMP) or (_Type == SENS_TYPE_LT_AMP)) 
+        {
+            PowerLog_Ah[SNr] += 1/(1000/Intervall*3600) * Module.GetPeriphValue(SNr, 3);
+        }
+    }        
+}
 void VoltageCalibration(int SNr, float V) 
 {
     char Buf[100] = {}; 
@@ -887,24 +920,29 @@ float ReadAmp (int SNr)
     float TempAmp      = 0;
     
     int ADC_Module = Module.GetPeriphI2CPort(SNr, 3);
-    if (ADC_Module > -1)
+    float AmpSamples = 0;
+
+    for (int av=0; av<10; av++)
     {
-        #ifdef ADC0
-            TempVal  = ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 3));
-            TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal); 
-            TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
-            delay(10);
-            DEBUG3 ("ReadAmp %d - %.3f", SNr, TempVolt);
-        #endif
+        if (ADC_Module > -1)
+        {
+            #ifdef ADC0
+                TempVal  = ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 3));
+                TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal); 
+                TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
+                DEBUG3 ("ReadAmp %d - %.3f", SNr, TempVolt);
+            #endif
+        }
+        else
+        {
+            TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 3));
+            TempVolt = BOARD_VOLTAGE/BOARD_ANALOG_MAX*TempVal;
+            TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * VOLTAGE_DEVIDER_A;
+        }
+        AmpSamples += TempAmp;
     }
-    else
-    {
-        TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 3));
-        TempVolt = BOARD_VOLTAGE/BOARD_ANALOG_MAX*TempVal;
-        TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * VOLTAGE_DEVIDER_A;
-        delay(10);
-    }
-  
+    
+    TempAmp = AmpSamples/10;
     //DEBUG3 ("ReadAmp: SNr=%d, port=%d: Raw:%.3f=%.3fV Null:%.4f --> %.4fV --> %.4fA", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal, TempVolt, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
 
     if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
@@ -920,26 +958,36 @@ float ReadVolt(int SNr)
     float TempVolt;
     
     int ADC_Module = Module.GetPeriphI2CPort(SNr, 2);
-    if (ADC_Module > -1)
+
+    float VoltSamples = 0;
+
+    for (int av=0; av<10; av++)
     {
-        #ifdef ADC0
-            //use ADC
-            TempVal  = ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 2));
-            TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal) * VOLTAGE_DEVIDER_V; 
+        if (ADC_Module > -1)
+        {
+            #ifdef ADC0
+                //use ADC
+                TempVal  = ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 2));
+                TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal) * VOLTAGE_DEVIDER_V; 
+                delay(10);
+            #else
+                DEBUG1 ("Critical Config-Error ADC");
+            #endif
+        }
+        else
+        {
+            //use io
+            if (Module.GetPeriphVin(SNr) == 0) { DEBUG3 ("SNr=%d - Vin must not be zero !!!\n\r", SNr); return 0; }
+            TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
+            TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER_V;
             delay(10);
-        #else
-            DEBUG1 ("Critical Config-Error ADC");
-        #endif
-    }
-    else
-    {
-        //use io
-        if (Module.GetPeriphVin(SNr) == 0) { DEBUG3 ("SNr=%d - Vin must not be zero !!!\n\r", SNr); return 0; }
-        TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
-        TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER_V;
-        delay(10);
+        }
+
+        VoltSamples += TempVolt;
     }
   
+    TempVolt = VoltSamples/10;
+
     DEBUG2 ("ReadVolt: SNr=%d, port=%d: Raw: %.1f / Vin:%.2f * V-Devider:%.2f--> %.2fV\n\r", SNr, Module.GetPeriphIOPort(SNr, 2), TempVal, Module.GetPeriphVin(SNr), VOLTAGE_DEVIDER_V, TempVolt);
  
     return TempVolt;
@@ -1151,7 +1199,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 {
                     Module.SetPeriphVperAmp(Pos, NewVperAmp);
                     SaveModule();
-                    Serial.printf("Updated VperAmp at Pos:%d to %.3f\n\r", Pos, NewVperAmp);
+                    DEBUG1 ("Updated VperAmp at Pos:%d to %.3f\n\r", Pos, NewVperAmp);
                 }
                 break;
             case SEND_CMD_UPDATE_NULLWERT:
@@ -1162,7 +1210,7 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                 {
                     Module.SetPeriphNullwert(Pos, NewNullwert);
                     SaveModule();
-                    Serial.printf("Updated Nullwert at Pos:%d to %.3f\n\r", Pos, NewNullwert);
+                    DEBUG1 ("Updated Nullwert at Pos:%d to %.3f\n\r", Pos, NewNullwert);
                 }
                 break;
             case SEND_CMD_SEND_STATE:
@@ -1217,6 +1265,12 @@ void loop()
         else SendStatus();
     }
 
+    if  ((actTime - TSLog ) > MSG_INTERVAL )                                 // PowerLog
+    {
+        TSLog = actTime;
+        LogPower(MSG_INTERVAL);
+    }
+
     if (((actTime - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
     {
         TSPair = 0;
@@ -1245,7 +1299,8 @@ void loop()
     #ifdef PAIRING_BUTTON                                                       // check for Pairing/Reset Button
         int BB1 = !digitalRead(PAIRING_BUTTON);
         int BB2 = 0;//!digitalRead(0);
-        if ((BB1 == 1) or (BB2 == 1)) {
+        if ((BB1 == 1) or (BB2 == 1)) 
+        {
             TSPair = actTime;
             Module.SetPairMode(true);
             SetMessageLED(1);
@@ -1278,50 +1333,53 @@ void loop()
 
 void InitSCL()
 {
-    #if defined(PORT0) || defined(ADC0)
-        byte error, address;
-        int nDevices;
-        Serial.println("Scanning...");
-        nDevices = 0;
+    if (DEBUG_LEVEL > 0)
+    {
+        #if defined(PORT0) || defined(ADC0)
+            byte error, address;
+            int nDevices;
+            Serial.println("Scanning...");
+            nDevices = 0;
 
-        Wire.begin(SDA_PIN, SCL_PIN, I2C_FREQ);
+            Wire.begin(SDA_PIN, SCL_PIN, I2C_FREQ);
 
-        for(address = 1; address < 127; address++ )
-        {
-            // The i2c_scanner uses the return value of
-            // the Write.endTransmisstion to see if
-            // a device did acknowledge to the address.
-            Wire.beginTransmission(address);
-            error = Wire.endTransmission();
-            if (error == 0)
+            for(address = 1; address < 127; address++ )
             {
-            Serial.print("I2C device found at address 0x");
-            if (address<16)
-                Serial.print("0");
-            Serial.print(address,HEX);
-            Serial.println("  !");
-            nDevices++;
+                // The i2c_scanner uses the return value of
+                // the Write.endTransmisstion to see if
+                // a device did acknowledge to the address.
+                Wire.beginTransmission(address);
+                error = Wire.endTransmission();
+                if (error == 0)
+                {
+                Serial.print("I2C device found at address 0x");
+                if (address<16)
+                    Serial.print("0");
+                Serial.print(address,HEX);
+                Serial.println("  !");
+                nDevices++;
+                }
+                else if (error==4)
+                {
+                Serial.print("Unknown error at address 0x");
+                if (address<16)
+                    Serial.print("0");
+                Serial.println(address,HEX);
+                }    
             }
-            else if (error==4)
+            if (nDevices == 0)
             {
-            Serial.print("Unknown error at address 0x");
-            if (address<16)
-                Serial.print("0");
-            Serial.println(address,HEX);
-            }    
-        }
-        if (nDevices == 0)
-        {
-            Serial.println("No I2C devices found\n");
-            while(1);
-        }
-        else
-        {
-            Serial.println("done\n");
-            delay(1000);
-        }
-    #endif
-    
+                Serial.println("No I2C devices found\n");
+                while(1);
+            }
+            else
+            {
+                Serial.println("done\n");
+                delay(1000);
+            }
+        #endif
+    }
+
     #ifdef PORT0                            // init IOBoard0
 	    IOBoard[0] = &IOBoard0;  
         for (int i=0; i<16; i++) IOBoard[0]->digitalWrite(i, 0);
