@@ -179,7 +179,7 @@ void InitModule()
     #endif
     
     #ifdef RGBLED_PIN
-        pinMode(RGBLED_PIN, OUTPUT);
+        //pinMode(RGBLED_PIN, OUTPUT);
     #endif
 
     

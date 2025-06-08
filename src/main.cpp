@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 3; 
+const int DEBUG_LEVEL = 1; 
 const int _LED_SIGNAL = 1;
 
 #define WAIT_ALIVE       15000
@@ -167,25 +167,10 @@ void setup()
     if (DEBUG_LEVEL > 0)
     {
         #ifdef ARDUINO_USB_CDC_ON_BOOT
-            delay(3000);
+            //delay(3000);
         #endif
     }
-    #ifdef LED_PIN
-        pinMode(LED_PIN, OUTPUT);
-    #endif
-    esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
-    
-    switch (wakeup_reason) {
-        case ESP_SLEEP_WAKEUP_TIMER:    
-            WaitForContact = WAIT_AFTER_SLEEP; 
-            LEDBlink(4, 1, 100);
-            break;
-        default:                        
-            WaitForContact = WAIT_ALIVE; 
-            LEDBlink(3, 3, 100);
-            break;
-    }
-
+   
     if (DEBUG_LEVEL > 0)
     {
         #ifdef ESP32
@@ -216,6 +201,19 @@ void setup()
 
     InitModule();
     
+    esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+    
+    switch (wakeup_reason) {
+        case ESP_SLEEP_WAKEUP_TIMER:    
+            WaitForContact = WAIT_AFTER_SLEEP; 
+            LEDBlink(4, 1, 100);
+            break;
+        default:                        
+            WaitForContact = WAIT_ALIVE; 
+            LEDBlink(3, 3, 100);
+            break;
+    }
+
     if (preferences.begin("JeepifyInit", true)) // import saved Module... if available
     {
         String SavedModule   = preferences.getString("Module", "");
@@ -277,90 +275,9 @@ void setup()
     
 }
 #pragma region Send-Things
-void SendStatusOld (int Pos) 
-{
-    TSLed = millis();
-    SetMessageLED(2);
-
-    JsonDocument doc; String jsondata; 
-    char buf[200]; 
-    
-    int Status = 0;
-    if (Module.GetDebugMode())   bitSet(Status, 0);
-    if (Module.GetSleepMode())   bitSet(Status, 1);
-    if (Module.GetDemoMode())    bitSet(Status, 2);
-    if (Module.GetPairMode())    bitSet(Status, 3);    
-    
-    snprintf(buf, sizeof(buf), "%s;%lu;%d", Module.GetName(), millis(), Status);
-    doc["Node"]  = buf;
-    
-    int SNrStart = lastPeriphSent+1;
-    int SNrMax = MAX_PERIPHERALS;
-
-    doc["Order"] = SEND_CMD_STATUS;
-
-    int PeriphsSent = 0;
-    for (int SNr=SNrStart; SNr<SNrMax ; SNr++) 
-    {   
-        lastPeriphSent = SNr;
-        if (!Module.isPeriphEmpty(SNr))
-        {
-            DEBUG3 ("SendStatus(%d) - %s (Type %d):\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr));
-
-            if (GetRelayState(SNr)) Module.SetPeriphValue(SNr, 1, 0);
-            else Module.SetPeriphValue(SNr, 0, 0);
-            
-            DEBUG3 ("GetPeriphValue(%d, 0) = %.3f\n\r", SNr, Module.GetPeriphValue(SNr, 0));
-            
-            Module.SetPeriphValue(SNr, ReadVolt(SNr),      2);
-            Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
-            
-            snprintf(buf, sizeof(buf), "%d;%s;%.0f;%.0f;%.2f;%.2f", 
-            Module.GetPeriphType(SNr), 
-            Module.GetPeriphName(SNr), 
-            Module.GetPeriphValue(SNr, 0),
-            
-            Module.GetPeriphValue(SNr, 1),
-            Module.GetPeriphValue(SNr, 2),
-            Module.GetPeriphValue(SNr, 3));
-                     
-            doc[ArrPeriph[SNr]] = buf;
-            PeriphsSent++;
-
-            //send first 4 Periphs
-            if (PeriphsSent == 4) break;
-        }
-    }
-    if (lastPeriphSent == MAX_PERIPHERALS-1) lastPeriphSent = -1;
-    if (PeriphsSent > 0)
-    {
-        serializeJson(doc, jsondata);  
-
-        for (int PNr=0; PNr<PeerList.size(); PNr++) 
-        {
-            PeerClass *Peer = PeerList.get(PNr);
-
-            if (Peer->GetType() >= MONITOR_ROUND)
-            {
-                DEBUG3 ("Sending to: %s ", Peer->GetName()); 
-                if (esp_now_send(Peer->GetBroadcastAddress(), (uint8_t *) jsondata.c_str(), 250) == 0) 
-                {
-                    DEBUG3("ESP_OK\\r");  
-                }
-                else 
-                {
-                    DEBUG1 ("%s: ESP_ERROR (SendStatus-2)\n\r", Peer->GetName()); 
-                }
-                    DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
-            }
-        }
-    }
-}
 
 void SendStatus (int Pos) 
 {
-    SetMessageLED(2);
-
     JsonDocument doc; 
     String jsondata; 
     
@@ -414,6 +331,8 @@ void SendStatus (int Pos)
     if (lastPeriphSent == MAX_PERIPHERALS-1) lastPeriphSent = -1;
     if (PeriphsSent > 0)
     {
+        SetMessageLED(2);
+        
         for (int PNr=0; PNr<PeerList.size(); PNr++) 
         {
             PeerClass *Peer = PeerList.get(PNr);
@@ -433,12 +352,12 @@ void SendStatus (int Pos)
                     DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
             }
         }
+        //SetMessageLED(0);
     }
 }
 
 void SendPairingRequest() 
 {
-    TSLed = millis();
     SetMessageLED(3);
     
     JsonDocument doc; String jsondata; 
@@ -473,7 +392,6 @@ void SendPairingRequest()
 
 void SendConfirm(const uint8_t * mac, uint32_t TSConfirm) 
 {
-    TSLed = millis();
     SetMessageLED(3);
     
     JsonDocument doc; String jsondata; 
@@ -677,7 +595,7 @@ void GoToSleep()
     serializeJson(doc, jsondata);  
         
     esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
-    delay(500);
+    delay(50);
     DEBUG2 ("\nSending: %s\n\r", jsondata.c_str());
     AddStatus("Send Going to sleep......"); 
     
@@ -687,6 +605,8 @@ void GoToSleep()
     #ifdef ESP32
     //gpio_deep_sleep_hold_en();
     //for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) if (Module.GetPeriphType(SNr) == SENS_TYPE_SWITCH) gpio_hold_en((gpio_num_t)Module.GetPeriphIOPort(SNr));  
+    
+    LEDBlink(4,2,50);
     
     esp_sleep_enable_timer_wakeup(SLEEP_INTERVAL * 1000);
     esp_deep_sleep_start();
@@ -731,6 +651,9 @@ void GetModule()
 void SetMessageLED(int Color)
 {
     // 0-off, 1-Red, 2-Green, 3-Blue, 4=violett
+    if (Color > 0) TSLed = millis();
+    else TSLed = 0;
+
     #if defined(LED_PIN) || defined(RGBLED_PIN)    
         if (_LED_SIGNAL) 
         switch (Color)
@@ -895,7 +818,7 @@ void CurrentCalibration()
                 }
                 TempVal /= 20;
                 
-                TempVolt = BOARD_VOLTAGE / BOARD_ANALOG_MAX * TempVal; // 1.5??? 
+                TempVolt = BOARD_VOLTAGE / BOARD_ANALOG_MAX * TempVal;
             }
 
             if (DEBUG_LEVEL > 2) { 
@@ -930,7 +853,6 @@ float ReadAmp (int SNr)
                 TempVal  = ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 3));
                 TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal); 
                 TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr);
-                DEBUG3 ("ReadAmp %d - %.3f", SNr, TempVolt);
             #endif
         }
         else
@@ -943,6 +865,7 @@ float ReadAmp (int SNr)
     }
     
     TempAmp = AmpSamples/10;
+    DEBUG3 ("ReadAmp %d - raw %.3f (%.2f)", SNr, TempVolt, TempAmp);
     //DEBUG3 ("ReadAmp: SNr=%d, port=%d: Raw:%.3f=%.3fV Null:%.4f --> %.4fV --> %.4fA", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal, TempVolt, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
 
     if (abs(TempAmp) < SCHWELLE) TempAmp = 0;
@@ -1271,7 +1194,7 @@ void loop()
         LogPower(MSG_INTERVAL);
     }
 
-    if (((actTime - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
+    if (((millis() - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
     {
         TSPair = 0;
         Module.SetPairMode(false);
@@ -1279,10 +1202,8 @@ void loop()
         SetMessageLED(0);
     }
 
-    if ((actTime - TSLed > MSGLIGHT_INTERVAL) and (TSLed > 0))                 // clear LED after LED interval
+    if ((millis() - TSLed > MSGLIGHT_INTERVAL) and (TSLed > 0))                 // clear LED after LED interval
     {
-        TSLed = 0;
-        
         if (Module.GetPairMode())
             SetMessageLED(1);
         else
