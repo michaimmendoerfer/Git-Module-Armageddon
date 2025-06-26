@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 1; 
+const int DEBUG_LEVEL = 3; 
 const int _LED_SIGNAL = 1;
 
 #define WAIT_ALIVE       15000
@@ -94,9 +94,6 @@ struct struct_Status {
   uint32_t  TSMsg;
 };
 
-float PowerLog_Ah[MAX_PERIPHERALS];
-float PowerLog_Cap;
-
 PeerClass Module;
 MyLinkedList<PeriphClass*> SwitchList = MyLinkedList<PeriphClass*>();
 MyLinkedList<PeriphClass*> SensorList = MyLinkedList<PeriphClass*>();
@@ -141,12 +138,12 @@ float  ReadAmp (int SNr);
 float  ReadVolt(int SNr);
 void   SendStatus (int Pos=-1);
 void   SendPairingRequest();
-void   LogPower(int Intervall);
 
 bool   GetRelayState(int SNr);
 void   SetRelayState(int SNr, bool State);
 
-void   UpdateSwitches();
+void   UpdateSwitchesFromData();
+void   UpdateDataFromSwitches();
 
 void   SetDemoMode (bool Mode);
 void   SetSleepMode(bool Mode);
@@ -224,18 +221,14 @@ void setup()
         preferences.end();
     }
     
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) Module.SetPeriphValue(SNr, GetRelayState(SNr), 0);
-    UpdateSwitches();
+    UpdateDataFromSwitches();
+    //UpdateSwitchesFromData();
 
     WiFi.mode(WIFI_STA);
     uint8_t MacTemp[6];
     WiFi.macAddress(MacTemp);
     Module.SetBroadcastAddress(MacTemp);
 
-    //Serial.printf("TX power: %d\n\r", WiFi.getTxPower());
-    //WiFi.setTxPower(WIFI_POWER_19_5dBm);
-    //Serial.printf("TX power: %d\n\r", WiFi.getTxPower());
-    
     Module.SetDebugMode(true);
 
     if (esp_now_init() != 0) 
@@ -303,23 +296,26 @@ void SendStatus (int Pos)
         lastPeriphSent = SNr;
         if (!Module.isPeriphEmpty(SNr))
         {
-            if (GetRelayState(SNr)) Module.SetPeriphValue(SNr, 1, 0);
-            else Module.SetPeriphValue(SNr, 0, 0);
-            
-            DEBUG3 ("SendStatus(%d) - %s (Type %d): %.3f\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphType(SNr), Module.GetPeriphValue(SNr, 0));
-            
-            Module.SetPeriphValue(SNr, ReadVolt(SNr),      2);
-            Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
+            if (Module.isPeriphSwitch(SNr))
+            {
+                
+                DEBUG3 ("SendStatus(%d) - %s (Switch): %.0f\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphValue(SNr, 0));
+            }
+        
+            if (Module.GetPeriphIOPort(2) > -1)
+                Module.SetPeriphValue(SNr, ReadVolt(SNr),      2);
+
+            if (Module.GetPeriphIOPort(3) > -1)
+                Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
             
             snprintf(buf, sizeof(buf), "%d;%s;%.0f;%.0f;%.2f;%.2f", 
-            Module.GetPeriphType(SNr), 
-            Module.GetPeriphName(SNr), 
-            Module.GetPeriphValue(SNr, 0),
-            
-            Module.GetPeriphValue(SNr, 1),
-            Module.GetPeriphValue(SNr, 2),
-            Module.GetPeriphValue(SNr, 3));
-                     
+                Module.GetPeriphType(SNr), 
+                Module.GetPeriphName(SNr), 
+                Module.GetPeriphValue(SNr, 0),
+                Module.GetPeriphValue(SNr, 1),
+                Module.GetPeriphValue(SNr, 2),
+                Module.GetPeriphValue(SNr, 3));
+                        
             doc[ArrPeriph[SNr]] = buf;
             PeriphsSent++;
 
@@ -473,6 +469,7 @@ void ToggleSwitch(int SNr, int State=2)
     DEBUG3("Value vor switch:%d\n\r", Value);
     Module.SetPeriphOldValue(SNr, Value, 0);
     
+    /*
     switch (State)
     {
         case 0: Value = 0; break;
@@ -480,15 +477,28 @@ void ToggleSwitch(int SNr, int State=2)
         case 2: Value = Value ? 0 : 1; break;
     }
     Module.SetPeriphValue(SNr, Value, 0);
-    DEBUG3 ("Value nach switch:%.0f\n\r", Module.GetPeriphValue(SNr, 0));
-    UpdateSwitches();
+    DEBUG3 ("Value nach switch (SNr:%d):%.0f\n\r", SNr, Module.GetPeriphValue(SNr, 0));
+    UpdateSwitchesFromData();
+    SendStatus(0);
+    */
+
+    switch (State)
+    {
+        case 0: SetRelayState(SNr, false); break;
+        case 1: SetRelayState(SNr, true); break;
+        case 2: if (Value == 0) SetRelayState(SNr, true);  break;
+                if (Value == 1) SetRelayState(SNr, false); break;
+    }
+    UpdateDataFromSwitches();
 }
 bool GetRelayState(int SNr)
 {
     int _Type = Module.GetPeriphType(SNr);
 	if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
         {
-            	if (ReadVolt(SNr) > 5) return true;
+            	int RawState = digitalRead(Module.GetPeriphIOPort(SNr, 2));
+                //DEBUG3 ("Relay(%d)-State = %d (>DigitalRead of port %d)\n\r", SNr, RawState, Module.GetPeriphIOPort(SNr, 2));
+                if (RawState) return true;
         }
     else if ((_Type == SENS_TYPE_SWITCH) or (_Type == SENS_TYPE_SW_AMP))
         {
@@ -540,41 +550,61 @@ void SetRelayState(int SNr, bool State)
     if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
     {
         int _Port;
-        if (State == false) _Port = Module.GetPeriphIOPort(SNr, 0);
-        else _Port = Module.GetPeriphIOPort(SNr, 1);
+        int _PORT_Module;
 
-        int PORT_Module = Module.GetPeriphI2CPort(SNr,2);
-        if (PORT_Module > -1)
+        if (State == false)
+        {
+            _Port = Module.GetPeriphIOPort(SNr, 0);
+            _PORT_Module = Module.GetPeriphI2CPort(SNr,0);
+        }
+        else
+        {
+            _Port = Module.GetPeriphIOPort(SNr, 1);
+            _PORT_Module = Module.GetPeriphI2CPort(SNr,1);
+        }
+
+        if (_PORT_Module > -1)
         {
             #ifdef PORT0
-                IOBoard[PORT_Module]->digitalWrite(_Port, 1);
+                IOBoard[_PORT_Module]->digitalWrite(_Port, 1);
                 delay(500);
-                IOBoard[PORT_Module]->digitalWrite(_Port, 0);
+                IOBoard[_PORT_Module]->digitalWrite(_Port, 0);
             #endif
         }
         else
         {
             digitalWrite(_Port, 1);
             DEBUG2 ("Setze _Port:%d auf on\n\r", _Port);
-            delay(500);
+            delay(500); //evtl tiefer
             digitalWrite(_Port, 0);
             DEBUG2 ("Setze _Port:%d auf off\n\r", _Port);
         }
     }
     
 }
-void UpdateSwitches() 
+void UpdateSwitchesFromData() 
 {
 	for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
 	{
-		if ((Module.GetPeriphType(SNr) > 0) and (Module.GetPeriphValue(SNr, 0) != GetRelayState(SNr))) //.isSwitch()???
+		if (Module.isPeriphSwitch(SNr))
         {
-            if (Module.GetPeriphValue(SNr, 0) == 0) SetRelayState(SNr, 0);
-            else SetRelayState(SNr, 1);
-            DEBUG3 ("Setze %s (Port:%d) auf %.0f\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), Module.GetPeriphValue(SNr, 0));
+            DEBUG3 ("Periph %d ist Switch.\n\r", SNr);
+            DEBUG3 ("GetPeriphValue(%d, 0) = %.4f", SNr, Module.GetPeriphValue(SNr, 0));
+
+            bool AktSwitchData = (bool) Module.GetPeriphValue(SNr, 0);
+            DEBUG3 ("AktSwitchData = %d, GetRelayState(%d) = %d\n\r", AktSwitchData, SNr, GetRelayState(SNr));
+
+            if (AktSwitchData != GetRelayState(SNr))
+            {
+                SetRelayState(SNr, AktSwitchData);
+                DEBUG3 ("Werte ungleich !! --> Setze %s (Port:%d) auf %.0f\n\r", Module.GetPeriphName(SNr), Module.GetPeriphIOPort(SNr, 0), AktSwitchData);
+            }
         }
     }
-    SendStatus(0);
+}
+void UpdateDataFromSwitches()
+{
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) Module.SetPeriphValue(SNr, GetRelayState(SNr), 0);
 }
 void PrintMAC(const uint8_t * mac_addr)
 {
@@ -742,16 +772,6 @@ void LEDBlink(int Color, int n, uint8_t ms)
 }
 #pragma endregion System-Things
 #pragma region Data-Things
-void LogPower(int Intervall)
-{
-    for(int SNr=0; SNr<MAX_PERIPHERALS; SNr++) {
-        int _Type = Module.GetPeriphType(SNr);
-        if ((_Type == SENS_TYPE_AMP) or (_Type == SENS_TYPE_SW_AMP) or (_Type == SENS_TYPE_LT_AMP)) 
-        {
-            PowerLog_Ah[SNr] += 1/(1000/Intervall*3600) * Module.GetPeriphValue(SNr, 3);
-        }
-    }        
-}
 void VoltageCalibration(int SNr, float V) 
 {
     char Buf[100] = {}; 
@@ -1180,6 +1200,7 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 void loop()
 {
     uint32_t actTime = millis();
+    UpdateDataFromSwitches();
     
     if  ((actTime - TSSend ) > MSG_INTERVAL/2  )                                 // Send-interval (Message or Pairing-request)
     {
@@ -1191,10 +1212,10 @@ void loop()
     if  ((actTime - TSLog ) > MSG_INTERVAL )                                 // PowerLog
     {
         TSLog = actTime;
-        LogPower(MSG_INTERVAL);
+        //LogPower(MSG_INTERVAL);
     }
 
-    if (((millis() - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
+    if (((actTime - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
     {
         TSPair = 0;
         Module.SetPairMode(false);

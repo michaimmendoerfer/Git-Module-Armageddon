@@ -59,11 +59,11 @@ void InitModule()
         //                Name        Type         Version        Address   sleep  debug  demo   pair
         Module.Setup(MODULE_NAME, SWITCH_4_WAY, MODULE_VERSION,     NULL,   false, true,  false, false);
         //                      Name     Type                   I2C         IO(0/1)  VOLT        AMP   NULL     VpA    Vin  PeerID  
-        Module.PeriphSetup(0, "Rel0",  SENS_TYPE_LT_AMP,     0,  0,  0,  0,  0,  1,     0,        1,   2.493,  0.040,  0,    0);
-        Module.PeriphSetup(1, "Rel1",  SENS_TYPE_LT_AMP,     0,  0,  1,  1,  4,  5,     0,        1,   2.478,  0.040,  0,    0);
-        Module.PeriphSetup(2, "Rel2",  SENS_TYPE_LT_AMP,     0,  0,  0,  0,  2,  3,     2,        3,   2.493,  0.040,  0,    0);
-        Module.PeriphSetup(3, "Rel3",  SENS_TYPE_LT_AMP,     0,  0,  1,  1,  6,  7,     2,        3,   2.505,  0.040,  0,    0);
-        Module.PeriphSetup(4, "VMon",  SENS_TYPE_VOLT,      -1, -1, -1, -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,      VIN,  0);  
+        Module.PeriphSetup(0, "Rel0",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 14, 13, 32, 39,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(1, "Rel1",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 26, 27, 25, 36,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(2, "Rel2",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 22, 23, 21, 34,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(3, "Rel3",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 18, 19, 17, 35,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(4, "VMon",  SENS_TYPE_VOLT,       -1, -1, -1, -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,      VIN,  0);  
     #endif
     
     #ifdef MODULE_4WAY_ESP32_MONSTER   
@@ -129,27 +129,22 @@ void InitModule()
         if (Module.GetPeriphIOPort(SNr, 0) >= 0) 
         {
             int PORT_Module = Module.GetPeriphI2CPort(SNr,0);
-            if (PORT_Module > -1)
-            {
-                #ifdef PORT0
-                    if (Module.GetPeriphI2CPort(SNr, 0) >= 0) IOBoard[PORT_Module]->pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT);
-                #else
-                    pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT);  // off(lt) oder on/off 
-                #endif
-            }
+            
+            #ifdef PORT0
+                if (Module.GetPeriphI2CPort(SNr, 0) >= 0) IOBoard[PORT_Module]->pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT);
+            #else
+                pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT);  // off(lt) oder on/off 
+            #endif
         }
 
         if (Module.GetPeriphIOPort(SNr, 1) >= 0) 
         {
             int PORT_Module = Module.GetPeriphI2CPort(SNr,1);
-            if (PORT_Module > -1)
-            {
-                #ifdef PORT0
-                    if (Module.GetPeriphI2CPort(SNr, 1) >= 0) IOBoard[PORT_Module]->pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT);
-                #else
-                    pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT);  // on(lt)
-                #endif
-            }
+            #ifdef PORT0
+                if (Module.GetPeriphI2CPort(SNr, 1) >= 0) IOBoard[PORT_Module]->pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT);
+            #else
+                pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT);  // on(lt)
+            #endif
         }
 
         if (Module.GetPeriphIOPort(SNr, 2) >= 0)   
