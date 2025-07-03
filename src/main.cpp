@@ -13,6 +13,7 @@ const int _LED_SIGNAL = 1;
 
 #define WAIT_ALIVE       15000
 #define WAIT_AFTER_SLEEP  3000
+#define RELAY_CHECK      100
 
 uint32_t WaitForContact = WAIT_AFTER_SLEEP;
 
@@ -108,7 +109,7 @@ volatile uint32_t TSPair     = 0;
 volatile uint32_t TSLed      = 0;
 volatile uint32_t TSStatus   = 0;
 volatile uint32_t TSSettings = 0;
-volatile uint32_t TSLog      = 0;
+volatile uint32_t TSCheckRel = 0;
 
 int lastPeriphSent = -1;
 
@@ -142,7 +143,7 @@ void   SendPairingRequest();
 bool   GetRelayState(int SNr);
 void   SetRelayState(int SNr, bool State);
 
-void   UpdateSwitchesFromData();
+//void   UpdateSwitchesFromData();
 void   UpdateDataFromSwitches();
 
 void   SetDemoMode (bool Mode);
@@ -486,8 +487,9 @@ void ToggleSwitch(int SNr, int State=2)
     {
         case 0: SetRelayState(SNr, false); break;
         case 1: SetRelayState(SNr, true); break;
-        case 2: if (Value == 0) SetRelayState(SNr, true);  break;
-                if (Value == 1) SetRelayState(SNr, false); break;
+        case 2: if (Value == 0) SetRelayState(SNr, true); 
+                if (Value == 1) SetRelayState(SNr, false); 
+                break;
     }
     UpdateDataFromSwitches();
 }
@@ -582,7 +584,7 @@ void SetRelayState(int SNr, bool State)
     }
     
 }
-void UpdateSwitchesFromData() 
+/*void UpdateSwitchesFromData() 
 {
 	for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
 	{
@@ -601,10 +603,11 @@ void UpdateSwitchesFromData()
             }
         }
     }
-}
+}*/
 void UpdateDataFromSwitches()
 {
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) Module.SetPeriphValue(SNr, GetRelayState(SNr), 0);
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++) 
+        if (Module.isPeriphSwitch(SNr)) Module.SetPeriphValue(SNr, GetRelayState(SNr), 0);
 }
 void PrintMAC(const uint8_t * mac_addr)
 {
@@ -968,7 +971,6 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                     if (esp_now_is_peer_exist((unsigned char *) mac)) 
                     { 
                         if (DEBUG_LEVEL > 0) { PrintMAC(mac); Serial.println(" already exists..."); }
-                        Module.SetPairMode(false);
                     }
                     else 
                     {
@@ -988,8 +990,8 @@ void OnDataRecvCommon(const uint8_t * mac, const uint8_t *incomingData, int len)
                             Serial.println("\n\rSaving Peers after received new one...");
                             ReportAll();
                         }
-                        Module.SetPairMode(false);
                     }
+                    Module.SetPairMode(false);
                 }
                 break;
             case SEND_CMD_STAY_ALIVE: 
@@ -1200,7 +1202,6 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 void loop()
 {
     uint32_t actTime = millis();
-    UpdateDataFromSwitches();
     
     if  ((actTime - TSSend ) > MSG_INTERVAL/2  )                                 // Send-interval (Message or Pairing-request)
     {
@@ -1209,10 +1210,10 @@ void loop()
         else SendStatus();
     }
 
-    if  ((actTime - TSLog ) > MSG_INTERVAL )                                 // PowerLog
+    if  ((actTime - TSCheckRel ) > RELAY_CHECK )                                 // Check Relay-State
     {
-        TSLog = actTime;
-        //LogPower(MSG_INTERVAL);
+        TSCheckRel = actTime;
+        UpdateDataFromSwitches();
     }
 
     if (((actTime - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
@@ -1252,7 +1253,7 @@ void loop()
             if (!TSButton) TSButton = actTime;
             else 
             {
-                if ((actTime - TSButton) > 3000) {
+                if ((actTime - TSButton) > 5000) {
                     DEBUG1 ("Button pressed... Clearing Peers and Reset");
                     AddStatus("Clearing Peers and Reset");
                     #ifdef ESP32

@@ -16,7 +16,7 @@
 
 void InitModule();
 
-#define MODULE_VERSION          "3.70"  
+#define MODULE_VERSION          "3.81"  
 #define PROTOKOLL_VERSION       "1.21"
 
 #ifdef MODULE_JL_BATTERY_SENSOR
@@ -87,7 +87,7 @@ void InitModule();
     #define VOLTAGE_PIN         33
     #define VOLTAGE_DEVIDER_V   (18000+4700)/4700
     #define VOLTAGE_DEVIDER_A   5
-    #define MODULE_NAME         "LW_1"
+    #define MODULE_NAME         "LW_2"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
