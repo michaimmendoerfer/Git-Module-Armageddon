@@ -19,7 +19,7 @@ void InitModule();
 #define MODULE_VERSION          "3.81"  
 #define PROTOKOLL_VERSION       "1.21"
 
-#ifdef MODULE_JL_BATTERY_SENSOR
+#ifdef MODULE_JL_BATTERY_SENSOR // locked
     // JL-Battery-Sensor hinten (tut)
     // ESP32-C3 Mini Plus (RGB)
     // 3 AMP-Sensors (ACS712)
@@ -41,6 +41,25 @@ void InitModule();
     #define VOLTAGE_DEVIDER_V   5.0
     #define VOLTAGE_DEVIDER_A   1.0
     #define MODULE_NAME         "JL_BAT"
+    #define BOARD_VOLTAGE       3.3
+    #define BOARD_ANALOG_MAX    4095
+#endif
+#ifdef MODULE_POWERDRAGON4_V1_0 // locked
+    // blue PCB PowerDragon V1.0 
+    // ESP32-C3 Mini 
+    // 4 latching switches (50A)
+    // 1 VOLT-Sensor 
+    // Pin 0:     Pairing Button
+    // Pin 33:    Voltage
+    
+    #define PAIRING_BUTTON       0
+    #define LED_PIN             10
+    #define LED_OFF             0
+    #define LED_ON              1
+    #define VOLTAGE_PIN         33
+    #define VOLTAGE_DEVIDER_V   (18000+4700)/4700
+    #define VOLTAGE_DEVIDER_A   5
+    #define MODULE_NAME         "LW_2"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
@@ -68,26 +87,6 @@ void InitModule();
     #define VOLTAGE_DEVIDER_V   (18+4.7)/4.7
     #define VOLTAGE_DEVIDER_A   1.0
     #define MODULE_NAME         "JLP1.2"
-    #define BOARD_VOLTAGE       3.3
-    #define BOARD_ANALOG_MAX    4095
-#endif
-
-#ifdef MODULE_POWERDRAGON4_V1_0
-    // blue PCB PowerDragon V1.0 
-    // ESP32-C3 Mini 
-    // 4 latching switches (50A)
-    // 1 VOLT-Sensor 
-    // Pin 0:     Pairing Button
-    // Pin 33:    Voltage
-    
-    #define PAIRING_BUTTON       0
-    #define LED_PIN             10
-    #define LED_OFF             0
-    #define LED_ON              1
-    #define VOLTAGE_PIN         33
-    #define VOLTAGE_DEVIDER_V   (18000+4700)/4700
-    #define VOLTAGE_DEVIDER_A   5
-    #define MODULE_NAME         "LW_2"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif

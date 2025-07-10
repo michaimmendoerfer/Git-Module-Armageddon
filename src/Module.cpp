@@ -15,6 +15,11 @@ const char *ArrPeriph[MAX_PERIPHERALS]   = {"Per0", "Per1", "Per2", "Per3", "Per
 
 void InitModule()
 {   
+    //------------------------------------------------------------------------------------------------------------------------------
+    //----------------------------------------------- MODULE_JL_BATTERY_SENSOR -----------------------------------------------------
+    //----------------------------------------------- fertig - nicht mehr ändern ---------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------------------
+    
     #ifdef MODULE_JL_BATTERY_SENSOR           
         #define SWITCHES_PER_SCREEN 4
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
@@ -28,6 +33,23 @@ void InitModule()
         Module.PeriphSetup(4, "VMon",   SENS_TYPE_VOLT,   -1, -1, -1, -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,    1241, 0);  
     #endif
     
+    //------------------------------------------------------------------------------------------------------------------------------
+    //----------------------------------------------- MODULE_POWERDRAGON4_V1_0 -----------------------------------------------------
+    //----------------------------------------------- fertig - nicht mehr ändern ---------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------------------
+    
+    #ifdef MODULE_POWERDRAGON4_V1_0           
+        #define VIN BOARD_ANALOG_MAX/BOARD_VOLTAGE
+        //                Name        Type         Version        Address   sleep  debug  demo   pair
+        Module.Setup(MODULE_NAME, SWITCH_4_WAY, MODULE_VERSION,     NULL,   false, true,  false, false);
+        //                      Name     Type                   I2C         IO(0/1)  VOLT        AMP   NULL     VpA    Vin  PeerID  
+        Module.PeriphSetup(0, "Rel0",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 14, 13, 32, 39,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(1, "Rel1",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 26, 27, 25, 36,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(2, "Rel2",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 22, 23, 21, 34,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(3, "Rel3",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 18, 19, 17, 35,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(4, "VMon",  SENS_TYPE_VOLT,       -1, -1, -1, -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,      VIN,  0);  
+    #endif
+   
     #ifdef MODULE_SENSORDRAGON_V1_0           
         #define VIN BOARD_ANALOG_MAX/BOARD_VOLTAGE
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
@@ -53,19 +75,7 @@ void InitModule()
         Module.PeriphSetup(3, "Intern",  SENS_TYPE_AMP,   -1, -1, -1,  0, -1, -1,       -1,     1,   2.505,  0.066,  0,    0);
         Module.PeriphSetup(4, "VMon",    SENS_TYPE_VOLT,  -1, -1, -1, -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,     VIN,   0);  
     #endif
-
-    #ifdef MODULE_POWERDRAGON4_V1_0           
-        #define VIN BOARD_ANALOG_MAX/BOARD_VOLTAGE
-        //                Name        Type         Version        Address   sleep  debug  demo   pair
-        Module.Setup(MODULE_NAME, SWITCH_4_WAY, MODULE_VERSION,     NULL,   false, true,  false, false);
-        //                      Name     Type                   I2C         IO(0/1)  VOLT        AMP   NULL     VpA    Vin  PeerID  
-        Module.PeriphSetup(0, "Rel0",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 14, 13, 32, 39,  1.666,  0.040,  0,    0);
-        Module.PeriphSetup(1, "Rel1",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 26, 27, 25, 36,  1.666,  0.040,  0,    0);
-        Module.PeriphSetup(2, "Rel2",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 22, 23, 21, 34,  1.666,  0.040,  0,    0);
-        Module.PeriphSetup(3, "Rel3",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 18, 19, 17, 35,  1.666,  0.040,  0,    0);
-        Module.PeriphSetup(4, "VMon",  SENS_TYPE_VOLT,       -1, -1, -1, -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,      VIN,  0);  
-    #endif
-    
+ 
     #ifdef MODULE_4WAY_ESP32_MONSTER   
         #define SWITCHES_PER_SCREEN 4
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
