@@ -49,7 +49,24 @@ void InitModule()
         Module.PeriphSetup(3, "Rel3",  SENS_TYPE_LT_AMP,     -1, -1, -1, -1, 18, 19, 17, 35,  1.666,  0.040,  0,    0);
         Module.PeriphSetup(4, "VMon",  SENS_TYPE_VOLT,       -1, -1, -1, -1, -1, -1, VOLTAGE_PIN, -1,     0,    0,      VIN,  0);  
     #endif
-   
+
+    //------------------------------------------------------------------------------------------------------------------------------
+    //----------------------------------------- MODULE_4_TAILED_FIRINGDRAGON_V1_0 --------------------------------------------------
+    //----------------------------------------------- in arbeit ---------------- ---------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------------------
+    
+    #ifdef MODULE_4_TAILED_FIRINGDRAGON_V1_0           
+        #define VIN BOARD_ANALOG_MAX/BOARD_VOLTAGE
+        //                Name        Type         Version        Address   sleep  debug  demo   pair
+        Module.Setup(MODULE_NAME, SWITCH_4_WAY, MODULE_VERSION,     NULL,   false, true,  false, false);
+        //                      Name     Type                   I2C         IO(0/1)  VOLT        AMP   NULL     VpA    Vin  PeerID  
+        Module.PeriphSetup(0, "Rel0",  SENS_TYPE_LT_AMP,      0,  0,  0,  0,  0, 1, 1, 0,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(1, "Rel1",  SENS_TYPE_LT_AMP,      0,  0,  1,  1,  2, 3, 3, 2,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(2, "Rel2",  SENS_TYPE_LT_AMP,      0,  0,  0,  0,  4, 5, 3, 2,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(3, "Rel3",  SENS_TYPE_LT_AMP,      0,  0,  1,  1,  6, 7, 1, 0,  1.666,  0.040,  0,    0);
+        Module.PeriphSetup(4, "VMon",  SENS_TYPE_VOLT,       -1, -1, -1, -1, -1, -1, VOLTAGE_PIN, -1,      0,    0,      VIN,  0);  
+    #endif
+
     #ifdef MODULE_SENSORDRAGON_V1_0           
         #define VIN BOARD_ANALOG_MAX/BOARD_VOLTAGE
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 
@@ -141,7 +158,7 @@ void InitModule()
             int PORT_Module = Module.GetPeriphI2CPort(SNr,0);
             
             #ifdef PORT0
-                if (Module.GetPeriphI2CPort(SNr, 0) >= 0) IOBoard[PORT_Module]->pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT);
+                if (PORT_Module >= 0) IOBoard[PORT_Module]->pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT);
             #else
                 pinMode(Module.GetPeriphIOPort(SNr, 0), OUTPUT);  // off(lt) oder on/off 
             #endif
@@ -151,7 +168,7 @@ void InitModule()
         {
             int PORT_Module = Module.GetPeriphI2CPort(SNr,1);
             #ifdef PORT0
-                if (Module.GetPeriphI2CPort(SNr, 1) >= 0) IOBoard[PORT_Module]->pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT);
+                if (PORT_Module >= 0) IOBoard[PORT_Module]->pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT);
             #else
                 pinMode(Module.GetPeriphIOPort(SNr, 1), OUTPUT);  // on(lt)
             #endif
@@ -159,19 +176,23 @@ void InitModule()
 
         if (Module.GetPeriphIOPort(SNr, 2) >= 0)   
         {
-            if (Module.GetPeriphI2CPort(SNr,2) == -1)
-            {
-                pinMode(Module.GetPeriphIOPort(SNr,2), INPUT);
-                Serial.printf("setze %d auf INPUT\n\r", Module.GetPeriphIOPort(SNr,2));
-            }
+            #ifndef ADC0
+                if (Module.GetPeriphI2CPort(SNr,2) == -1)
+                {
+                    pinMode(Module.GetPeriphIOPort(SNr,2), INPUT);
+                    Serial.printf("setze %d auf INPUT\n\r", Module.GetPeriphIOPort(SNr,2));
+                }
+            #endif
         }
 
         if (Module.GetPeriphIOPort(SNr, 3) >= 0)     
         {
-            if (Module.GetPeriphI2CPort(SNr,3) == -1)
-            {
-                pinMode(Module.GetPeriphIOPort(SNr,3), INPUT);
-            }
+            #ifndef ADC0
+                if (Module.GetPeriphI2CPort(SNr,3) == -1)
+                {
+                    pinMode(Module.GetPeriphIOPort(SNr,3), INPUT);
+                }
+            #endif
         }
     }
     

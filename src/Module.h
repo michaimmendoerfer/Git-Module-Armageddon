@@ -6,7 +6,8 @@
 //#define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_SENSORDRAGON_V1_0
 //#define MODULE_SENSIBLEDRAGON_V1_2
-#define MODULE_POWERDRAGON4_V1_0
+//#define MODULE_POWERDRAGON4_V1_0
+#define MODULE_4_TAILED_FIRINGDRAGON_V1_0
 //#define MODULE_4WAY_ESP32_MONSTER
 //#define MODULE_4WAY_ESP32_BIGGY
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
@@ -60,6 +61,31 @@ void InitModule();
     #define VOLTAGE_DEVIDER_V   (18000+4700)/4700
     #define VOLTAGE_DEVIDER_A   5
     #define MODULE_NAME         "LW_2"
+    #define BOARD_VOLTAGE       3.3
+    #define BOARD_ANALOG_MAX    4095
+#endif
+
+#ifdef MODULE_4_TAILED_FIRINGDRAGON_V1_0 //
+    // blue PCB 
+    // ESP32-C3 Mini 
+    // 4 latching switches (50A)
+    // 1 VOLT-Sensor 
+    // Pin 00:    Pairing Button
+    // Pin 01:    Voltage
+    
+    #define PAIRING_BUTTON       0
+    #define LED_PIN             10
+    #define LED_OFF             0
+    #define LED_ON              1
+    #define SDA_PIN             20
+    #define SCL_PIN             21
+    #define PORT0               0x20
+    #define ADC0                0x48
+    #define ADC1                0x49
+    #define VOLTAGE_PIN         1
+    #define VOLTAGE_DEVIDER_V   4.82978
+    #define VOLTAGE_DEVIDER_A   4.46938
+    #define MODULE_NAME         "PD_4"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
