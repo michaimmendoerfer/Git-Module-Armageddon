@@ -167,6 +167,7 @@ void   SetMessageLED(int Color);
 void   LEDBlink(int Color, int n, uint8_t ms);
 void   MacCharToByte(uint8_t *mac, char *MAC);
 void   MacByteToChar(char *MAC, uint8_t *mac);
+bool   MACequals( uint8_t *MAC1, uint8_t *MAC2);
 
 
 #pragma endregion Functions
@@ -237,6 +238,7 @@ void setup()
     //UpdateSwitchesFromData();
 
     WiFi.mode(WIFI_STA);
+    WiFi.STA.begin();
     uint8_t MacTemp[6];
     WiFi.macAddress(MacTemp);
     Module.SetBroadcastAddress(MacTemp);
@@ -280,7 +282,23 @@ void setup()
     
 }
 #pragma region Send-Things
-
+void GarbageMessages()
+{
+    if (ReceivedMessagesList.size() > 0)
+    {  
+        for (int i=ReceivedMessagesList.size()-1; i>=0; i--)
+        {
+            ReceivedMessagesStruct *RMItem = ReceivedMessagesList.get(i);
+            
+            if (millis() > RMItem->TS + SEND_CMD_MSG_HOLD*1000)
+            {
+                DEBUG3 ("Message aus RMList entfernt\n\r");
+                ReceivedMessagesList.remove(i);
+                delete RMItem;
+            }
+        }
+    }
+}
 void SendStatus (int Pos) 
 {
     JsonDocument doc; 
@@ -293,7 +311,8 @@ void SendStatus (int Pos)
     doc[SEND_CMD_JSON_FROM]  = mac;
     doc[SEND_CMD_JSON_TO]    = broadCastAddressAllC;
     doc[SEND_CMD_JSON_TS]    = millis();
-    
+    doc[SEND_CMD_JSON_TTL]         = SEND_CMD_MSG_TTL;
+        
     int Status = 0;
     if (Module.GetDebugMode())   bitSet(Status, 0);
     if (Module.GetSleepMode())   bitSet(Status, 1);
@@ -370,6 +389,8 @@ void SendPairingRequest()
     doc[SEND_CMD_JSON_FROM]  = mac;
     doc[SEND_CMD_JSON_TO]    = broadCastAddressAllC;
     doc[SEND_CMD_JSON_TS]    = millis();
+    doc[SEND_CMD_JSON_TTL]   = SEND_CMD_MSG_TTL;
+    
 
     int Status = 0;
     if (Module.GetDebugMode())   bitSet(Status, 0);
@@ -381,7 +402,7 @@ void SendPairingRequest()
     doc[SEND_CMD_JSON_ORDER]       = SEND_CMD_PAIR_ME;
     doc[SEND_CMD_JSON_MODULE_TYPE] = Module.GetType();
     doc[SEND_CMD_JSON_VERSION]     = Module.GetVersion();
-    doc[SEND_CMD_JSON_ORDER]       = SEND_CMD_PAIR_ME;
+    doc[SEND_CMD_JSON_PEER_NAME]   = Module.GetName();
     
     for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++) {
         if (!Module.isPeriphEmpty(SNr)) 
@@ -403,7 +424,6 @@ void SendConfirm(const uint8_t * MAC, uint32_t TSConfirm)
     SetMessageLED(3);
     
     JsonDocument doc; String jsondata; 
-    char buf[100];
     char _mac[13];
 
     MacByteToChar(_mac, Module.GetBroadcastAddress());
@@ -411,7 +431,8 @@ void SendConfirm(const uint8_t * MAC, uint32_t TSConfirm)
     MacByteToChar(_mac, (uint8_t *) MAC);
     doc[SEND_CMD_JSON_TO]    = _mac;
     doc[SEND_CMD_JSON_TS]    = TSConfirm;
-
+    doc[SEND_CMD_JSON_TTL]         = SEND_CMD_MSG_TTL;
+    
     int Status = 0;
     if (Module.GetDebugMode())   bitSet(Status, 0);
     if (Module.GetSleepMode())   bitSet(Status, 1);
@@ -514,18 +535,15 @@ bool GetRelayState(int SNr)
 {
     int _Type = Module.GetPeriphType(SNr);
 	if ((_Type == SENS_TYPE_LT) or (_Type == SENS_TYPE_LT_AMP))
-    {
-        float TempVal;
-        float TempVolt;
-    
+    {    
         int ADC_Module = Module.GetPeriphI2CPort(SNr, 2);
         
         if (ADC_Module > -1)
         {
             #ifdef ADC0
                 //use ADC
-                TempVal  = ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 2));
-                TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal) * VOLTAGE_DEVIDER_V; 
+                float TempVal  = ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 2));
+                float TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal) * VOLTAGE_DEVIDER_V; 
                 delay(10);
                 DEBUG3 ("Relaystate: SNr:%d - TempVal: %.2f - V:%.2f\n\r", SNr, TempVal, TempVolt);
                 if (TempVolt > 8) return true;
@@ -917,8 +935,8 @@ float ReadVolt(int SNr)
 {
     if (Module.GetPeriphIOPort(SNr, 2) < 0) { DEBUG3 ("SNr=%d - no IOPort[2] - no volt-sensor!!!\n\r", SNr);  return 0; }
     
-    float TempVal;
-    float TempVolt;
+    float TempVal = 0;
+    float TempVolt = 0;
     
     int ADC_Module = Module.GetPeriphI2CPort(SNr, 2);
 
@@ -951,7 +969,7 @@ float ReadVolt(int SNr)
   
     TempVolt = VoltSamples/10;
 
-    DEBUG2 ("ReadVolt: SNr=%d, port=%d: Raw: %.1f / Vin:%.2f * V-Devider:%.2f--> %.2fV\n\r", SNr, Module.GetPeriphIOPort(SNr, 2), TempVal, Module.GetPeriphVin(SNr), VOLTAGE_DEVIDER_V, TempVolt);
+    DEBUG2 ("ReadVolt: SNr=%d, port=%d: Raw: %.1f / Vin:%.2f * V-Devider:%.2f--> %.2fV\n\r", SNr, Module.GetPeriphIOPort(SNr, 2), TempVal, Module.GetPeriphVin(SNr), (float) VOLTAGE_DEVIDER_V, TempVolt);
  
     return TempVolt;
 }
@@ -977,15 +995,18 @@ void OnDataRecvCommon(const uint8_t * dummymac, const uint8_t *incomingData, int
         uint8_t _From[6];
         uint8_t _To[6];
         
-        const char *macTmp = doc[SEND_CMD_JSON_FROM];
-        MacCharToByte(_From, (char *) macTmp);
-        macTmp = doc[SEND_CMD_JSON_TO];
-        MacCharToByte(_To, (char *) macTmp);
-        int _TS = (int)doc[SEND_CMD_JSON_TS];
+        const char *MacFromS = doc[SEND_CMD_JSON_FROM];
+        MacCharToByte(_From, (char *) MacFromS);
+        const char *MacToS = doc[SEND_CMD_JSON_TO];
+        MacCharToByte(_To, (char *) MacToS);
+        uint32_t _TS = (int)doc[SEND_CMD_JSON_TS];
 
-        if (DEBUG_LEVEL > 2) { Serial.printf("%lu: Recieved from: ", millis()); PrintMAC(_From); }
-    
-        if (_To != Module.GetBroadcastAddress()) return;
+
+        if ((MACequals(_To, Module.GetBroadcastAddress()) == false) and (MACequals(_To, broadcastAddressAll) == false)) return;
+            if (DEBUG_LEVEL > 2) 
+            { 
+                Serial.printf("%lu: Recieved from: %s (%s)", _TS, MacFromS, FindPeerByMAC(_From)->GetName()); 
+            }
             //already recevied?
             if (ReceivedMessagesList.size() > 0)
             { 
@@ -993,7 +1014,7 @@ void OnDataRecvCommon(const uint8_t * dummymac, const uint8_t *incomingData, int
                 {
                     ReceivedMessagesStruct *RMItem = ReceivedMessagesList.get(i);
                     
-                    if (!((RMItem->From == _From) and (RMItem->TS == _TS)))
+                    if ((MACequals(RMItem->From, _From)) and (RMItem->TS ==_TS))
                     {
                         DEBUG3 ("Message schon verarbeitet\\r");
                         return;
@@ -1252,6 +1273,7 @@ void loop()
         TSSend = actTime;
         if (Module.GetPairMode()) SendPairingRequest();
         else SendStatus();
+        GarbageMessages();
     }
 
     if  ((actTime - TSCheckRel ) > RELAY_CHECK )                                 // Check Relay-State
@@ -1320,13 +1342,21 @@ void loop()
 
 void MacCharToByte(uint8_t *mac, char *MAC)
 {
-    sscanf(MAC, "%2x%2x%2x%2x%2x%2x", &mac[0], &mac[1], &mac[2], &mac[3], &mac[4], &mac[5]);
+    sscanf(MAC, "%2x%2x%2x%2x%2x%2x", (unsigned int*) &mac[0], (unsigned int*) &mac[1], (unsigned int*) &mac[2], (unsigned int*) &mac[3], (unsigned int*) &mac[4], (unsigned int*) &mac[5]);
 }
 void MacByteToChar(char *MAC, uint8_t *mac)
 {
     sprintf(MAC, "%2.2X%2.2X%2.2X%2.2X%2.2X%2.2X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
 
+bool MACequals( uint8_t *MAC1, uint8_t *MAC2)
+{
+    for (int i=0; i<6; i++)
+    {
+        if (MAC1[i] != MAC2[i]) return false;
+    }
+    return true;
+}
 void InitSCL()
 {
     if (DEBUG_LEVEL > 0)

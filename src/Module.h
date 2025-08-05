@@ -6,8 +6,8 @@
 //#define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_SENSORDRAGON_V1_0
 //#define MODULE_SENSIBLEDRAGON_V1_2
-//#define MODULE_POWERDRAGON4_V1_0
-#define MODULE_4_TAILED_FIRINGDRAGON_V1_0
+#define MODULE_POWERDRAGON4_V1_0
+//#define MODULE_4_TAILED_FIRINGDRAGON_V1_0
 //#define MODULE_4WAY_ESP32_MONSTER
 //#define MODULE_4WAY_ESP32_BIGGY
 //#define MODULE_TERMINATOR_PRO         // ESP32-3248S035C, 480x320 Display
@@ -17,8 +17,8 @@
 
 void InitModule();
 
-#define MODULE_VERSION          "3.81"  
-#define PROTOKOLL_VERSION       "1.21"
+#define MODULE_VERSION          "4.01"  
+#define PROTOKOLL_VERSION       "3.01"
 
 #ifdef MODULE_JL_BATTERY_SENSOR // locked
     // JL-Battery-Sensor hinten (tut)
