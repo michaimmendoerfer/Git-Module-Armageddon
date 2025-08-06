@@ -73,6 +73,7 @@ void InitModule()
         Module.Setup(MODULE_NAME, SWITCH_1_WAY, MODULE_VERSION,     NULL,   false, true,  false, false);
         //                      Name     Type                   I2C         IO(0/1)  VOLT        AMP   NULL     VpA    Vin  PeerID  
         Module.PeriphSetup(0, "sc6",   SENS_TYPE_SWITCH,      -1, -1, -1, -1, 19, -1, -1, -1,     0,  0,  0,  0);
+        Module.SetRelayType(RELAY_NORMAL);
     #endif
     
 
