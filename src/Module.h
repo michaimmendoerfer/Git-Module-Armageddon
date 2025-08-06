@@ -6,7 +6,8 @@
 //#define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_SENSORDRAGON_V1_0
 //#define MODULE_SENSIBLEDRAGON_V1_2
-#define MODULE_POWERDRAGON4_V1_0
+//#define MODULE_POWERDRAGON4_V1_0
+#define MODULE_1WAY_C6
 //#define MODULE_4_TAILED_FIRINGDRAGON_V1_0
 //#define MODULE_4WAY_ESP32_MONSTER
 //#define MODULE_4WAY_ESP32_BIGGY
@@ -64,6 +65,25 @@ void InitModule();
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
+
+#ifdef MODULE_1WAY_C6 
+    // Single-Relay
+    // ESP32-C6 Mini 
+    // 1 switches (10A)
+    // Pin 0:     Pairing Button
+    // Pin 19:    Relay
+    
+    #define PAIRING_BUTTON      9
+    #define LED_PIN             2
+    #define LED_OFF             0
+    #define LED_ON              1
+    #define MODULE_NAME         "C6_1"
+    #define VOLTAGE_DEVIDER_V   (18000+4700)/4700
+    #define VOLTAGE_DEVIDER_A   5
+    #define BOARD_VOLTAGE       3.3
+    #define BOARD_ANALOG_MAX    4095
+#endif
+
 
 #ifdef MODULE_4_TAILED_FIRINGDRAGON_V1_0 //
     // blue PCB 

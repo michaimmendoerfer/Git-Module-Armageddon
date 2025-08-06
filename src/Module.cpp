@@ -67,6 +67,15 @@ void InitModule()
         Module.PeriphSetup(4, "VMon",  SENS_TYPE_VOLT,       -1, -1, -1, -1, -1, -1, VOLTAGE_PIN, -1,      0,    0,      VIN,  0);  
     #endif
 
+    #ifdef MODULE_1WAY_C6           
+        #define VIN BOARD_ANALOG_MAX/BOARD_VOLTAGE
+        //                Name        Type         Version        Address   sleep  debug  demo   pair
+        Module.Setup(MODULE_NAME, SWITCH_1_WAY, MODULE_VERSION,     NULL,   false, true,  false, false);
+        //                      Name     Type                   I2C         IO(0/1)  VOLT        AMP   NULL     VpA    Vin  PeerID  
+        Module.PeriphSetup(0, "sc6",   SENS_TYPE_SWITCH,      -1, -1, -1, -1, 19, -1, -1, -1,     0,  0,  0,  0);
+    #endif
+    
+
     #ifdef MODULE_SENSORDRAGON_V1_0           
         #define VIN BOARD_ANALOG_MAX/BOARD_VOLTAGE
         //                Name        Type         Version        Address   sleep  debug  demo  pair  vMon RelayType       SCA      SCL      voltagedevier 

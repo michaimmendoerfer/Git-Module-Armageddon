@@ -382,13 +382,13 @@ void SendPairingRequest()
     SetMessageLED(3);
     
     JsonDocument doc; String jsondata; 
-    char buf[200] = {};
-    char mac[13];
+    char buf[300] = {};
+    char mac[20];
 
     MacByteToChar(mac, Module.GetBroadcastAddress());
     doc[SEND_CMD_JSON_FROM]  = mac;
     doc[SEND_CMD_JSON_TO]    = broadCastAddressAllC;
-    doc[SEND_CMD_JSON_TS]    = millis();
+    doc[SEND_CMD_JSON_TS]    = (uint32_t) millis();
     doc[SEND_CMD_JSON_TTL]   = SEND_CMD_MSG_TTL;
     
 
@@ -995,17 +995,24 @@ void OnDataRecvCommon(const uint8_t * dummymac, const uint8_t *incomingData, int
         uint8_t _From[6];
         uint8_t _To[6];
         
-        const char *MacFromS = doc[SEND_CMD_JSON_FROM];
-        MacCharToByte(_From, (char *) MacFromS);
-        const char *MacToS = doc[SEND_CMD_JSON_TO];
-        MacCharToByte(_To, (char *) MacToS);
-        uint32_t _TS = (int)doc[SEND_CMD_JSON_TS];
+        String MacFromS;
+        String MacToS;
+        MacFromS = (String) doc[SEND_CMD_JSON_FROM];
+        MacCharToByte(_From, (char *) MacFromS.c_str());
+        MacToS = (String) doc[SEND_CMD_JSON_TO];
+        MacCharToByte(_To, (char *) MacToS.c_str());
+        uint32_t _TS = (uint32_t)doc[SEND_CMD_JSON_TS];
 
-
-        if ((MACequals(_To, Module.GetBroadcastAddress()) == false) and (MACequals(_To, broadcastAddressAll) == false)) return;
+        DEBUG3 ("From: %s, To: %s\n\r", MacFromS.c_str(), MacToS.c_str());
+        DEBUG3 ("MACequals (_to, module) = %d, - MACequals (_to, broadcastall) = %d\n\r", MACequals(_To, Module.GetBroadcastAddress()), MACequals(_To, broadcastAddressAll));
+        
+        if ( (memcmp(_To, Module.GetBroadcastAddress(), 6) == 0) or (memcmp(_To, broadcastAddressAll, 6) == 0) )
+        {
+            Serial.println("Message wird verarbeitet:");
+            Serial.println(buff);
             if (DEBUG_LEVEL > 2) 
             { 
-                Serial.printf("%lu: Recieved from: %s (%s)", _TS, MacFromS, FindPeerByMAC(_From)->GetName()); 
+                Serial.printf("%lu: Recieved from: %s\n\r", _TS, (char *)MacFromS.c_str()); 
             }
             //already recevied?
             if (ReceivedMessagesList.size() > 0)
@@ -1014,9 +1021,9 @@ void OnDataRecvCommon(const uint8_t * dummymac, const uint8_t *incomingData, int
                 {
                     ReceivedMessagesStruct *RMItem = ReceivedMessagesList.get(i);
                     
-                    if ((MACequals(RMItem->From, _From)) and (RMItem->TS ==_TS))
+                    if ( (memcmp(RMItem->From, _From, 6) == 0) and (RMItem->TS ==_TS) )
                     {
-                        DEBUG3 ("Message schon verarbeitet\\r");
+                        DEBUG3 ("Message %lu: %s schon verarbeitet\n\r", _TS, MacFromS.c_str());
                         return;
                     }
                     else
@@ -1025,6 +1032,7 @@ void OnDataRecvCommon(const uint8_t * dummymac, const uint8_t *incomingData, int
                         memcpy(RMItem->From, _From, 6);
                         RMItem->TS = _TS;
                         ReceivedMessagesList.add(RMItem);
+                        DEBUG3 ("Message %lu: %s gespeichert\n\r", _TS, MacFromS.c_str());
                     }
                 }
             }     
@@ -1227,8 +1235,9 @@ void OnDataRecvCommon(const uint8_t * dummymac, const uint8_t *incomingData, int
                     Pos = (int) doc[SEND_CMD_JSON_PERIPH_POS];
                     SendStatus(Pos);
                     break;
-            } // end (!error)
-    }
+            }
+        } 
+    } // end (!error)
     else // error
     { 
           DEBUG1 ("deserializeJson failed: %s\n\r", error.c_str());
