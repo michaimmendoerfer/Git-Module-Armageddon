@@ -98,6 +98,7 @@ struct struct_Status {
 struct ReceivedMessagesStruct {
     uint8_t  From[6];
     uint32_t TS;
+    uint32_t SaveTime;
 };
 
 MyLinkedList<ReceivedMessagesStruct*> ReceivedMessagesList = MyLinkedList<ReceivedMessagesStruct*>();
@@ -190,6 +191,11 @@ void setup()
         #endif
     }
 
+    #ifdef KILL_NVS
+        nvs_flash_erase(); nvs_flash_init(); while (1) {};
+    #endif
+
+
     InitSCL();
 
     if (DEBUG_LEVEL > 0)                        // Show free entries
@@ -256,10 +262,6 @@ void setup()
 
     AddStatus("Init Module");
     
-    #ifdef KILL_NVS
-        nvs_flash_erase(); nvs_flash_init(); while (1) {};
-    #endif
-
     if (GetPeers() == 0)                        // Pairmode if no known peers
     {
         Module.SetPairMode(true); 
@@ -290,7 +292,7 @@ void GarbageMessages()
         {
             ReceivedMessagesStruct *RMItem = ReceivedMessagesList.get(i);
             
-            if (millis() > RMItem->TS + SEND_CMD_MSG_HOLD*1000)
+            if (millis() > RMItem->SaveTime + SEND_CMD_MSG_HOLD*1000)
             {
                 DEBUG3 ("Message aus RMList entfernt\n\r");
                 ReceivedMessagesList.remove(i);
@@ -343,9 +345,9 @@ void SendStatus (int Pos)
             if (Module.GetPeriphIOPort(3) > -1)
                 Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
             
-            snprintf(buf, sizeof(buf), "%d;%s;%.0f;%.0f;%.2f;%.2f", 
-                Module.GetPeriphType(SNr), 
-                Module.GetPeriphName(SNr), 
+            snprintf(buf, sizeof(buf), "%d;%s;%.0f;%.0f;%.2f;%.2f", //besser 0
+                Module.GetPeriphType(SNr),   //-----------------------weg
+                Module.GetPeriphName(SNr),   //---------------------weg
                 Module.GetPeriphValue(SNr, 0),
                 Module.GetPeriphValue(SNr, 1),
                 Module.GetPeriphValue(SNr, 2),
@@ -665,7 +667,7 @@ void PrintMAC(const uint8_t * mac_addr)
 }
 void GoToSleep() 
 {
-    JsonDocument doc;
+    /*JsonDocument doc;
     String jsondata;
     
     doc["Node"] = Module.GetName();   
@@ -677,6 +679,7 @@ void GoToSleep()
     esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 200);  //Sending "jsondata"  
     delay(50);
     DEBUG2 ("\nSending: %s\n\r", jsondata.c_str());
+    */
     AddStatus("Send Going to sleep......"); 
     
     DEBUG2 ("Going to sleep at: %lu....................................................................................\n\r", millis());
@@ -1049,6 +1052,7 @@ void OnDataRecvCommon(const uint8_t * dummymac, const uint8_t *incomingData, int
             ReceivedMessagesStruct *RMItem = new ReceivedMessagesStruct;
             memcpy(RMItem->From, _From, 6);
             RMItem->TS = _TS;
+            RMItem->SaveTime = millis();
             ReceivedMessagesList.add(RMItem);
             DEBUG3 ("%d.Message %lu: %s gespeichert\n\r", ReceivedMessagesList.size(), _TS, MacFromS.c_str());
             

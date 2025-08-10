@@ -6,8 +6,8 @@
 //#define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_SENSORDRAGON_V1_0
 //#define MODULE_SENSIBLEDRAGON_V1_2
-//#define MODULE_POWERDRAGON4_V1_0
-#define MODULE_1WAY_C6
+#define MODULE_POWERDRAGON4_V1_0
+//#define MODULE_1WAY_C6
 //#define MODULE_4_TAILED_FIRINGDRAGON_V1_0
 //#define MODULE_4WAY_ESP32_MONSTER
 //#define MODULE_4WAY_ESP32_BIGGY
@@ -48,7 +48,7 @@ void InitModule();
 #endif
 #ifdef MODULE_POWERDRAGON4_V1_0 // locked
     // blue PCB PowerDragon V1.0 
-    // ESP32-C3 Mini 
+    // ESP32- 39 pin 
     // 4 latching switches (50A)
     // 1 VOLT-Sensor 
     // Pin 0:     Pairing Button
@@ -61,12 +61,12 @@ void InitModule();
     #define VOLTAGE_PIN         33
     #define VOLTAGE_DEVIDER_V   (18000+4700)/4700
     #define VOLTAGE_DEVIDER_A   5
-    #define MODULE_NAME         "LW_2"
+    #define MODULE_NAME         "PD_1"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
 
-#ifdef MODULE_1WAY_C6 
+#ifdef MODULE_1WAY_C6 // locked
     // Single-Relay
     // ESP32-C6 Mini 
     // 1 switches (10A)
@@ -110,7 +110,7 @@ void InitModule();
     #define BOARD_ANALOG_MAX    4095
 #endif
 
-#ifdef MODULE_SENSIBLEDRAGON_V1_2
+#ifdef MODULE_SENSIBLEDRAGON_V1_2 // locked
     // blue PCB SensibleDragon V1.2 
     // ESP32-C3 Mini 
     // 4 AMP-Sensors (ACS712) 30A
