@@ -4,6 +4,7 @@
 #define DEBUG1(...) if ((Module.GetDebugMode()) and (DEBUG_LEVEL > 0)) Serial.printf(__VA_ARGS__)
 #define DEBUG2(...) if ((Module.GetDebugMode()) and (DEBUG_LEVEL > 1)) Serial.printf(__VA_ARGS__)
 #define DEBUG3(...) if ((Module.GetDebugMode()) and (DEBUG_LEVEL > 2)) Serial.printf(__VA_ARGS__)
+#define JX(...) (doc[__VA_ARGS__].is<JsonVariant>())
 
 #include <Arduino.h>
 #include <Module.h>
@@ -162,14 +163,12 @@ void   SetPairMode(bool Mode);
 
 void   SaveModule();
 void   AddStatus(String Msg);
-void   PrintMAC(const uint8_t * mac_addr);
 void   GoToSleep();
 void   SetMessageLED(int Color);
 void   LEDBlink(int Color, int n, uint8_t ms);
 void   MacCharToByte(uint8_t *mac, char *MAC);
 void   MacByteToChar(char *MAC, uint8_t *mac);
 bool   MACequals( uint8_t *MAC1, uint8_t *MAC2);
-
 
 #pragma endregion Functions
 
@@ -307,25 +306,25 @@ void SendStatus (int Pos)
     String jsondata; 
     
     char buf[250]; 
+    
     char mac[13];
-
     MacByteToChar(mac, Module.GetBroadcastAddress());
-    doc[SEND_CMD_JSON_FROM]  = mac;
-    doc[SEND_CMD_JSON_TO]    = broadCastAddressAllC;
-    doc[SEND_CMD_JSON_TS]    = millis();
-    doc[SEND_CMD_JSON_TTL]         = SEND_CMD_MSG_TTL;
-        
+    
     int Status = 0;
     if (Module.GetDebugMode())   bitSet(Status, 0);
     if (Module.GetSleepMode())   bitSet(Status, 1);
     if (Module.GetDemoMode())    bitSet(Status, 2);
     if (Module.GetPairMode())    bitSet(Status, 3);    
     
-    int SNrStart = lastPeriphSent+1;
-    int SNrMax = MAX_PERIPHERALS;
-
+    doc[SEND_CMD_JSON_FROM]   = mac;
+    doc[SEND_CMD_JSON_TO]     = broadCastAddressAllC;
+    doc[SEND_CMD_JSON_TS]     = millis();
+    doc[SEND_CMD_JSON_TTL]    = SEND_CMD_MSG_TTL;
     doc[SEND_CMD_JSON_STATUS] = Status;
     doc[SEND_CMD_JSON_ORDER]  = SEND_CMD_STATUS;
+    
+    int SNrStart = lastPeriphSent+1;
+    int SNrMax = MAX_PERIPHERALS;
 
     int PeriphsSent = 0;
     for (int SNr=SNrStart; SNr<SNrMax ; SNr++) 
@@ -345,13 +344,19 @@ void SendStatus (int Pos)
             if (Module.GetPeriphIOPort(3) > -1)
                 Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
             
-            snprintf(buf, sizeof(buf), "%d;%s;%.0f;%.0f;%.2f;%.2f", //besser 0
+            char FormatedValue2[10] = "0";
+            char FormatedValue3[10] = "0";
+            
+            if (Module.GetPeriphValue(SNr, 2)) sprintf(FormatedValue2, "%.2f", Module.GetPeriphValue(SNr, 2));
+            if (Module.GetPeriphValue(SNr, 3)) sprintf(FormatedValue3, "%.2f", Module.GetPeriphValue(SNr, 3));
+            
+            snprintf(buf, sizeof(buf), "%d;%s;%.0f;%.0f;%s;%s", //besser 0
                 Module.GetPeriphType(SNr),   //-----------------------weg
                 Module.GetPeriphName(SNr),   //---------------------weg
                 Module.GetPeriphValue(SNr, 0),
                 Module.GetPeriphValue(SNr, 1),
-                Module.GetPeriphValue(SNr, 2),
-                Module.GetPeriphValue(SNr, 3));
+                FormatedValue2,
+                FormatedValue3);
                         
             doc[ArrPeriph[SNr]] = buf;
             PeriphsSent++;
@@ -426,23 +431,22 @@ void SendConfirm(const uint8_t * MAC, uint32_t TSConfirm)
     SetMessageLED(3);
     
     JsonDocument doc; String jsondata; 
-    char _mac[13];
-
-    MacByteToChar(_mac, Module.GetBroadcastAddress());
-    doc[SEND_CMD_JSON_FROM]  = _mac;
-    MacByteToChar(_mac, (uint8_t *) MAC);
-    doc[SEND_CMD_JSON_TO]    = _mac;
-    doc[SEND_CMD_JSON_TS]    = TSConfirm;
-    doc[SEND_CMD_JSON_TTL]         = SEND_CMD_MSG_TTL;
     
     int Status = 0;
     if (Module.GetDebugMode())   bitSet(Status, 0);
     if (Module.GetSleepMode())   bitSet(Status, 1);
     if (Module.GetDemoMode())    bitSet(Status, 2);
     if (Module.GetPairMode())    bitSet(Status, 3);    
-    
-    doc[SEND_CMD_JSON_STATUS]      = Status;
-    doc[SEND_CMD_JSON_ORDER]       = SEND_CMD_CONFIRM;
+
+    char _mac[13];
+    MacByteToChar(_mac, Module.GetBroadcastAddress());
+    doc[SEND_CMD_JSON_FROM]   = _mac;
+    MacByteToChar(_mac, (uint8_t *) MAC);
+    doc[SEND_CMD_JSON_TO]     = _mac;
+    doc[SEND_CMD_JSON_TS]     = TSConfirm;
+    doc[SEND_CMD_JSON_TTL]    = SEND_CMD_MSG_TTL;
+    doc[SEND_CMD_JSON_STATUS] = Status;
+    doc[SEND_CMD_JSON_ORDER]  = SEND_CMD_CONFIRM;
 
     serializeJson(doc, jsondata); 
 
@@ -506,31 +510,17 @@ void AddStatus(String Msg)
 void ToggleSwitch(int SNr, int State=2)
 {
     int Value = Module.GetPeriphValue(SNr, 0);
-    
-    //DEBUG3("Value vor switch:%d, State:%d\n\r", Value, State);
     Module.SetPeriphOldValue(SNr, Value, 0);
     
-    /*
-    switch (State)
-    {
-        case 0: Value = 0; break;
-        case 1: Value = 1; break;
-        case 2: Value = Value ? 0 : 1; break;
-    }
-    Module.SetPeriphValue(SNr, Value, 0);
-    DEBUG3 ("Value nach switch (SNr:%d):%.0f\n\r", SNr, Module.GetPeriphValue(SNr, 0));
-    UpdateSwitchesFromData();
-    SendStatus(0);
-    */
-
     switch (State)
     {
         case 0: SetRelayState(SNr, false); break;
-        case 1: SetRelayState(SNr, true); break;
+        case 1: SetRelayState(SNr, true);  break;
         case 2: if (Value == 0) SetRelayState(SNr, true); 
                 if (Value == 1) SetRelayState(SNr, false); 
                 break;
     }
+
     UpdateDataFromSwitches();
 }
 bool GetRelayState(int SNr)
@@ -646,24 +636,23 @@ void SetRelayState(int SNr, bool State)
     }
     
 }
-void UpdateDataFromSwitches()
-{
-    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
-    {
-        if (Module.isPeriphSwitch(SNr))
-        {
-            //bool Value =  GetRelayState(SNr);
-            Module.SetPeriphValue(SNr, GetRelayState(SNr), 0);
-            //Serial.printf("SNr:%d, RelayState:%d, GetPeriphValue:%.2f\n\r", SNr, Value, Module.GetPeriphValue(SNr, 0));
-        }
-    }
-}
 void PrintMAC(const uint8_t * mac_addr)
 {
   char macStr[18];
   snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
            mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   if (DEBUG_LEVEL > 0) Serial.print(macStr);
+}
+void UpdateDataFromSwitches()
+{
+    for (int SNr=0; SNr<MAX_PERIPHERALS; SNr++)
+    {
+        if (Module.isPeriphSwitch(SNr))
+        {
+            Module.SetPeriphValue(SNr, GetRelayState(SNr), 0);
+            //Serial.printf("SNr:%d, RelayState:%d, GetPeriphValue:%.2f\n\r", SNr, Value, Module.GetPeriphValue(SNr, 0));
+        }
+    }
 }
 void GoToSleep() 
 {
@@ -1016,24 +1005,25 @@ void OnDataRecvCommon(const uint8_t * dummymac, const uint8_t *incomingData, int
         
         String MacFromS;
         String MacToS;
-        MacFromS = (String) doc[SEND_CMD_JSON_FROM];
-        MacCharToByte(_From, (char *) MacFromS.c_str());
-        MacToS = (String) doc[SEND_CMD_JSON_TO];
-        MacCharToByte(_To, (char *) MacToS.c_str());
-        uint32_t _TS = (uint32_t)doc[SEND_CMD_JSON_TS];
+        uint32_t _TS;
 
-        //DEBUG3 ("From: %s, To: %s\n\r", MacFromS.c_str(), MacToS.c_str());
-        //DEBUG3 ("MACequals (_to, module) = %d, - MACequals (_to, broadcastall) = %d\n\r", MACequals(_To, Module.GetBroadcastAddress()), MACequals(_To, broadcastAddressAll));
-        //DEBUG3 ("memcpy (_to, module) = %d, - memcpy (_to, broadcastall) = %d\n\r", memcmp(_To, Module.GetBroadcastAddress(), 6), memcmp(_To, broadcastAddressAll, 6));
-        
+        if ( JX(SEND_CMD_JSON_FROM) and JX(SEND_CMD_JSON_TO) and JX(SEND_CMD_JSON_TS))
+        {
+            MacFromS = (String) doc[SEND_CMD_JSON_FROM];
+            MacCharToByte(_From, (char *) MacFromS.c_str());
+            MacToS = (String) doc[SEND_CMD_JSON_TO];
+            MacCharToByte(_To, (char *) MacToS.c_str());
+            _TS = (uint32_t)doc[SEND_CMD_JSON_TS];
+        }
+        else
+        {
+            return;
+        }
+
         if ( (memcmp(_To, Module.GetBroadcastAddress(), 6) == 0) or (memcmp(_To, broadcastAddressAll, 6) == 0) )
         {
-            //Serial.println("Message wird verarbeitet:");
-            //Serial.println(buff);
-            if (DEBUG_LEVEL > 2) 
-            { 
-                Serial.printf("%lu: Recieved from: %s\n\r", _TS, (char *)MacFromS.c_str()); 
-            }
+            DEBUG3 ("%lu: Recieved from: %s\n\r", _TS, (char *)MacFromS.c_str()); 
+
             //already recevied?
             if (ReceivedMessagesList.size() > 0)
             { 
@@ -1056,221 +1046,226 @@ void OnDataRecvCommon(const uint8_t * dummymac, const uint8_t *incomingData, int
             ReceivedMessagesList.add(RMItem);
             DEBUG3 ("%d.Message %lu: %s gespeichert\n\r", ReceivedMessagesList.size(), _TS, MacFromS.c_str());
             
-            if (doc[SEND_CMD_JSON_CONFIRM].is<JsonVariant>()) SendConfirm(_From, (uint32_t)doc[SEND_CMD_JSON_TS]);
+            if (JX(SEND_CMD_JSON_CONFIRM)) SendConfirm(_From, (uint32_t)doc[SEND_CMD_JSON_TS]);
             
-            switch ((int) doc[SEND_CMD_JSON_ORDER]) 
+            if (JX(SEND_CMD_JSON_ORDER))
             {
-                case SEND_CMD_YOU_ARE_PAIRED:
-                    if (esp_now_is_peer_exist((unsigned char *) _From)) 
-                    { 
-                        if (DEBUG_LEVEL > 0) { PrintMAC(_From); Serial.println(" already exists..."); }
-                    }
-                    else 
-                    {
-                        PeerClass *Peer = new PeerClass;
-                        Peer->Setup(doc[SEND_CMD_JSON_PEER_NAME], (int) doc[SEND_CMD_JSON_MODULE_TYPE], MODULE_VERSION, _From, false, false, false, false);
-                        Peer->SetLastContact(millis());
-                        WaitForContact = WAIT_AFTER_SLEEP; 
-                        PeerList.add(Peer);
-
-                        SavePeers();
-                        RegisterPeers();
-                        
-                        if (DEBUG_LEVEL > 1) 
-                        {
-                            Serial.printf("New Peer added: %s (Type:%d), MAC:", Peer->GetName(), Peer->GetType());
-                            PrintMAC(Peer->GetBroadcastAddress());
-                            Serial.println("\n\rSaving Peers after received new one...");
-                            ReportAll();
+                switch ((int) doc[SEND_CMD_JSON_ORDER]) 
+                {
+                    case SEND_CMD_YOU_ARE_PAIRED:
+                        if (esp_now_is_peer_exist((unsigned char *) _From)) 
+                        { 
+                            DEBUG1 ("%s already exists...\n\r", MacFromS.c_str()); 
                         }
-                    }
-                    Module.SetPairMode(false);
-                    break;
-                case SEND_CMD_STAY_ALIVE: 
-                    Module.SetLastContact(millis());
-                    WaitForContact = WAIT_ALIVE; 
-                    DEBUG2 ("LastContact: %6lu\n\r", Module.GetLastContact());
-                    break;
-                case SEND_CMD_SLEEPMODE_ON:
-                    AddStatus("Sleep: on");  
-                    SetSleepMode(true);  
-                    SendStatus();
-                    break;
-                case SEND_CMD_SLEEPMODE_OFF:
-                    AddStatus("Sleep: off"); 
-                    SetSleepMode(false); 
-                    SendStatus();
-                    break;
-                case SEND_CMD_SLEEPMODE_TOGGLE:
-                    if (Module.GetSleepMode()) 
-                    { 
-                        AddStatus("Sleep: off");   
-                        SetSleepMode(false); 
-                        SendStatus();
-                    }
-                    else 
-                    { 
-                        AddStatus("Sleep: on");    
+                        else 
+                        {
+                            PeerClass *Peer = new PeerClass;
+                            Peer->Setup(doc[SEND_CMD_JSON_PEER_NAME], (int) doc[SEND_CMD_JSON_MODULE_TYPE], MODULE_VERSION, _From, false, false, false, false);
+                            Peer->SetLastContact(millis());
+                            WaitForContact = WAIT_AFTER_SLEEP; 
+                            PeerList.add(Peer);
+
+                            SavePeers();
+                            RegisterPeers();
+                            
+                            if (DEBUG_LEVEL > 1) 
+                            {
+                                Serial.printf("New Peer added: %s (Type:%d), MAC:%s\n\r", Peer->GetName(), Peer->GetType(), MacFromS.c_str());
+                                Serial.println("Saving Peers after received new one...");
+                                ReportAll();
+                            }
+                        }
+                        Module.SetPairMode(false);
+                        break;
+                    case SEND_CMD_STAY_ALIVE: 
+                        Module.SetLastContact(millis());
+                        WaitForContact = WAIT_ALIVE; 
+                        DEBUG2 ("LastContact: %6lu\n\r", Module.GetLastContact());
+                        break;
+                    case SEND_CMD_SLEEPMODE_ON:
+                        AddStatus("Sleep: on");  
                         SetSleepMode(true);  
                         SendStatus();
-                    }
-                    break;
-                case SEND_CMD_DEBUGMODE_ON:
-                    AddStatus("DebugMode: on");  
-                    SetDebugMode(true);  
-                    SaveModule();
-                    SendStatus();
-                    break;
-                case SEND_CMD_DEBUGMODE_OFF:
-                    AddStatus("DebugMode: off"); 
-                    SetDebugMode(false); 
-                    SaveModule();
-                    SendStatus();
-                    break;
-                case SEND_CMD_DEBUGMODE_TOGGLE:
-                    if (Module.GetDebugMode()) 
-                    {   
-                        AddStatus("DebugMode: off");   
-                        SetDebugMode(false);  
-                    }
-                    else 
-                    { 
-                        AddStatus("DebugMode: on");    
-                        SetDebugMode(true);  
-                    }
-                    SendStatus();
-                    break;
-                case SEND_CMD_DEMOMODE_ON:
-                    AddStatus("Demo: on");   
-                    SetDemoMode(true);   
-                    SendStatus();
-                    break;
-                case SEND_CMD_DEMOMODE_OFF:
-                    AddStatus("Demo: off");  
-                    SetDemoMode(false);  
-                    SendStatus();
-                    break;
-                case SEND_CMD_DEMOMODE_TOGGLE:
-                    if (Module.GetDemoMode()) 
-                    { 
-                        AddStatus("DemoMode: off"); 
-                        SetDemoMode(false);
-                    }
-                    else 
-                    { 
-                        AddStatus("DemoMode: on");  
-                        SetDemoMode(true);  
-                    }
-                    SendStatus();
-                    break;
-                case SEND_CMD_RESET:
-                    AddStatus("Clear all"); 
-                    #ifdef ESP32
-                        ClearPeers(); ClearInit(); nvs_flash_erase(); nvs_flash_init();
-                    #elif defined(ESP8266)
-                        ClearPeers(); ClearInit();
-                    #endif
-                    ESP.restart();
-                    break;
-                case SEND_CMD_RESTART:
-                    ESP.restart(); 
-                    break;
-                case SEND_CMD_PAIRMODE_ON:
-                    Module.SetPairMode(true);
-                    TSPair = millis();    
-                    AddStatus("Pairing beginnt"); 
-                    SendStatus();
-                    #ifdef MODULE_TERMINATOR_PRO
-                    smartdisplay_led_set_rgb(1,0,0);
-                    #endif
-                    break;
-                case SEND_CMD_CURRENT_CALIB:
-                    AddStatus("Eichen beginnt"); 
-                    CurrentCalibration();
-                    break;
-                case SEND_CMD_VOLTAGE_CALIB:
-                    AddStatus("VoltCalib beginnt");
-                    NewVoltage = (float) doc["NewVoltage"];
-                    for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++)
-                    {
-                        if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT)
+                        break;
+                    case SEND_CMD_SLEEPMODE_OFF:
+                        AddStatus("Sleep: off"); 
+                        SetSleepMode(false); 
+                        SendStatus();
+                        break;
+                    case SEND_CMD_SLEEPMODE_TOGGLE:
+                        if (Module.GetSleepMode()) 
                         { 
-                            VoltageCalibration(SNr, NewVoltage) ;
-                            break;
+                            AddStatus("Sleep: off");   
+                            SetSleepMode(false); 
+                            SendStatus();
                         }
-                    }                 
-                    break;
-                case SEND_CMD_SWITCH_TOGGLE:
-                    if (doc[SEND_CMD_JSON_PERIPH_POS].is<JsonVariant>())    
-                    {
-                        Pos = doc[SEND_CMD_JSON_PERIPH_POS];
-                        if (Module.isPeriphEmpty(Pos) == false) ToggleSwitch(Pos);
-                    }
-                    break;
-                case SEND_CMD_UPDATE_NAME:
-                    if ( (doc[SEND_CMD_JSON_PERIPH_POS].is<JsonVariant>()) and (doc[SEND_CMD_JSON_VALUE].is<JsonVariant>()) )
-                    {
-                        Pos = (int) doc[SEND_CMD_JSON_PERIPH_POS];
-                        NewName = doc[SEND_CMD_JSON_VALUE].as<String>();
-                        if (NewName != "") 
-                        {
-                            if (Pos == 99) Module.SetName(NewName.c_str());
-                            else           Module.SetPeriphName(Pos, NewName.c_str());
+                        else 
+                        { 
+                            AddStatus("Sleep: on");    
+                            SetSleepMode(true);  
+                            SendStatus();
                         }
-                        
+                        break;
+                    case SEND_CMD_DEBUGMODE_ON:
+                        AddStatus("DebugMode: on");  
+                        SetDebugMode(true);  
                         SaveModule();
-                        NameChanged = true;
-                    }
-                        //SendNameChange(Pos);
-                    break;
-                case SEND_CMD_UPDATE_VIN:
-                    if  ( (doc[SEND_CMD_JSON_VALUE].is<JsonVariant>()) and (doc[SEND_CMD_JSON_PERIPH_POS].is<JsonVariant>()) )
-                    {   
-                        NewVin = (float) doc[SEND_CMD_JSON_VALUE];
-                        Pos = (int) doc[SEND_CMD_JSON_PERIPH_POS];
-
-                        if (NewVin > 0)
-                        {
-                            Module.SetPeriphVin(Pos, NewVin);
-                            SaveModule();
+                        SendStatus();
+                        break;
+                    case SEND_CMD_DEBUGMODE_OFF:
+                        AddStatus("DebugMode: off"); 
+                        SetDebugMode(false); 
+                        SaveModule();
+                        SendStatus();
+                        break;
+                    case SEND_CMD_DEBUGMODE_TOGGLE:
+                        if (Module.GetDebugMode()) 
+                        {   
+                            AddStatus("DebugMode: off");   
+                            SetDebugMode(false);  
                         }
-                    }
-                    break;
-                case SEND_CMD_UPDATE_VPERAMP:
-                    if  ( (doc[SEND_CMD_JSON_VALUE].is<JsonVariant>()) and (doc[SEND_CMD_JSON_PERIPH_POS].is<JsonVariant>()) )
-                    {
-                        Pos = (int) doc[SEND_CMD_JSON_PERIPH_POS];
-                        NewVperAmp = (float) doc[SEND_CMD_JSON_VALUE];
-
-                        if (NewVperAmp > 0)
-                        {
-                            Module.SetPeriphVperAmp(Pos, NewVperAmp);
-                            SaveModule();
-                            DEBUG1 ("Updated VperAmp at Pos:%d to %.3f\n\r", Pos, NewVperAmp);
+                        else 
+                        { 
+                            AddStatus("DebugMode: on");    
+                            SetDebugMode(true);  
                         }
-                    }
-                    break;
-                case SEND_CMD_UPDATE_NULLWERT:
-                    if  ( (doc[SEND_CMD_JSON_VALUE].is<JsonVariant>()) and (doc[SEND_CMD_JSON_PERIPH_POS].is<JsonVariant>()) )
-                    {
-                        Pos = (int) doc[SEND_CMD_JSON_PERIPH_POS];
-                        NewNullwert = (float) doc[SEND_CMD_JSON_VALUE];
-
-                        if (NewNullwert > 0)
-                        {
-                            Module.SetPeriphNullwert(Pos, NewNullwert);
-                            SaveModule();
-                            DEBUG1 ("Updated Nullwert at Pos:%d to %.3f\n\r", Pos, NewNullwert);
+                        SendStatus();
+                        break;
+                    case SEND_CMD_DEMOMODE_ON:
+                        AddStatus("Demo: on");   
+                        SetDemoMode(true);   
+                        SendStatus();
+                        break;
+                    case SEND_CMD_DEMOMODE_OFF:
+                        AddStatus("Demo: off");  
+                        SetDemoMode(false);  
+                        SendStatus();
+                        break;
+                    case SEND_CMD_DEMOMODE_TOGGLE:
+                        if (Module.GetDemoMode()) 
+                        { 
+                            AddStatus("DemoMode: off"); 
+                            SetDemoMode(false);
                         }
-                    }
-                    break;
-                case SEND_CMD_SEND_STATE:
-                    if (doc[SEND_CMD_JSON_PERIPH_POS].is<JsonVariant>())    
-                    {
-                        Pos = (int) doc[SEND_CMD_JSON_PERIPH_POS];
-                        SendStatus(Pos);
-                    }
-                    break;
+                        else 
+                        { 
+                            AddStatus("DemoMode: on");  
+                            SetDemoMode(true);  
+                        }
+                        SendStatus();
+                        break;
+                    case SEND_CMD_RESET:
+                        AddStatus("Clear all"); 
+                        #ifdef ESP32
+                            ClearPeers(); ClearInit(); nvs_flash_erase(); nvs_flash_init();
+                        #elif defined(ESP8266)
+                            ClearPeers(); ClearInit();
+                        #endif
+                        ESP.restart();
+                        break;
+                    case SEND_CMD_RESTART:
+                        ESP.restart(); 
+                        break;
+                    case SEND_CMD_PAIRMODE_ON:
+                        Module.SetPairMode(true);
+                        TSPair = millis();    
+                        AddStatus("Pairing beginnt"); 
+                        SendStatus();
+                        #ifdef MODULE_TERMINATOR_PRO
+                        smartdisplay_led_set_rgb(1,0,0);
+                        #endif
+                        break;
+                    case SEND_CMD_CURRENT_CALIB:
+                        AddStatus("Eichen beginnt"); 
+                        CurrentCalibration();
+                        break;
+                    case SEND_CMD_VOLTAGE_CALIB:
+                        if (JX(SEND_CMD_JSON_VALUE))
+                        {
+                            AddStatus("VoltCalib beginnt");
+                            NewVoltage = (float) doc[SEND_CMD_JSON_VALUE];
+                            for (int SNr=0 ; SNr<MAX_PERIPHERALS; SNr++)
+                            {
+                                if (Module.GetPeriphType(SNr) == SENS_TYPE_VOLT)
+                                { 
+                                    VoltageCalibration(SNr, NewVoltage) ;
+                                    break;
+                                }
+                            } 
+                        }                
+                        break;
+                    case SEND_CMD_SWITCH_TOGGLE:
+                        if (JX(SEND_CMD_JSON_PERIPH_POS))    
+                        {
+                            Pos = doc[SEND_CMD_JSON_PERIPH_POS];
+                            if (Module.isPeriphEmpty(Pos) == false) ToggleSwitch(Pos);
+                        }
+                        break;
+                    case SEND_CMD_UPDATE_NAME:
+                        if ( JX(SEND_CMD_JSON_PERIPH_POS) and JX(SEND_CMD_JSON_VALUE) )
+                        {
+                            Pos = (int) doc[SEND_CMD_JSON_PERIPH_POS];
+                            NewName = doc[SEND_CMD_JSON_VALUE].as<String>();
+                            if (NewName != "") 
+                            {
+                                if (Pos == 99) Module.SetName(NewName.c_str());
+                                else           Module.SetPeriphName(Pos, NewName.c_str());
+                            }
+                            
+                            SaveModule();
+                            NameChanged = true;
+                        }
+                            //SendNameChange(Pos);
+                        break;
+                    case SEND_CMD_UPDATE_VIN:
+                        if  ( JX(SEND_CMD_JSON_VALUE) and JX(SEND_CMD_JSON_PERIPH_POS) )
+                        {   
+                            NewVin = (float) doc[SEND_CMD_JSON_VALUE];
+                            Pos = (int) doc[SEND_CMD_JSON_PERIPH_POS];
+
+                            if (NewVin > 0)
+                            {
+                                Module.SetPeriphVin(Pos, NewVin);
+                                SaveModule();
+                            }
+                        }
+                        break;
+                    case SEND_CMD_UPDATE_VPERAMP:
+                        if  ( JX(SEND_CMD_JSON_VALUE) and JX(SEND_CMD_JSON_PERIPH_POS) )
+                        {
+                            Pos = (int) doc[SEND_CMD_JSON_PERIPH_POS];
+                            NewVperAmp = (float) doc[SEND_CMD_JSON_VALUE];
+
+                            if (NewVperAmp > 0)
+                            {
+                                Module.SetPeriphVperAmp(Pos, NewVperAmp);
+                                SaveModule();
+                                DEBUG1 ("Updated VperAmp at Pos:%d to %.3f\n\r", Pos, NewVperAmp);
+                            }
+                        }
+                        break;
+                    case SEND_CMD_UPDATE_NULLWERT:
+                        if  ( JX(SEND_CMD_JSON_VALUE) and JX(SEND_CMD_JSON_PERIPH_POS) )
+                        {
+                            Pos = (int) doc[SEND_CMD_JSON_PERIPH_POS];
+                            NewNullwert = (float) doc[SEND_CMD_JSON_VALUE];
+
+                            if (NewNullwert > 0)
+                            {
+                                Module.SetPeriphNullwert(Pos, NewNullwert);
+                                SaveModule();
+                                DEBUG1 ("Updated Nullwert at Pos:%d to %.3f\n\r", Pos, NewNullwert);
+                            }
+                        }
+                        break;
+                    case SEND_CMD_SEND_STATE:
+                        if (JX(SEND_CMD_JSON_PERIPH_POS))    
+                        {
+                            Pos = (int) doc[SEND_CMD_JSON_PERIPH_POS];
+                            SendStatus(Pos);
+                        }
+                        break;
+                }
             }
         } 
     } // end (!error)
