@@ -18,8 +18,8 @@
 
 void InitModule();
 
-#define MODULE_VERSION          "4.01"  
-#define PROTOKOLL_VERSION       "3.01"
+#define MODULE_VERSION          "4.10"  
+#define PROTOKOLL_VERSION       "3.10"
 
 #ifdef MODULE_JL_BATTERY_SENSOR // locked
     // JL-Battery-Sensor hinten (tut)

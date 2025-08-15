@@ -9,7 +9,7 @@
 #include <Arduino.h>
 #include <Module.h>
 
-const int DEBUG_LEVEL = 3; 
+const int DEBUG_LEVEL = 1; 
 const int _LED_SIGNAL = 1;
 
 #define WAIT_ALIVE       15000
@@ -153,7 +153,6 @@ void   SendPairingRequest();
 bool   GetRelayState(int SNr);
 void   SetRelayState(int SNr, bool State);
 
-//void   UpdateSwitchesFromData();
 void   UpdateDataFromSwitches();
 
 void   SetDemoMode (bool Mode);
@@ -177,7 +176,7 @@ void setup()
     if (DEBUG_LEVEL > 0)
     {
         #ifdef ARDUINO_USB_CDC_ON_BOOT
-            delay(3000);
+            //delay(3000);
         #endif
     }
    
@@ -1046,7 +1045,7 @@ void OnDataRecvCommon(const uint8_t * dummymac, const uint8_t *incomingData, int
             ReceivedMessagesList.add(RMItem);
             DEBUG3 ("%d.Message %lu: %s gespeichert\n\r", ReceivedMessagesList.size(), _TS, MacFromS.c_str());
             
-            if (JX(SEND_CMD_JSON_CONFIRM)) SendConfirm(_From, (uint32_t)doc[SEND_CMD_JSON_TS]);
+            if (JX(SEND_CMD_JSON_CONFIRM)) SendConfirm(_From, _TS);
             
             if (JX(SEND_CMD_JSON_ORDER))
             {
