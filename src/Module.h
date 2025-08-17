@@ -5,8 +5,8 @@
 
 //#define MODULE_JL_BATTERY_SENSOR      // (tut)
 //#define MODULE_SENSORDRAGON_V1_0
-//#define MODULE_SENSIBLEDRAGON_V1_2
-#define MODULE_POWERDRAGON4_V1_0
+#define MODULE_SENSIBLEDRAGON_V1_2
+//#define MODULE_POWERDRAGON4_V1_0
 //#define MODULE_1WAY_C6
 //#define MODULE_4_TAILED_FIRINGDRAGON_V1_0
 //#define MODULE_4WAY_ESP32_MONSTER
@@ -18,7 +18,7 @@
 
 void InitModule();
 
-#define MODULE_VERSION          "4.10"  
+#define MODULE_VERSION          "4.11"  
 #define PROTOKOLL_VERSION       "3.10"
 
 #ifdef MODULE_JL_BATTERY_SENSOR // locked
@@ -59,9 +59,9 @@ void InitModule();
     #define LED_OFF             0
     #define LED_ON              1
     #define VOLTAGE_PIN         33
-    #define VOLTAGE_DEVIDER_V   (18000+4700)/4700
+    #define VOLTAGE_DEVIDER_V   4.829787 //18k-4,7k
     #define VOLTAGE_DEVIDER_A   5
-    #define MODULE_NAME         "PD_1"
+    #define MODULE_NAME         "PD_1.0"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
@@ -78,7 +78,7 @@ void InitModule();
     #define LED_OFF             0
     #define LED_ON              1
     #define MODULE_NAME         "C6_1"
-    #define VOLTAGE_DEVIDER_V   (18000+4700)/4700
+    #define VOLTAGE_DEVIDER_V   4.829787 //18k-4,7k
     #define VOLTAGE_DEVIDER_A   5
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
@@ -105,7 +105,7 @@ void InitModule();
     #define VOLTAGE_PIN         1
     #define VOLTAGE_DEVIDER_V   4.82978
     #define VOLTAGE_DEVIDER_A   4.46938
-    #define MODULE_NAME         "PD_4"
+    #define MODULE_NAME         "4TF_1.0"
     #define BOARD_VOLTAGE       3.3
     #define BOARD_ANALOG_MAX    4095
 #endif
@@ -130,7 +130,7 @@ void InitModule();
     #define SDA_PIN             20
     #define SCL_PIN             21
     #define VOLTAGE_PIN         1
-    #define VOLTAGE_DEVIDER_V   (18+4.7)/4.7
+    #define VOLTAGE_DEVIDER_V   4.829787 //18k-4,7k
     #define VOLTAGE_DEVIDER_A   1.0
     #define MODULE_NAME         "JLP1.2"
     #define BOARD_VOLTAGE       3.3

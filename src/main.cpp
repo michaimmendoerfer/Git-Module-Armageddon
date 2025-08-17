@@ -12,9 +12,10 @@
 const int DEBUG_LEVEL = 1; 
 const int _LED_SIGNAL = 1;
 
-#define WAIT_ALIVE       15000
+#define WAIT_ALIVE        15000
 #define WAIT_AFTER_SLEEP  3000
-#define RELAY_CHECK      100
+#define RELAY_CHECK       100
+#define AMP_SAMPLES       3
 
 uint32_t WaitForContact = WAIT_AFTER_SLEEP;
 
@@ -176,7 +177,7 @@ void setup()
     if (DEBUG_LEVEL > 0)
     {
         #ifdef ARDUINO_USB_CDC_ON_BOOT
-            //delay(3000);
+            delay(3000);
         #endif
     }
    
@@ -336,16 +337,13 @@ void SendStatus (int Pos)
                 
                 DEBUG3 ("SendStatus(%d) - %s (Switch): %.0f\n\r",SNr, Module.GetPeriphName(SNr), Module.GetPeriphValue(SNr, 0));
             }
-        
-            if (Module.GetPeriphIOPort(2) > -1)
+            if (Module.GetPeriphIOPort(SNr, 2) > -1)
                 Module.SetPeriphValue(SNr, ReadVolt(SNr),      2);
-
-            if (Module.GetPeriphIOPort(3) > -1)
+            if (Module.GetPeriphIOPort(SNr, 3) > -1)
                 Module.SetPeriphValue(SNr, ReadAmp(SNr),       3);
             
             char FormatedValue2[10] = "0";
             char FormatedValue3[10] = "0";
-            
             if (Module.GetPeriphValue(SNr, 2)) sprintf(FormatedValue2, "%.2f", Module.GetPeriphValue(SNr, 2));
             if (Module.GetPeriphValue(SNr, 3)) sprintf(FormatedValue3, "%.2f", Module.GetPeriphValue(SNr, 3));
             
@@ -365,11 +363,15 @@ void SendStatus (int Pos)
             if (serializeJson(doc, jsondata) > 240) break;
         }
     }
-    if (lastPeriphSent == MAX_PERIPHERALS-1) lastPeriphSent = -1;
+    if (lastPeriphSent == MAX_PERIPHERALS-1) 
+    {
+        lastPeriphSent = -1;
+        TSSend = millis();
+    }
+
     if (PeriphsSent > 0)
     {
         SetMessageLED(2);
-        
         //DEBUG2 ("JSON: %s\n\r", jsondata.c_str());
         if (esp_now_send(broadcastAddressAll, (uint8_t *) jsondata.c_str(), 250) == 0) 
         {
@@ -381,6 +383,7 @@ void SendStatus (int Pos)
         }
         DEBUG3 ("Länge: %d - %s\n\r", strlen(jsondata.c_str()), jsondata.c_str());
     }
+    Serial.printf("nach ESPSend: %lu\n\r", millis());
 }
 
 void SendPairingRequest() 
@@ -535,7 +538,7 @@ bool GetRelayState(int SNr)
                 //use ADC
                 float TempVal  = ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 2));
                 float TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal) * VOLTAGE_DEVIDER_V; 
-                delay(10);
+                //delay(10);
                 DEBUG3 ("Relaystate: SNr:%d - TempVal: %.2f - V:%.2f\n\r", SNr, TempVal, TempVolt);
                 if (TempVolt > 8) return true;
             #else
@@ -722,8 +725,6 @@ void GetModule()
 void SetMessageLED(int Color)
 {
     // 0-off, 1-Red, 2-Green, 3-Blue, 4=violett
-    if (Color > 0) TSLed = millis();
-    else TSLed = 0;
 
     #if defined(LED_PIN) || defined(RGBLED_PIN)    
         if (_LED_SIGNAL) 
@@ -800,6 +801,8 @@ void SetMessageLED(int Color)
                 break;  
         }
     #endif
+    if (Color > 0) TSLed = millis();
+    else TSLed = 0;
 }
 void LEDBlink(int Color, int n, uint8_t ms)
 {
@@ -826,7 +829,7 @@ void VoltageCalibration(int SNr, float V)
         for (int i=0; i<20; i++) 
         {
             TempRead += (float)analogRead(Module.GetPeriphIOPort(SNr, 2));
-            delay(10);
+            //delay(10);
         }
         TempRead = (float) TempRead / 20;
         
@@ -906,7 +909,7 @@ float ReadAmp (int SNr)
     int ADC_Module = Module.GetPeriphI2CPort(SNr, 3);
     float AmpSamples = 0;
 
-    for (int av=0; av<10; av++)
+    for (int av=0; av<AMP_SAMPLES; av++)
     {
         if (ADC_Module > -1)
         {
@@ -918,14 +921,13 @@ float ReadAmp (int SNr)
         }
         else
         {
-            TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 3));
-            TempVolt = BOARD_VOLTAGE/BOARD_ANALOG_MAX*TempVal;
-            TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) * VOLTAGE_DEVIDER_A;
+            TempVolt  = analogReadMilliVolts(Module.GetPeriphIOPort(SNr, 3)) * VOLTAGE_DEVIDER_A;
+            TempAmp  = (TempVolt - Module.GetPeriphNullwert(SNr)) / Module.GetPeriphVperAmp(SNr) /1000;
         }
         AmpSamples += TempAmp;
     }
     
-    TempAmp = AmpSamples/10;
+    TempAmp = AmpSamples/AMP_SAMPLES;
     DEBUG3 ("ReadAmp %d - raw %.3f (%.2f)", SNr, TempVolt, TempAmp);
     //DEBUG3 ("ReadAmp: SNr=%d, port=%d: Raw:%.3f=%.3fV Null:%.4f --> %.4fV --> %.4fA", SNr, Module.GetPeriphIOPort(SNr, 3), TempVal, TempVolt, Module.GetPeriphNullwert(SNr), TempVolt, TempAmp);
 
@@ -953,7 +955,7 @@ float ReadVolt(int SNr)
                 //use ADC
                 TempVal  = ADCBoard[ADC_Module].readADC_SingleEnded(Module.GetPeriphIOPort(SNr, 2));
                 TempVolt = ADCBoard[ADC_Module].computeVolts(TempVal) * VOLTAGE_DEVIDER_V; 
-                delay(10);
+                //delay(1);
             #else
                 DEBUG1 ("Critical Config-Error ADC");
             #endif
@@ -966,18 +968,16 @@ float ReadVolt(int SNr)
                 //DEBUG3 ("SNr=%d - Vin must not be zero !!!\n\r", SNr); 
                 return 0; 
             }
-            TempVal  = analogRead(Module.GetPeriphIOPort(SNr, 2));
-            TempVolt = (float) TempVal / Module.GetPeriphVin(SNr) * VOLTAGE_DEVIDER_V;
-            delay(10);
+            TempVolt = (float) analogReadMilliVolts(Module.GetPeriphIOPort(SNr, 2)) * VOLTAGE_DEVIDER_V / 1000;
+            //delay(10);
         }
 
         VoltSamples += TempVolt;
     }
   
     TempVolt = VoltSamples/10;
+    DEBUG3 ("ReadVolt %d - %.2f\n\r", SNr, TempVolt);
 
-    DEBUG2 ("ReadVolt: SNr=%d, port=%d: Raw: %.1f / Vin:%.2f * V-Devider:%.2f--> %.2fV\n\r", SNr, Module.GetPeriphIOPort(SNr, 2), TempVal, Module.GetPeriphVin(SNr), (float) VOLTAGE_DEVIDER_V, TempVolt);
- 
     return TempVolt;
 }
 #pragma endregion Data-Things
@@ -1306,21 +1306,24 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 void loop()
 {
     uint32_t actTime = millis();
-    
-    if  ((actTime - TSSend ) > MSG_INTERVAL/2  )                                 // Send-interval (Message or Pairing-request)
+        
+    if  ((actTime - TSSend ) > MSG_INTERVAL)                                 // Send-interval (Message or Pairing-request)
     {
-        TSSend = actTime;
-        if (Module.GetPairMode()) SendPairingRequest();
+        if (Module.GetPairMode()) 
+        {
+            TSSend = actTime;
+            SendPairingRequest();
+        }
         else SendStatus();
         GarbageMessages();
     }
-
+    
     if  ((actTime - TSCheckRel ) > RELAY_CHECK )                                 // Check Relay-State
     {
         TSCheckRel = actTime;
         UpdateDataFromSwitches();
     }
-
+    
     if (((actTime - TSPair ) > PAIR_INTERVAL ) and (Module.GetPairMode()))     // end Pairing after pairing interval
     {
         TSPair = 0;
@@ -1328,22 +1331,22 @@ void loop()
         AddStatus("Pairing beendet...");
         SetMessageLED(0);
     }
-
-    if ((millis() - TSLed > MSGLIGHT_INTERVAL) and (TSLed > 0))                 // clear LED after LED interval
+    
+    if ((actTime - TSLed > MSGLIGHT_INTERVAL+300) and (TSLed > 0))                 // clear LED after LED interval
     {
         if (Module.GetPairMode())
             SetMessageLED(1);
         else
             SetMessageLED(0);
     }
-
+    
     if ((Module.GetSleepMode()) and (!Module.GetPairMode()) and (actTime+100 - Module.GetLastContact() > WaitForContact))       
     {
         DEBUG1 ("actTime:%lu, LastContact:%lu - (actTime - Module.GetLastContact()) = %lu, WaitForContact = %lu, - Try to sleep...........................................................\n\r", actTime, Module.GetLastContact(), actTime - Module.GetLastContact(), WaitForContact);
         Module.SetLastContact(millis());
         GoToSleep();
     }
-
+    
     #ifdef PAIRING_BUTTON                                                       // check for Pairing/Reset Button
         int BB1 = !digitalRead(PAIRING_BUTTON);
         int BB2 = 0;//!digitalRead(0);
@@ -1372,7 +1375,7 @@ void loop()
         }
         else TSButton = 0; 
     #endif
-
+    
     #ifdef MODULE_HAS_DISPLAY                                               // start ui if module has display
         lv_timer_handler();
         delay(5);
